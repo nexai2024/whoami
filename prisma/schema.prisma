@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,11 +8,365 @@ datasource db {
 }
 
 model User {
-  id        String   @id @unique
-  fullname  String?
-  username  String?
+  id        String   @id @default(cuid())
   email     String   @unique
-  image     String?
-  createdAt DateTime @default(now()) @map(name: "created_at")
-  updatedAt DateTime @default(now()) @map(name: "updated_at")
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Profile information
+  profile   Profile?
+  pages     Page[]
+  analytics Analytics[]
+
+  @@map("users")
+}
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  username    String  @unique
+  displayName String?
+  bio         String?
+  avatar      String?
+  theme       String  @default("default")
+
+  // Subscription and billing
+  plan               Plan    @default(FREE)
+  stripeCustomerId   String?
+  subscriptionId     String?
+  subscriptionStatus String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Page {
+  id          String  @id @default(cuid())
+  userId      String
+  slug        String  @unique
+  title       String
+  description String?
+  isActive    Boolean @default(true)
+
+  customDomain String?
+
+  // SEO and metadata
+  metaTitle       String?
+  metaDescription String?
+  ogImage         String?
+
+  // Styling
+  backgroundColor String @default("#ffffff")
+  textColor       String @default("#000000")
+  buttonStyle     String @default("rounded")
+  fontFamily      String @default("inter")
+
+  // Analytics settings
+  googleAnalyticsId String?
+  facebookPixelId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  header pageHeader?
+
+  blocks Block[]
+  clicks Click[]
+
+  @@map("pages")
+}
+model pageHeader {
+  id          String    @id @default(cuid())
+  pageId      String    @unique
+
+  data        Json @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+model Block {
+  id          String    @id @default(cuid())
+  pageId      String
+  type        BlockType
+  position    Int
+  isActive    Boolean   @default(true)
+
+  // Basic properties
+  title       String
+  description String?
+  url         String?
+  imageUrl    String?
+
+  // Styling
+  backgroundColor String?
+  textColor       String?
+  borderRadius    Int     @default(8)
+
+  // Block-specific data (JSON for flexibility)
+  data Json @default("{}")
+
+  // Scheduling
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+
+  // A/B Testing
+  variantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  clicks Click[]
+
+  @@map("blocks")
+}
+
+model Click {
+  id      String  @id @default(cuid())
+  pageId  String
+  blockId String?
+
+  // Analytics data
+  ipAddress String
+  userAgent String
+  referer   String?
+  country   String?
+  city      String?
+  device    String?
+  browser   String?
+  os        String?
+
+  // UTM parameters
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmTerm     String?
+  utmContent  String?
+
+  timestamp DateTime @default(now())
+
+  page  Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  block Block? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+
+  @@map("clicks")
+}
+
+model Analytics {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime
+
+  // Metrics
+  pageViews      Int   @default(0)
+  uniqueVisitors Int   @default(0)
+  totalClicks    Int   @default(0)
+  revenue        Float @default(0)
+
+  // Device breakdown
+  mobileViews  Int @default(0)
+  desktopViews Int @default(0)
+  tabletViews  Int @default(0)
+
+  // Traffic sources
+  directTraffic   Int @default(0)
+  socialTraffic   Int @default(0)
+  searchTraffic   Int @default(0)
+  referralTraffic Int @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("analytics")
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  price       Float
+  currency    String  @default("USD")
+
+  // Digital product files
+  fileUrl       String?
+  downloadLimit Int?
+
+  // Stripe integration
+  stripeProductId String?
+  stripePriceId   String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales Sale[]
+
+  @@map("products")
+}
+
+model Sale {
+  id         String @id @default(cuid())
+  productId  String
+  buyerEmail String
+  amount     Float
+  currency   String @default("USD")
+
+  // Payment processing
+  stripePaymentIntentId String?
+  status                String @default("pending")
+
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("sales")
+}
+
+model EmailSubscriber {
+  id     String @id @default(cuid())
+  pageId String
+  email  String
+  name   String?
+  source String? // Which block they subscribed from
+
+  tags String[] // For segmentation
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@unique([pageId, email])
+  @@map("email_subscribers")
+}
+
+model ABTest {
+  id          String @id @default(cuid())
+  pageId      String
+  name        String
+  description String?
+
+  // Test configuration
+  trafficSplit Float      @default(50) // Percentage for variant
+  status       TestStatus @default(DRAFT)
+
+  // Results
+  controlClicks  Int @default(0)
+  controlViews   Int @default(0)
+  variantClicks  Int @default(0)
+  variantViews   Int @default(0)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("ab_tests")
+}
+
+model Integration {
+  id     String          @id @default(cuid())
+  userId String
+  type   IntegrationType
+  name   String
+
+  // Encrypted credentials and configuration
+  config Json
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, type])
+  @@map("integrations")
+}
+
+model Webhook {
+  id     String         @id @default(cuid())
+  userId String
+  url    String
+  events WebhookEvent[]
+  secret String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("webhooks")
+}
+
+model AuditLog {
+  id         String @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+
+  // Request details
+  ipAddress String?
+  userAgent String?
+
+  // Change details
+  oldValues Json?
+  newValues Json?
+
+  timestamp DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+enum Plan {
+  FREE
+  CREATOR
+  PRO
+  BUSINESS
+}
+
+enum BlockType {
+  LINK
+  PRODUCT
+  EMAIL_CAPTURE
+  IMAGE_GALLERY
+  MUSIC_PLAYER
+  VIDEO_EMBED
+  BOOKING_CALENDAR
+  TIP_JAR
+  SOCIAL_FEED
+  AMA_BLOCK
+  GATED_CONTENT
+  RSS_FEED
+  PORTFOLIO
+  CONTACT_FORM
+  DIVIDER
+  TEXT_BLOCK
+}
+
+enum TestStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+}
+
+enum IntegrationType {
+  STRIPE
+  PAYPAL
+  MAILCHIMP
+  CONVERTKIT
+  CALENDLY
+  SHOPIFY
+  GUMROAD
+  GOOGLE_ANALYTICS
+  FACEBOOK_PIXEL
+  ZAPIER
+}
+
+enum WebhookEvent {
+  PAGE_VIEW
+  BLOCK_CLICK
+  EMAIL_SIGNUP
+  PRODUCT_SALE
+  TIP_RECEIVED
 }
