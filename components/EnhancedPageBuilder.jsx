@@ -17,6 +17,7 @@ const {
 const EnhancedPageBuilder = () => {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('header');
+  const [user , setUser] = useState(null);
   const [blocks, setBlocks] = useState([
     { id: 1, type: 'link', title: 'Latest YouTube Video', url: 'https://youtube.com', icon: FiVideo },
     { id: 2, type: 'product', title: 'Digital Photography Course', price: '$49', icon: FiShoppingBag },
@@ -25,7 +26,7 @@ const EnhancedPageBuilder = () => {
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { currUser } = useAuth();
+  
   const tabs = [
     { id: 'header', label: 'Header', icon: FiUser },
     { id: 'blocks', label: 'Content Blocks', icon: FiLink },
@@ -43,11 +44,20 @@ const EnhancedPageBuilder = () => {
   ];
 
   useEffect(() => {
+    async function fetchUser() {
+      const { currUser } = await useAuth();
+      setUser(currUser);
+      console.log("Current user in page builder:", currUser);
+    }
+    fetchUser();
+  }, []);
     const pageId = searchParams.get('page');
     const isNew = searchParams.get('new');
-    
+
     if (pageId) {
-      loadPageData(pageId);
+      useEffect(() => {
+        loadPageData(pageId);
+      }, [pageId]);
     } else if (isNew) {
       // Initialize new page
       console.log("Initializing new page");
@@ -55,8 +65,8 @@ const EnhancedPageBuilder = () => {
         title: 'New Page',
         description: 'New page description',
       }
-      console.log("Current user in page builder:", currUser.user.id, currUser);
-      const newPage = PageService.createPage({ userID: currUser?.user?.id });
+    //  console.log("Current user in page builder:", user.id, user);
+      const newPage = PageService.createPage({ userID: user?.id });
       if (newPage.id) {
         console.log("New page created:", newPage);
       setPageData({
@@ -78,8 +88,7 @@ const EnhancedPageBuilder = () => {
         }
       });
     }
-  };
-  }, [searchParams]);
+  }
 
   const loadPageData = async (pageId) => {
     try {
