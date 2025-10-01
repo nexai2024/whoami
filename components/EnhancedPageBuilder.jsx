@@ -3,26 +3,40 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import * as FiIcons from 'react-icons/fi';
-import SafeIcon from '../common/SafeIcon';
-import HeaderCustomizer from './HeaderCustomizer';
 import { PageService } from '../lib/database/pages';
-import { useAuth } from '@/lib/auth/AuthContext';
+import { AnalyticsService } from '../lib/database/analytics';
+import { logger } from '../lib/utils/logger';
+import SEOHead from './SEOHead';
+import SafeIcon from '../common/SafeIcon';
 
 const { 
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
   FiLink, FiShoppingBag, FiMail, FiMusic, FiVideo, FiCalendar,
-  FiUser, FiSettings
+  FiUser, FiSettings, FiTag, FiShare2
 } = FiIcons;
 
 const EnhancedPageBuilder = () => {
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('header');
   const [user , setUser] = useState(null);
-  const [blocks, setBlocks] = useState([
-    { id: 1, type: 'link', title: 'Latest YouTube Video', url: 'https://youtube.com', icon: FiVideo },
-    { id: 2, type: 'product', title: 'Digital Photography Course', price: '$49', icon: FiShoppingBag },
-    { id: 3, type: 'email', title: 'Join My Newsletter', description: 'Get weekly tips', icon: FiMail }
-  ]);
+  const [blocks, setBlocks] = useState([]);
+  // Fetch blocks for the page from backend
+  useEffect(() => {
+    const pageId = searchParams.get('page');
+    if (!pageId) return;
+    async function fetchBlocks() {
+      try {
+        const res = await fetch(`/api/pages/${pageId}/blocks`);
+        if (res.ok) {
+          const data = await res.json();
+          setBlocks(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch blocks:', err);
+      }
+    }
+    fetchBlocks();
+  }, [searchParams]);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -40,7 +54,14 @@ const EnhancedPageBuilder = () => {
     { type: 'image', label: 'Image Gallery', icon: FiImage, color: 'pink' },
     { type: 'music', label: 'Music Player', icon: FiMusic, color: 'orange' },
     { type: 'video', label: 'Video Embed', icon: FiVideo, color: 'red' },
-    { type: 'booking', label: 'Booking', icon: FiCalendar, color: 'indigo' }
+    { type: 'booking', label: 'Booking', icon: FiCalendar, color: 'indigo' },
+    { type: 'analytics', label: 'Analytics', icon: FiEye, color: 'teal' },
+    { type: 'promo', label: 'Promo', icon: FiTag, color: 'yellow' },
+    { type: 'discount', label: 'Discount', icon: FiTag, color: 'amber' },
+    { type: 'social_share', label: 'Social Share', icon: FiShare2, color: 'cyan' },
+    { type: 'waitlist', label: 'Waitlist', icon: FiMail, color: 'lime' },
+    { type: 'newsletter', label: 'Newsletter', icon: FiMail, color: 'rose' },
+    { type: 'custom', label: 'Custom', icon: FiEdit3, color: 'gray' }
   ];
 
   useEffect(() => {
@@ -106,10 +127,15 @@ const EnhancedPageBuilder = () => {
     const newBlock = {
       id: Date.now(),
       type,
-      title: `New ${type}`,
-      ...(type === 'product' && { price: '$0' }),
-      ...(type === 'email' && { description: 'Subscribe for updates' })
+      title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      data: {},
     };
+    // Provide sensible defaults for new block types
+    if (type === 'product') newBlock.data.price = '$0';
+    if (type === 'email' || type === 'newsletter' || type === 'waitlist') newBlock.data.description = 'Subscribe for updates';
+    if (type === 'promo') newBlock.data.promoCode = '';
+    if (type === 'discount') newBlock.data.discount = 0;
+    if (type === 'analytics') newBlock.data.source = '';
     setBlocks([...blocks, newBlock]);
   };
 
@@ -125,25 +151,29 @@ const EnhancedPageBuilder = () => {
     }));
   };
 
-  const handlePreview = () => {
-    // Open preview with current data
-    const previewData = {
-      ...pageData,
-      blocks
-    };
-    
-    const previewUrl = `${window.location.origin}/#/page/preview?data=${encodeURIComponent(JSON.stringify(previewData))}`;
-    const previewWindow = window.open(
-      previewUrl,
-      'preview',
-      'width=400,height=800,scrollbars=yes,resizable=yes,toolbar=no,menubar=no,location=no,status=no'
-    );
-    
-    if (previewWindow) {
-      previewWindow.focus();
-    } else {
-      alert('Please allow popups to use the preview feature');
+  // Save blocks to backend
+  const handleSaveBlocks = async () => {
+    const pageId = searchParams.get('page');
+    if (!pageId) return;
+    try {
+      const res = await fetch(`/api/pages/${pageId}/blocks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(blocks),
+      });
+      if (res.ok) {
+        // Optionally show a success message
+        // const saved = await res.json();
+      } else {
+        alert('Failed to save blocks');
+      }
+    } catch (err) {
+      alert('Failed to save blocks');
     }
+  };
+
+  const handlePreview = () => {
+    // ...existing code...
   };
 
   const BlockPreview = ({ block }) => {
@@ -155,9 +185,36 @@ const EnhancedPageBuilder = () => {
         image: FiImage,
         music: FiMusic,
         video: FiVideo,
-        booking: FiCalendar
+        booking: FiCalendar,
+        analytics: FiEye,
+        promo: FiTag,
+        discount: FiTag,
+        social_share: FiShare2,
+        waitlist: FiMail,
+        newsletter: FiMail,
+        custom: FiEdit3
       };
       return iconMap[type] || FiLink;
+    };
+
+    // Display block summary based on type
+    const renderBlockSummary = () => {
+      switch (block.type) {
+        case 'product':
+          return <p className="text-sm text-green-600 font-medium">{block.data?.price}</p>;
+        case 'email':
+        case 'newsletter':
+        case 'waitlist':
+          return <p className="text-sm text-gray-600">{block.data?.description}</p>;
+        case 'promo':
+          return <p className="text-sm text-yellow-600">Promo: {block.data?.promoCode}</p>;
+        case 'discount':
+          return <p className="text-sm text-amber-600">Discount: {block.data?.discount}%</p>;
+        case 'analytics':
+          return <p className="text-sm text-teal-600">Analytics Source: {block.data?.source}</p>;
+        default:
+          return null;
+      }
     };
 
     return (
@@ -177,8 +234,7 @@ const EnhancedPageBuilder = () => {
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{block.title}</h3>
-            {block.price && <p className="text-sm text-green-600 font-medium">{block.price}</p>}
-            {block.description && <p className="text-sm text-gray-600">{block.description}</p>}
+            {renderBlockSummary()}
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
@@ -287,13 +343,22 @@ const EnhancedPageBuilder = () => {
                     }}
                   />
                 </div>
+                {/* Block-specific config UIs */}
                 {selectedBlock.type === 'link' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">URL</label>
                     <input
                       type="url"
+                      value={selectedBlock.data?.url || ''}
                       placeholder="https://example.com"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      onChange={e => {
+                        const updatedBlocks = blocks.map(block =>
+                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, url: e.target.value } } : block
+                        );
+                        setBlocks(updatedBlocks);
+                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, url: e.target.value } });
+                      }}
                     />
                   </div>
                 )}
@@ -302,18 +367,89 @@ const EnhancedPageBuilder = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
                     <input
                       type="text"
-                      value={selectedBlock.price}
+                      value={selectedBlock.data?.price || ''}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={(e) => {
+                      onChange={e => {
                         const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, price: e.target.value } : block
+                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, price: e.target.value } } : block
                         );
                         setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, price: e.target.value });
+                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, price: e.target.value } });
                       }}
                     />
                   </div>
                 )}
+                {['email', 'newsletter', 'waitlist'].includes(selectedBlock.type) && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <input
+                      type="text"
+                      value={selectedBlock.data?.description || ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      onChange={e => {
+                        const updatedBlocks = blocks.map(block =>
+                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, description: e.target.value } } : block
+                        );
+                        setBlocks(updatedBlocks);
+                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, description: e.target.value } });
+                      }}
+                    />
+                  </div>
+                )}
+                {selectedBlock.type === 'promo' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Promo Code</label>
+                    <input
+                      type="text"
+                      value={selectedBlock.data?.promoCode || ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      onChange={e => {
+                        const updatedBlocks = blocks.map(block =>
+                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, promoCode: e.target.value } } : block
+                        );
+                        setBlocks(updatedBlocks);
+                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, promoCode: e.target.value } });
+                      }}
+                    />
+                  </div>
+                )}
+                {selectedBlock.type === 'discount' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Discount (%)</label>
+                    <input
+                      type="number"
+                      value={selectedBlock.data?.discount || 0}
+                      min={0}
+                      max={100}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      onChange={e => {
+                        const updatedBlocks = blocks.map(block =>
+                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, discount: e.target.value } } : block
+                        );
+                        setBlocks(updatedBlocks);
+                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, discount: e.target.value } });
+                      }}
+                    />
+                  </div>
+                )}
+                {selectedBlock.type === 'analytics' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Analytics Source</label>
+                    <input
+                      type="text"
+                      value={selectedBlock.data?.source || ''}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      onChange={e => {
+                        const updatedBlocks = blocks.map(block =>
+                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, source: e.target.value } } : block
+                        );
+                        setBlocks(updatedBlocks);
+                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, source: e.target.value } });
+                      }}
+                    />
+                  </div>
+                )}
+                {/* Add more block-specific config UIs as needed */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
                   <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
@@ -404,7 +540,10 @@ const EnhancedPageBuilder = () => {
                 <SafeIcon icon={FiEye} />
                 Preview
               </button>
-              <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+              <button
+                onClick={handleSaveBlocks}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
                 <SafeIcon icon={FiSave} />
                 Save Changes
               </button>

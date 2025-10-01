@@ -18,7 +18,9 @@ model User {
   profile   Profile?
   pages     Page[]
   analytics Analytics[]
-
+  subscriptions Subscription[]
+  usage     UsageRecord[]
+  forms     Form[]
   @@map("users")
 }
 
@@ -33,7 +35,7 @@ model Profile {
   theme       String  @default("default")
 
   // Subscription and billing
-  plan               Plan    @default(FREE)
+  plan               PlanEnum    @default(FREE)
   stripeCustomerId   String?
   subscriptionId     String?
   subscriptionStatus String?
@@ -76,7 +78,7 @@ model Page {
 
   blocks Block[]
   clicks Click[]
-
+  forms    Form[]
   @@map("pages")
 }
 model pageHeader {
@@ -123,7 +125,38 @@ model Block {
   page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
   clicks Click[]
 
+  // For extensibility: link to product, analytics, or form if needed
+  productId String?
+  analyticsId String?
+  formId String?
+
+  product   Product?   @relation(fields: [productId], references: [id])
+  analytics Analytics? @relation(fields: [analyticsId], references: [id])
+  form      Form?      @relation(fields: [formId], references: [id])
+
   @@map("blocks")
+}
+// Form model for email capture, waitlist, contact, etc.
+model Form {
+  id        String   @id @default(cuid())
+  userId    String
+  pageId    String
+  type      FormType
+  config    Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blocks Block[]
+
+  @@map("forms")
+}
+enum FormType {
+  EMAIL_CAPTURE
+  WAITLIST
+  CONTACT
+  CUSTOM
 }
 
 model Click {
@@ -179,7 +212,7 @@ model Analytics {
   referralTraffic Int @default(0)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  blocks   Block[]
   @@unique([userId, date])
   @@map("analytics")
 }
@@ -205,7 +238,7 @@ model Product {
   updatedAt DateTime @updatedAt
 
   sales Sale[]
-
+  blocks Block[]
   @@map("products")
 }
 
@@ -317,7 +350,114 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-enum Plan {
+// Subscription plans
+model Plan {
+  id            String         @id @default(cuid())
+  name          String         @unique // e.g., "Free", "Pro", "Enterprise"
+  description   String?
+  planEnum      PlanEnum
+  price         Decimal        @db.Decimal(10, 2)
+  interval      String         // "month", "year"
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  features      PlanFeature[]
+  subscriptions Subscription[]
+  
+  @@index([name])
+}
+
+// Features available in the system
+model Feature {
+  id            String         @id @default(cuid())
+  name          String         @unique // e.g., "api_calls", "storage", "users"
+  description   String?
+  type          String         // "boolean", "quota", "rate_limit"
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  planFeatures  PlanFeature[]
+  usageRecords  UsageRecord[]
+  
+  @@index([name])
+}
+
+// Junction table: Plan features with limits
+model PlanFeature {
+  id            String    @id @default(cuid())
+  planId        String
+  featureId     String
+  
+  // For boolean features (enabled/disabled)
+  enabled       Boolean   @default(true)
+  
+  // For quota-based features (e.g., 1000 API calls/month)
+  limit         Int?      // null = unlimited
+  
+  // For rate limiting (e.g., 100 requests per minute)
+  rateLimit     Int?      // requests allowed
+  ratePeriod    String?   // "minute", "hour", "day"
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  plan          Plan      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  feature       Feature   @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  
+  @@unique([planId, featureId])
+  @@index([planId])
+  @@index([featureId])
+}
+
+// User subscriptions
+model Subscription {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  planId            String
+  
+  status            String    // "active", "canceled", "past_due", "trialing"
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd Boolean   @default(false)
+  
+  // Payment provider info
+  stripeSubscriptionId String? @unique
+  stripeCustomerId     String?
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan              Plan      @relation(fields: [planId], references: [id])
+  
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+}
+
+// Track feature usage for rate limiting and quotas
+model UsageRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  featureId   String
+  
+  count       Int      @default(1)
+  periodStart DateTime
+  periodEnd   DateTime
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature     Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, featureId, periodStart])
+  @@index([userId, featureId, periodStart])
+  @@index([periodEnd])
+}
+
+enum PlanEnum {
   FREE
   CREATOR
   PRO
@@ -341,6 +481,13 @@ enum BlockType {
   CONTACT_FORM
   DIVIDER
   TEXT_BLOCK
+  ANALYTICS
+  PROMO
+  DISCOUNT
+  SOCIAL_SHARE
+  WAITLIST
+  NEWSLETTER
+  CUSTOM
 }
 
 enum TestStatus {

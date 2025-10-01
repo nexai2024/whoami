@@ -2,6 +2,8 @@ import React from 'react';
 import type { Metadata } from 'next';
 import classNames from 'classnames';
 import { Geist, Geist_Mono } from 'next/font/google';
+
+
 export const metadata: Metadata = {
   title: "WhoAmI",
   description: "Ultimate link in bio and personal brand marketing solution.",
@@ -26,8 +28,12 @@ export default function RootLayout({
         <html lang="en">
             <head />
           <body className={classNames(geistSans.variable, geistMono.variable, 'antialiased')}>
+            
                 {children}
-            </body>
+               
+        
+
+          </body>
         </html>
     );
 }
