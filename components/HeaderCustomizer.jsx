@@ -19,8 +19,10 @@ const {
  * @param {(headerData: Object) => void} [props.onSave] - Callback when header is saved.
  * @param {(headerData: Object) => void} [props.onPreview] - Callback to preview header.
  */
+
 const HeaderCustomizer = ({ pageId, currentHeader, onSave, onPreview }) => {
   const [headerData, setHeaderData] = useState({
+    id: '',
     displayName: '',
     title: '',
     company: '',
@@ -43,9 +45,10 @@ const HeaderCustomizer = ({ pageId, currentHeader, onSave, onPreview }) => {
     showSocialLinks: true,
     showLocation: true,
     customIntroduction: '',
-    ...(currentHeader || {})
+    ...currentHeader
   });
-
+console.log('Current Header:', currentHeader);
+console.log('Header Data State:', headerData);
   const [activeTab, setActiveTab] = useState('basic');
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -492,6 +495,8 @@ const HeaderCustomizer = ({ pageId, currentHeader, onSave, onPreview }) => {
             exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
+
+
             {activeTab === 'basic' && renderBasicInfo()}
             {activeTab === 'contact' && renderContactInfo()}
             {activeTab === 'social' && renderSocialLinks()}
@@ -504,10 +509,7 @@ const HeaderCustomizer = ({ pageId, currentHeader, onSave, onPreview }) => {
   );
 };
 
-/**
- * @param {Object} props
- * @param {Object} props.headerData - The header data to display in the preview.
- */
+// Header Preview Component
 const HeaderPreview = ({ headerData }) => {
   const getSocialIcon = (platform) => {
     const iconMap = {
@@ -643,4 +645,4 @@ const HeaderPreview = ({ headerData }) => {
 };
 
 export default HeaderCustomizer;
-export { HeaderPreview };
+	

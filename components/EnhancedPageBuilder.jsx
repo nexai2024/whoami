@@ -8,6 +8,7 @@ import { AnalyticsService } from '../lib/database/analytics';
 import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
 import SafeIcon from '../common/SafeIcon';
+import HeaderCustomizer from './HeaderCustomizer';
 
 const { 
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
@@ -173,7 +174,12 @@ const EnhancedPageBuilder = () => {
   };
 
   const handlePreview = () => {
-    // ...existing code...
+    if (pageData && pageData.slug) {
+      // Open the public page in a new tab
+      window.open(`/#/${pageData.slug}`, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('Page preview is only available after saving the page with a valid slug.');
+    }
   };
 
   const BlockPreview = ({ block }) => {
@@ -489,7 +495,7 @@ const EnhancedPageBuilder = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">Page URL</label>
           <div className="flex">
             <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-              whoami.bio/
+              localhost:3000/
             </span>
             <input
               type="text"
