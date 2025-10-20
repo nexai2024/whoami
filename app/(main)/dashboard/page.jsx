@@ -225,7 +225,7 @@ const Dashboard = () => {
                       <SafeIcon icon={FiEdit3} name={undefined} />
                     </Link>
                     <a
-                      href={`#/${page.slug}`}
+                      href={page.customDomain ? `https://${page.customDomain}` : `/${page.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
