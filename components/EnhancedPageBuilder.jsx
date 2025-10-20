@@ -159,44 +159,39 @@ const EnhancedPageBuilder = () => {
     }
   }, [currUser]);
 
-    const pageId = searchParams.get('page');
-    const isNew = searchParams.get('new');
+  const pageId = searchParams.get('page');
+  const isNew = searchParams.get('new');
 
+  // Initialize or load page data - fixed to prevent duplicate creation
+  useEffect(() => {
     if (pageId) {
-      useEffect(() => {
-        loadPageData(pageId);
-      }, [pageId]);
-    } else if (isNew) {
-      // Initialize new page
+      loadPageData(pageId);
+    } else if (isNew && !pageData?.id && user?.id) {
+      // Initialize new page only if we don't already have one
       console.log("Initializing new page");
-      const newPageData = {
-        title: 'New Page',
-        description: 'New page description',
-      }
-    //  console.log("Current user in page builder:", user.id, user);
-      const newPage = PageService.createPage({ userID: user?.id });
+      const newPage = PageService.createPage({ userID: user.id });
       if (newPage.id) {
         console.log("New page created:", newPage);
-      setPageData({
-        id: newPage.id,
-        title: newPage.title,
-        description: newPage.description,
-        headerData: {
-          displayName: '',
-          title: '',
-          company: '',
-          
-          bio: '',
-          email: '',
-          phone: '',
-          website: '',
-          location: '',
-          customIntroduction: '',
-          headerStyle: 'minimal'
-        }
-      });
+        setPageData({
+          id: newPage.id,
+          title: newPage.title,
+          description: newPage.description,
+          headerData: {
+            displayName: '',
+            title: '',
+            company: '',
+            bio: '',
+            email: '',
+            phone: '',
+            website: '',
+            location: '',
+            customIntroduction: '',
+            headerStyle: 'minimal'
+          }
+        });
+      }
     }
-  }
+  }, [pageId, isNew, user?.id, pageData?.id]);
 
   const loadPageData = async (pageId) => {
     try {
