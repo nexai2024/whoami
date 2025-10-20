@@ -3,13 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import * as FiIcons from 'react-icons/fi';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { PageService } from '../lib/database/pages';
 import { AnalyticsService } from '../lib/database/analytics';
 import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
 import SafeIcon from '../common/SafeIcon';
 import HeaderCustomizer from './HeaderCustomizer';
+import { useAuth } from '../lib/auth/AuthContext.jsx';
+import BlockFormFields from './BlockFormFields';
 
 const { 
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
@@ -17,11 +21,83 @@ const {
   FiUser, FiSettings, FiTag, FiShare2
 } = FiIcons;
 
+// SortableBlock component for drag-and-drop functionality
+const SortableBlock = ({ block, selectedBlock, setSelectedBlock, deleteBlock, getBlockIcon, renderBlockSummary }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: block.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <motion.div
+        className={`bg-white rounded-xl p-4 border-2 cursor-pointer transition-all ${
+          selectedBlock?.id === block.id
+            ? 'border-indigo-500 shadow-lg'
+            : 'border-gray-200 hover:border-gray-300'
+        }`}
+        onClick={() => setSelectedBlock(block)}
+        whileHover={{ scale: isDragging ? 1 : 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-100 rounded-lg">
+            <SafeIcon icon={getBlockIcon(block.type)} className="text-indigo-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900">{block.title}</h3>
+            {renderBlockSummary(block)}
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              {...listeners}
+              {...attributes}
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors cursor-grab active:cursor-grabbing"
+            >
+              <SafeIcon icon={FiIcons.FiMove} />
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteBlock(block.id);
+              }}
+              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <SafeIcon icon={FiIcons.FiTrash2} />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const EnhancedPageBuilder = () => {
   const searchParams = useSearchParams();
+  const { currUser } = useAuth();
   const [activeTab, setActiveTab] = useState('header');
   const [user , setUser] = useState(null);
   const [blocks, setBlocks] = useState([]);
+  
+  // Setup sensors for @dnd-kit
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+  
   // Fetch blocks for the page from backend
   useEffect(() => {
     const pageId = searchParams.get('page');
@@ -63,17 +139,26 @@ const EnhancedPageBuilder = () => {
     { type: 'social_share', label: 'Social Share', icon: FiShare2, color: 'cyan' },
     { type: 'waitlist', label: 'Waitlist', icon: FiMail, color: 'lime' },
     { type: 'newsletter', label: 'Newsletter', icon: FiMail, color: 'rose' },
+    { type: 'tip', label: 'Tip Jar', icon: FiTag, color: 'emerald' },
+    { type: 'social_feed', label: 'Social Feed', icon: FiShare2, color: 'sky' },
+    { type: 'ama', label: 'Ask Me Anything', icon: FiMail, color: 'violet' },
+    { type: 'gated', label: 'Gated Content', icon: FiSettings, color: 'fuchsia' },
+    { type: 'rss', label: 'RSS Feed', icon: FiLink, color: 'orange' },
+    { type: 'portfolio', label: 'Portfolio', icon: FiImage, color: 'slate' },
+    { type: 'contact', label: 'Contact Form', icon: FiMail, color: 'zinc' },
+    { type: 'divider', label: 'Divider', icon: FiEdit3, color: 'stone' },
+    { type: 'text', label: 'Text Block', icon: FiEdit3, color: 'neutral' },
     { type: 'custom', label: 'Custom', icon: FiEdit3, color: 'gray' }
   ];
 
+  // Set user from currUser when it becomes available
   useEffect(() => {
-    async function fetchUser() {
-      const { currUser } = await useAuth();
+    if (currUser) {
       setUser(currUser);
       console.log("Current user in page builder:", currUser);
     }
-    fetchUser();
-  }, []);
+  }, [currUser]);
+
     const pageId = searchParams.get('page');
     const isNew = searchParams.get('new');
 
@@ -132,12 +217,76 @@ const EnhancedPageBuilder = () => {
       title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
       data: {},
     };
-    // Provide sensible defaults for new block types
-    if (type === 'product') newBlock.data.price = '$0';
-    if (type === 'email' || type === 'newsletter' || type === 'waitlist') newBlock.data.description = 'Subscribe for updates';
-    if (type === 'promo') newBlock.data.promoCode = '';
-    if (type === 'discount') newBlock.data.discount = 0;
-    if (type === 'analytics') newBlock.data.source = '';
+    
+    // Provide sensible defaults for all block types
+    switch (type) {
+      case 'product':
+        newBlock.data = { price: 0, currency: 'USD', stockStatus: 'in_stock' };
+        break;
+      case 'link':
+        newBlock.data = { url: '', openInNewTab: true };
+        break;
+      case 'email':
+      case 'newsletter':
+      case 'waitlist':
+        newBlock.data = { description: 'Subscribe for updates', buttonText: 'Subscribe' };
+        break;
+      case 'promo':
+        newBlock.data = { promoCode: '', showCopyButton: true };
+        break;
+      case 'discount':
+        newBlock.data = { discountPercentage: 0, codeRequired: false };
+        break;
+      case 'analytics':
+        newBlock.data = { provider: 'google' };
+        break;
+      case 'image':
+        newBlock.data = { images: [], layout: 'grid', clickBehavior: 'lightbox' };
+        break;
+      case 'music':
+        newBlock.data = { trackTitle: '', audioUrl: '' };
+        break;
+      case 'video':
+        newBlock.data = { videoUrl: '', platform: 'youtube', showControls: true };
+        break;
+      case 'booking':
+        newBlock.data = { duration: 30, calendarIntegration: 'calendly' };
+        break;
+      case 'tip':
+        newBlock.data = { suggestedAmounts: [5, 10, 20], currency: 'USD', allowCustomAmount: true };
+        break;
+      case 'social_feed':
+        newBlock.data = { platform: 'instagram', layout: 'grid', itemCount: 9 };
+        break;
+      case 'social_share':
+        newBlock.data = { platforms: { facebook: true, twitter: true }, buttonStyle: 'icons' };
+        break;
+      case 'ama':
+        newBlock.data = { questionFormTitle: 'Ask Me Anything', answerFormat: 'text' };
+        break;
+      case 'contact':
+        newBlock.data = { submitButtonText: 'Send Message', enableCaptcha: true };
+        break;
+      case 'text':
+        newBlock.data = { content: '', headingLevel: 'p', textAlign: 'left', fontSize: 'medium' };
+        break;
+      case 'divider':
+        newBlock.data = { style: 'solid', thickness: 1, width: 100, color: '#E5E7EB' };
+        break;
+      case 'portfolio':
+        newBlock.data = { projectTitle: '', images: [], featured: false };
+        break;
+      case 'rss':
+        newBlock.data = { feedUrl: '', itemCount: 10, layout: 'list' };
+        break;
+      case 'gated':
+        newBlock.data = { contentType: 'file', accessRequirement: 'email' };
+        break;
+      case 'custom':
+        newBlock.data = { allowScripts: false };
+        break;
+    }
+    
     setBlocks([...blocks, newBlock]);
   };
 
@@ -146,20 +295,55 @@ const EnhancedPageBuilder = () => {
     setSelectedBlock(null);
   };
 
-  // Handle drag and drop reordering
-  const handleDragEnd = async (result) => {
-    const { destination, source } = result;
+  // Helper function to update block data fields
+  const updateBlockData = (field, value) => {
+    const updatedBlocks = blocks.map(block => {
+      if (block.id === selectedBlock.id) {
+        // Handle nested fields (e.g., 'platforms.facebook')
+        if (field.includes('.')) {
+          const [parent, child] = field.split('.');
+          return {
+            ...block,
+            data: {
+              ...block.data,
+              [parent]: {
+                ...(block.data?.[parent] || {}),
+                [child]: value
+              }
+            }
+          };
+        }
+        // Handle regular fields
+        return {
+          ...block,
+          data: { ...block.data, [field]: value }
+        };
+      }
+      return block;
+    });
+    
+    setBlocks(updatedBlocks);
+    
+    // Update selected block
+    const updatedSelected = updatedBlocks.find(b => b.id === selectedBlock.id);
+    setSelectedBlock(updatedSelected);
+  };
 
-    // Dropped outside the list
-    if (!destination) return;
+  // Handle drag and drop reordering with @dnd-kit
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
 
-    // Same position
-    if (destination.index === source.index) return;
+    // Dropped outside or on itself
+    if (!over || active.id === over.id) return;
+
+    // Find the indices of the dragged and drop target blocks
+    const oldIndex = blocks.findIndex(b => b.id === active.id);
+    const newIndex = blocks.findIndex(b => b.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
 
     // Reorder blocks locally (optimistic update)
-    const reorderedBlocks = Array.from(blocks);
-    const [movedBlock] = reorderedBlocks.splice(source.index, 1);
-    reorderedBlocks.splice(destination.index, 0, movedBlock);
+    const reorderedBlocks = arrayMove(blocks, oldIndex, newIndex);
 
     // Update local state immediately
     setBlocks(reorderedBlocks);
@@ -252,7 +436,16 @@ const EnhancedPageBuilder = () => {
       social_share: FiShare2,
       waitlist: FiMail,
       newsletter: FiMail,
-      custom: FiEdit3
+      custom: FiEdit3,
+      tip: FiTag,
+      social_feed: FiShare2,
+      ama: FiMail,
+      gated: FiSettings,
+      rss: FiLink,
+      portfolio: FiImage,
+      contact: FiMail,
+      divider: FiEdit3,
+      text: FiEdit3
     };
     return iconMap[type] || FiLink;
   };
@@ -261,17 +454,50 @@ const EnhancedPageBuilder = () => {
   const renderBlockSummary = (block) => {
     switch (block.type) {
       case 'product':
-        return <p className="text-sm text-green-600 font-medium">{block.data?.price}</p>;
+        return <p className="text-sm text-green-600 font-medium">${block.data?.price || '0'}</p>;
+      case 'link':
+        return <p className="text-sm text-blue-600 truncate">{block.data?.url || 'No URL'}</p>;
       case 'email':
       case 'newsletter':
       case 'waitlist':
-        return <p className="text-sm text-gray-600">{block.data?.description}</p>;
+        return <p className="text-sm text-gray-600">{block.data?.description || 'Email capture'}</p>;
       case 'promo':
-        return <p className="text-sm text-yellow-600">Promo: {block.data?.promoCode}</p>;
+        return <p className="text-sm text-yellow-600">Code: {block.data?.promoCode || 'N/A'}</p>;
       case 'discount':
-        return <p className="text-sm text-amber-600">Discount: {block.data?.discount}%</p>;
+        return <p className="text-sm text-amber-600">{block.data?.discountPercentage || block.data?.discount || 0}% off</p>;
       case 'analytics':
-        return <p className="text-sm text-teal-600">Analytics Source: {block.data?.source}</p>;
+        return <p className="text-sm text-teal-600">{block.data?.provider || block.data?.source || 'Analytics'}</p>;
+      case 'music':
+        return <p className="text-sm text-orange-600">{block.data?.trackTitle || 'Music track'}</p>;
+      case 'video':
+        return <p className="text-sm text-red-600">{block.data?.platform || 'Video'}</p>;
+      case 'booking':
+        return <p className="text-sm text-indigo-600">{block.data?.serviceType || 'Booking'}</p>;
+      case 'tip':
+        return <p className="text-sm text-emerald-600">Tip Jar - {block.data?.currency || 'USD'}</p>;
+      case 'social_feed':
+        return <p className="text-sm text-sky-600">{block.data?.platform || 'Social'} - @{block.data?.username || 'user'}</p>;
+      case 'ama':
+        return <p className="text-sm text-violet-600">Q&A Block</p>;
+      case 'gated':
+        return <p className="text-sm text-fuchsia-600">{block.data?.accessRequirement || 'Gated'} access</p>;
+      case 'rss':
+        return <p className="text-sm text-orange-600 truncate">{block.data?.feedUrl || 'RSS Feed'}</p>;
+      case 'portfolio':
+        return <p className="text-sm text-slate-600">{block.data?.projectTitle || 'Portfolio item'}</p>;
+      case 'contact':
+        return <p className="text-sm text-zinc-600">Contact Form</p>;
+      case 'text':
+        return <p className="text-sm text-neutral-600">{block.data?.headingLevel || 'Text'}</p>;
+      case 'divider':
+        return <p className="text-sm text-stone-600">{block.data?.style || 'solid'} line</p>;
+      case 'image':
+        const imgCount = block.data?.images?.length || 0;
+        return <p className="text-sm text-pink-600">{imgCount} image{imgCount !== 1 ? 's' : ''}</p>;
+      case 'social_share':
+        return <p className="text-sm text-cyan-600">Share buttons</p>;
+      case 'custom':
+        return <p className="text-sm text-gray-600">Custom HTML/JS</p>;
       default:
         return null;
     }
@@ -367,75 +593,37 @@ const EnhancedPageBuilder = () => {
             <p className="text-gray-600">Drag and drop blocks to rearrange them</p>
           </div>
 
-          {/* Blocks with Drag-Drop */}
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="blocks">
-              {(provided, snapshot) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className={`space-y-4 ${snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg' : ''}`}
-                >
-                  {blocks.map((block, index) => (
-                    <Draggable key={block.id} draggableId={String(block.id)} index={index}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`${snapshot.isDragging ? 'opacity-80 shadow-2xl rotate-1' : ''}`}
-                        >
-                          <motion.div
-                            className={`bg-white rounded-xl p-4 border-2 cursor-pointer transition-all ${
-                              selectedBlock?.id === block.id
-                                ? 'border-indigo-500 shadow-lg'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            onClick={() => setSelectedBlock(block)}
-                            whileHover={{ scale: snapshot.isDragging ? 1 : 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-indigo-100 rounded-lg">
-                                <SafeIcon icon={getBlockIcon(block.type)} className="text-indigo-600" />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="font-medium text-gray-900">{block.title}</h3>
-                                {renderBlockSummary(block)}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  {...provided.dragHandleProps}
-                                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors cursor-grab active:cursor-grabbing"
-                                >
-                                  <SafeIcon icon={FiMove} />
-                                </div>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteBlock(block.id);
-                                  }}
-                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                >
-                                  <SafeIcon icon={FiTrash2} />
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                  {blocks.length === 0 && (
-                    <div className="text-center py-12">
-                      <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
-                      <p className="text-gray-600">Add your first block to get started</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          {/* Blocks with Drag-Drop using @dnd-kit */}
+          <DndContext 
+            sensors={sensors} 
+            collisionDetection={closestCenter} 
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext 
+              items={blocks.map(b => b.id)} 
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {blocks.map((block) => (
+                  <SortableBlock
+                    key={block.id}
+                    block={block}
+                    selectedBlock={selectedBlock}
+                    setSelectedBlock={setSelectedBlock}
+                    deleteBlock={deleteBlock}
+                    getBlockIcon={getBlockIcon}
+                    renderBlockSummary={renderBlockSummary}
+                  />
+                ))}
+                {blocks.length === 0 && (
+                  <div className="text-center py-12">
+                    <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
+                    <p className="text-gray-600">Add your first block to get started</p>
+                  </div>
+                )}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
 
@@ -461,122 +649,12 @@ const EnhancedPageBuilder = () => {
                     }}
                   />
                 </div>
-                {/* Block-specific config UIs */}
-                {selectedBlock.type === 'link' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">URL</label>
-                    <input
-                      type="url"
-                      value={selectedBlock.data?.url || ''}
-                      placeholder="https://example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, url: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, url: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {selectedBlock.type === 'product' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
-                    <input
-                      type="text"
-                      value={selectedBlock.data?.price || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, price: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, price: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {['email', 'newsletter', 'waitlist'].includes(selectedBlock.type) && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <input
-                      type="text"
-                      value={selectedBlock.data?.description || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, description: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, description: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {selectedBlock.type === 'promo' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Promo Code</label>
-                    <input
-                      type="text"
-                      value={selectedBlock.data?.promoCode || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, promoCode: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, promoCode: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {selectedBlock.type === 'discount' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Discount (%)</label>
-                    <input
-                      type="number"
-                      value={selectedBlock.data?.discount || 0}
-                      min={0}
-                      max={100}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, discount: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, discount: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {selectedBlock.type === 'analytics' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Analytics Source</label>
-                    <input
-                      type="text"
-                      value={selectedBlock.data?.source || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, source: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, source: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {/* Add more block-specific config UIs as needed */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option>Default</option>
-                    <option>Gradient</option>
-                    <option>Outlined</option>
-                    <option>Minimal</option>
-                  </select>
-                </div>
+                
+                {/* Comprehensive block-specific form fields */}
+                <BlockFormFields 
+                  selectedBlock={selectedBlock} 
+                  updateBlockData={updateBlockData}
+                />
               </div>
             </div>
           ) : (

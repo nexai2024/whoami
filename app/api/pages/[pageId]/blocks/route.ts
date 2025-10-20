@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 import { Block, BlockType } from '@prisma/client';
+import { mapBlockType } from '@/lib/blockTypeMapping';
  
 // GET: Fetch all blocks for a page
 export async function GET(req: NextRequest, { params }: { params: { pageId: string } }) {
@@ -28,34 +29,45 @@ export async function POST(req: NextRequest, { params }: { params: { pageId: str
     await prisma.block.deleteMany({ where: { pageId } });
     // Create new blocks
     const createdBlocks = await prisma.$transaction(
-      blocks.map((block: BlockSelectCreateManyAndReturn, idx: number) =>
-        prisma.block.create({
-          data: {
-            pageId,
-            type: 'PRODUCT', 
-            position: idx,
-            isActive: block.isActive !== false,
-            title: block.title,
-            description: block.description || null,
-            url: block.url || null,
-            imageUrl: block.imageUrl || null,
-            backgroundColor: block.backgroundColor || null,
-            textColor: block.textColor || null,
-            borderRadius: block.borderRadius || 8,
-            data: block.data || {},
-            scheduledStart: block.scheduledStart || null,
-            scheduledEnd: block.scheduledEnd || null,
-            variantId: block.variantId || null,
-            // productId: block.productId || null,
-            // analyticsId: block.analyticsId || null,
-            // formId: block.formId || null,
+      blocks.map((block: BlockSelectCreateManyAndReturn, idx: number) => {
+        try {
+          const blockType = mapBlockType(block.type);
+          return prisma.block.create({
+            data: {
+              pageId,
+              type: blockType, 
+              position: idx,
+              isActive: block.isActive !== false,
+              title: block.title,
+              description: block.description || null,
+              url: block.url || null,
+              imageUrl: block.imageUrl || null,
+              backgroundColor: block.backgroundColor || null,
+              textColor: block.textColor || null,
+              borderRadius: block.borderRadius || 8,
+              data: block.data || {},
+              scheduledStart: block.scheduledStart || null,
+              scheduledEnd: block.scheduledEnd || null,
+              variantId: block.variantId || null,
+              // productId: block.productId || null,
+              // analyticsId: block.analyticsId || null,
+              // formId: block.formId || null,
+            }
+          });
+        } catch (error) {
+          if (error instanceof Error && error.message.includes('Unknown block type')) {
+            throw new Error(`Invalid block type: ${block.type}`);
           }
-        })
-      )
+          throw error;
+        }
+      })
     );
     return NextResponse.json(createdBlocks);
   } catch (error) {
     logger.error('Error saving blocks:', error);
+    if (error instanceof Error && error.message.includes('Invalid block type')) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     return NextResponse.json({ error: 'Failed to save blocks' }, { status: 500 });
   }
 }

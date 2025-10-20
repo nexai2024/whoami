@@ -8,6 +8,7 @@ import { AnalyticsService } from '../lib/database/analytics';
 import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
 import EmailCaptureModal from './EmailCaptureModal';
+import BlockRenderer from './BlockRenderer';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo, 
@@ -283,26 +284,7 @@ const EnhancedPublicPage = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
               >
-                <div
-                  className={getBlockStyles(block)}
-                  onClick={() => handleBlockClick(block)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
-                      <SafeIcon icon={getBlockIcon(block.type)} className="text-xl" />
-                      <div className="flex-1 text-left">
-                        <h3 className="font-semibold">{block.title}</h3>
-                        {block.description && (
-                          <p className="text-sm opacity-90">{block.description}</p>
-                        )}
-                        {block.type === 'PRODUCT' && block.data?.price && (
-                          <p className="text-sm font-bold">${block.data.price}</p>
-                        )}
-                      </div>
-                    </div>
-                    <SafeIcon icon={FiExternalLink} className="text-lg opacity-70" />
-                  </div>
-                </div>
+                <BlockRenderer block={block} onBlockClick={handleBlockClick} />
               </motion.div>
             ))}
           </div>
