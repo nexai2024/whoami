@@ -13,6 +13,7 @@ import SEOHead from './SEOHead';
 import SafeIcon from '../common/SafeIcon';
 import HeaderCustomizer from './HeaderCustomizer';
 import { useAuth } from '../lib/auth/AuthContext.jsx';
+import BlockFormFields from './BlockFormFields';
 
 const { 
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
@@ -228,6 +229,40 @@ const EnhancedPageBuilder = () => {
   const deleteBlock = (id) => {
     setBlocks(blocks.filter(block => block.id !== id));
     setSelectedBlock(null);
+  };
+
+  // Helper function to update block data fields
+  const updateBlockData = (field, value) => {
+    const updatedBlocks = blocks.map(block => {
+      if (block.id === selectedBlock.id) {
+        // Handle nested fields (e.g., 'platforms.facebook')
+        if (field.includes('.')) {
+          const [parent, child] = field.split('.');
+          return {
+            ...block,
+            data: {
+              ...block.data,
+              [parent]: {
+                ...(block.data?.[parent] || {}),
+                [child]: value
+              }
+            }
+          };
+        }
+        // Handle regular fields
+        return {
+          ...block,
+          data: { ...block.data, [field]: value }
+        };
+      }
+      return block;
+    });
+    
+    setBlocks(updatedBlocks);
+    
+    // Update selected block
+    const updatedSelected = updatedBlocks.find(b => b.id === selectedBlock.id);
+    setSelectedBlock(updatedSelected);
   };
 
   // Handle drag and drop reordering with @dnd-kit
