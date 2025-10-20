@@ -303,21 +303,27 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
               </div>
               
               <div className="space-y-4">
-                {topLinks.map((link, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-900 mb-1">{link.title}</h3>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>{link.clicks} clicks</span>
-                        <span>CTR: {link.ctr}</span>
-                        <span className="text-green-600 font-medium">{link.revenue}</span>
+                {topLinks.length > 0 ? (
+                  topLinks.map((link, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 mb-1">{link.title}</h3>
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <span>{link.clicks} clicks</span>
+                          {link.ctr && <span>CTR: {link.ctr}</span>}
+                          {link.revenue && <span className="text-green-600 font-medium">{link.revenue}</span>}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-gray-900">#{index + 1}</div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-gray-900">#{index + 1}</div>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No data available yet
                   </div>
-                ))}
+                )}
               </div>
             </motion.div>
 
