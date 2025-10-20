@@ -187,12 +187,29 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">Analytics</h1>
             <div className="flex items-center gap-4">
+              {/* Page Selector */}
+              <div className="flex items-center gap-2">
+                <select 
+                  value={selectedPageId}
+                  onChange={(e) => onPageChange && onPageChange(e.target.value)}
+                  className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  disabled={loading}
+                >
+                  <option value="all">All Pages</option>
+                  {pages.map(page => (
+                    <option key={page.id} value={page.id}>{page.title}</option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Time Range Selector */}
               <div className="flex items-center gap-2">
                 <SafeIcon icon={FiCalendar} className="text-gray-500" />
                 <select 
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
                   className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  disabled={loading}
                 >
                   <option value="7d">Last 7 days</option>
                   <option value="30d">Last 30 days</option>
@@ -200,7 +217,10 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
                   <option value="1y">Last year</option>
                 </select>
               </div>
-              <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+              <button 
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading}
+              >
                 <SafeIcon icon={FiDownload} />
                 Export
               </button>
@@ -209,135 +229,148 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={index}
+      {loading ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-32 bg-gray-200 rounded-2xl"></div>
+              ))}
+            </div>
+            <div className="h-96 bg-gray-200 rounded-2xl"></div>
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {stats.map((stat, index) => (
+              <motion.div
+                key={index}
+                className="bg-white rounded-2xl shadow-sm border p-6"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-xl bg-${stat.color}-100`}>
+                    <SafeIcon icon={stat.icon} className={`text-${stat.color}-600 text-xl`} />
+                  </div>
+                  <span className="text-green-600 text-sm font-medium">{stat.change}</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                <p className="text-gray-600 text-sm">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8 mb-8">
+            {/* Clicks Chart */}
+            <motion.div 
+              className="lg:col-span-2 bg-white rounded-2xl shadow-sm border p-6"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 0.6 }}
+            >
+              <ReactECharts option={chartOptions} style={{ height: '400px' }} />
+            </motion.div>
+
+            {/* Device Breakdown */}
+            <motion.div 
               className="bg-white rounded-2xl shadow-sm border p-6"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-xl bg-${stat.color}-100`}>
-                  <SafeIcon icon={stat.icon} className={`text-${stat.color}-600 text-xl`} />
-                </div>
-                <span className="text-green-600 text-sm font-medium">{stat.change}</span>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-              <p className="text-gray-600 text-sm">{stat.label}</p>
+              <ReactECharts option={deviceChartOptions} style={{ height: '400px' }} />
             </motion.div>
-          ))}
-        </div>
+          </div>
 
-        <div className="grid lg:grid-cols-3 gap-8 mb-8">
-          {/* Clicks Chart */}
-          <motion.div 
-            className="lg:col-span-2 bg-white rounded-2xl shadow-sm border p-6"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            <ReactECharts option={chartOptions} style={{ height: '400px' }} />
-          </motion.div>
-
-          {/* Device Breakdown */}
-          <motion.div 
-            className="bg-white rounded-2xl shadow-sm border p-6"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6, duration: 0.6 }}
-          >
-            <ReactECharts option={deviceChartOptions} style={{ height: '400px' }} />
-          </motion.div>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Top Performing Links */}
-          <motion.div 
-            className="bg-white rounded-2xl shadow-sm border p-6"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Top Performing Links</h2>
-              <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
-                <SafeIcon icon={FiFilter} />
-                Filter
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              {topLinks.map((link, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 mb-1">{link.title}</h3>
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                      <span>{link.clicks} clicks</span>
-                      <span>CTR: {link.ctr}</span>
-                      <span className="text-green-600 font-medium">{link.revenue}</span>
+          <div className="grid lg:grid-cols-2 gap-8">
+            {/* Top Performing Links */}
+            <motion.div 
+              className="bg-white rounded-2xl shadow-sm border p-6"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.8, duration: 0.6 }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Top Performing Links</h2>
+                <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
+                  <SafeIcon icon={FiFilter} />
+                  Filter
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {topLinks.map((link, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900 mb-1">{link.title}</h3>
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <span>{link.clicks} clicks</span>
+                        <span>CTR: {link.ctr}</span>
+                        <span className="text-green-600 font-medium">{link.revenue}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-gray-900">#{index + 1}</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold text-gray-900">#{index + 1}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
+                ))}
+              </div>
+            </motion.div>
 
-          {/* AI Insights */}
-          <motion.div 
-            className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-sm border p-6"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1.0, duration: 0.6 }}
-          >
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">AI Insights & Recommendations</h2>
-            
-            <div className="space-y-4">
-              <div className="bg-white p-4 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <SafeIcon icon={FiTrendingUp} className="text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Peak Engagement Time</h3>
-                    <p className="text-sm text-gray-600">Your audience is most active between 7-9 PM. Consider scheduling new links during this time.</p>
-                  </div>
-                </div>
-              </div>
+            {/* AI Insights */}
+            <motion.div 
+              className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-sm border p-6"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 1.0, duration: 0.6 }}
+            >
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">AI Insights & Recommendations</h2>
               
-              <div className="bg-white p-4 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <SafeIcon icon={FiUsers} className="text-blue-600" />
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <SafeIcon icon={FiTrendingUp} className="text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900 mb-1">Peak Engagement Time</h3>
+                      <p className="text-sm text-gray-600">Your audience is most active between 7-9 PM. Consider scheduling new links during this time.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Audience Growth</h3>
-                    <p className="text-sm text-gray-600">Your mobile traffic increased 34% this week. Optimize your page layout for mobile users.</p>
+                </div>
+                
+                <div className="bg-white p-4 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <SafeIcon icon={FiUsers} className="text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900 mb-1">Audience Growth</h3>
+                      <p className="text-sm text-gray-600">Your mobile traffic increased 34% this week. Optimize your page layout for mobile users.</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white p-4 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <SafeIcon icon={FiDollarSign} className="text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-gray-900 mb-1">Revenue Opportunity</h3>
+                      <p className="text-sm text-gray-600">Add a tip jar to your page. Similar creators see 15% revenue increase.</p>
+                    </div>
                   </div>
                 </div>
               </div>
-              
-              <div className="bg-white p-4 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <SafeIcon icon={FiDollarSign} className="text-purple-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900 mb-1">Revenue Opportunity</h3>
-                    <p className="text-sm text-gray-600">Add a tip jar to your page. Similar creators see 15% revenue increase.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
