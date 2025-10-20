@@ -86,28 +86,28 @@ const Dashboard = () => {
     {
       label: 'Total Clicks',
       value: analytics.totals.totalClicks.toLocaleString(),
-      change: '+23%',
+      change: analytics.changes.totalClicks,
       icon: FiEye,
       color: 'blue'
     },
     {
       label: 'Revenue',
       value: `$${analytics.totals.revenue.toLocaleString()}`,
-      change: '+45%',
+      change: analytics.changes.revenue,
       icon: FiDollarSign,
       color: 'green'
     },
     {
       label: 'Page Views',
       value: analytics.totals.pageViews.toLocaleString(),
-      change: '+12%',
+      change: analytics.changes.pageViews,
       icon: FiUsers,
       color: 'purple'
     },
     {
       label: 'Unique Visitors',
       value: analytics.totals.uniqueVisitors.toLocaleString(),
-      change: '+8%',
+      change: analytics.changes.uniqueVisitors,
       icon: FiTrendingUp,
       color: 'orange'
     }
