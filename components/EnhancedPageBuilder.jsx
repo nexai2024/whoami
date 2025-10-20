@@ -87,6 +87,16 @@ const EnhancedPageBuilder = () => {
   const [activeTab, setActiveTab] = useState('header');
   const [user , setUser] = useState(null);
   const [blocks, setBlocks] = useState([]);
+  
+  // Setup sensors for @dnd-kit
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+  
   // Fetch blocks for the page from backend
   useEffect(() => {
     const pageId = searchParams.get('page');
@@ -211,20 +221,21 @@ const EnhancedPageBuilder = () => {
     setSelectedBlock(null);
   };
 
-  // Handle drag and drop reordering
-  const handleDragEnd = async (result) => {
-    const { destination, source } = result;
+  // Handle drag and drop reordering with @dnd-kit
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
 
-    // Dropped outside the list
-    if (!destination) return;
+    // Dropped outside or on itself
+    if (!over || active.id === over.id) return;
 
-    // Same position
-    if (destination.index === source.index) return;
+    // Find the indices of the dragged and drop target blocks
+    const oldIndex = blocks.findIndex(b => b.id === active.id);
+    const newIndex = blocks.findIndex(b => b.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
 
     // Reorder blocks locally (optimistic update)
-    const reorderedBlocks = Array.from(blocks);
-    const [movedBlock] = reorderedBlocks.splice(source.index, 1);
-    reorderedBlocks.splice(destination.index, 0, movedBlock);
+    const reorderedBlocks = arrayMove(blocks, oldIndex, newIndex);
 
     // Update local state immediately
     setBlocks(reorderedBlocks);
@@ -433,7 +444,7 @@ const EnhancedPageBuilder = () => {
           </div>
 
           {/* Blocks with Drag-Drop */}
-          <DndContext sensors={useSensors(PointerSensor)} onDragEnd={handleDragEnd}>
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext items={blocks} strategy={verticalListSortingStrategy}>
               {(items) => (
                 <div className="space-y-4">
