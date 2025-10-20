@@ -372,7 +372,16 @@ const EnhancedPageBuilder = () => {
       social_share: FiShare2,
       waitlist: FiMail,
       newsletter: FiMail,
-      custom: FiEdit3
+      custom: FiEdit3,
+      tip: FiTag,
+      social_feed: FiShare2,
+      ama: FiMail,
+      gated: FiSettings,
+      rss: FiLink,
+      portfolio: FiImage,
+      contact: FiMail,
+      divider: FiEdit3,
+      text: FiEdit3
     };
     return iconMap[type] || FiLink;
   };
@@ -381,17 +390,50 @@ const EnhancedPageBuilder = () => {
   const renderBlockSummary = (block) => {
     switch (block.type) {
       case 'product':
-        return <p className="text-sm text-green-600 font-medium">{block.data?.price}</p>;
+        return <p className="text-sm text-green-600 font-medium">${block.data?.price || '0'}</p>;
+      case 'link':
+        return <p className="text-sm text-blue-600 truncate">{block.data?.url || 'No URL'}</p>;
       case 'email':
       case 'newsletter':
       case 'waitlist':
-        return <p className="text-sm text-gray-600">{block.data?.description}</p>;
+        return <p className="text-sm text-gray-600">{block.data?.description || 'Email capture'}</p>;
       case 'promo':
-        return <p className="text-sm text-yellow-600">Promo: {block.data?.promoCode}</p>;
+        return <p className="text-sm text-yellow-600">Code: {block.data?.promoCode || 'N/A'}</p>;
       case 'discount':
-        return <p className="text-sm text-amber-600">Discount: {block.data?.discount}%</p>;
+        return <p className="text-sm text-amber-600">{block.data?.discountPercentage || block.data?.discount || 0}% off</p>;
       case 'analytics':
-        return <p className="text-sm text-teal-600">Analytics Source: {block.data?.source}</p>;
+        return <p className="text-sm text-teal-600">{block.data?.provider || block.data?.source || 'Analytics'}</p>;
+      case 'music':
+        return <p className="text-sm text-orange-600">{block.data?.trackTitle || 'Music track'}</p>;
+      case 'video':
+        return <p className="text-sm text-red-600">{block.data?.platform || 'Video'}</p>;
+      case 'booking':
+        return <p className="text-sm text-indigo-600">{block.data?.serviceType || 'Booking'}</p>;
+      case 'tip':
+        return <p className="text-sm text-emerald-600">Tip Jar - {block.data?.currency || 'USD'}</p>;
+      case 'social_feed':
+        return <p className="text-sm text-sky-600">{block.data?.platform || 'Social'} - @{block.data?.username || 'user'}</p>;
+      case 'ama':
+        return <p className="text-sm text-violet-600">Q&A Block</p>;
+      case 'gated':
+        return <p className="text-sm text-fuchsia-600">{block.data?.accessRequirement || 'Gated'} access</p>;
+      case 'rss':
+        return <p className="text-sm text-orange-600 truncate">{block.data?.feedUrl || 'RSS Feed'}</p>;
+      case 'portfolio':
+        return <p className="text-sm text-slate-600">{block.data?.projectTitle || 'Portfolio item'}</p>;
+      case 'contact':
+        return <p className="text-sm text-zinc-600">Contact Form</p>;
+      case 'text':
+        return <p className="text-sm text-neutral-600">{block.data?.headingLevel || 'Text'}</p>;
+      case 'divider':
+        return <p className="text-sm text-stone-600">{block.data?.style || 'solid'} line</p>;
+      case 'image':
+        const imgCount = block.data?.images?.length || 0;
+        return <p className="text-sm text-pink-600">{imgCount} image{imgCount !== 1 ? 's' : ''}</p>;
+      case 'social_share':
+        return <p className="text-sm text-cyan-600">Share buttons</p>;
+      case 'custom':
+        return <p className="text-sm text-gray-600">Custom HTML/JS</p>;
       default:
         return null;
     }
