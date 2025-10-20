@@ -6,23 +6,51 @@ import ReactECharts from 'echarts-for-react';
 
 const { FiTrendingUp, FiUsers, FiDollarSign, FiEye, FiCalendar, FiDownload, FiFilter } = FiIcons;
 
-const Analytics = () => {
+const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loading = false }) => {
   const [timeRange, setTimeRange] = useState('7d');
 
-  const stats = [
-    { label: 'Total Views', value: '24,847', change: '+23%', icon: FiEye, color: 'blue' },
-    { label: 'Unique Visitors', value: '18,293', change: '+18%', icon: FiUsers, color: 'purple' },
-    { label: 'Click-through Rate', value: '4.2%', change: '+8%', icon: FiTrendingUp, color: 'green' },
-    { label: 'Revenue', value: '$3,247', change: '+45%', icon: FiDollarSign, color: 'orange' }
-  ];
+  // Use real data or show defaults when loading/no data
+  const stats = data ? [
+    { 
+      label: 'Total Views', 
+      value: data.totals.pageViews?.toLocaleString() || '0', 
+      change: data.changes?.pageViews || '0%', 
+      icon: FiEye, 
+      color: 'blue' 
+    },
+    { 
+      label: 'Unique Visitors', 
+      value: data.totals.uniqueVisitors?.toLocaleString() || '0', 
+      change: data.changes?.uniqueVisitors || '0%', 
+      icon: FiUsers, 
+      color: 'purple' 
+    },
+    { 
+      label: 'Total Clicks', 
+      value: data.totals.totalClicks?.toLocaleString() || '0', 
+      change: data.changes?.totalClicks || '0%', 
+      icon: FiTrendingUp, 
+      color: 'green' 
+    },
+    { 
+      label: 'Revenue', 
+      value: `$${data.totals.revenue?.toFixed(2) || '0.00'}`, 
+      change: data.changes?.revenue || '0%', 
+      icon: FiDollarSign, 
+      color: 'orange' 
+    }
+  ] : [];
 
-  const topLinks = [
-    { title: 'Latest YouTube Video', clicks: 2847, ctr: '6.8%', revenue: '$234' },
-    { title: 'Digital Photography Course', clicks: 1923, ctr: '4.2%', revenue: '$1,847' },
-    { title: 'Free Lightroom Presets', clicks: 1456, ctr: '8.1%', revenue: '$0' },
-    { title: 'Instagram Growth Guide', clicks: 987, ctr: '3.9%', revenue: '$487' },
-    { title: 'Coaching Call Booking', clicks: 543, ctr: '7.2%', revenue: '$685' }
-  ];
+  // Prepare chart data from real daily data
+  const chartData = data?.daily || [];
+  const chartLabels = chartData.map(d => {
+    const date = new Date(d.date);
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+  });
+  const chartValues = chartData.map(d => d.totalClicks || d.clicks || 0);
+
+  // Top performing blocks - use real data or show empty
+  const topLinks = data?.topBlocks || [];
 
   const chartOptions = {
     title: {
@@ -44,7 +72,7 @@ const Analytics = () => {
     },
     xAxis: {
       type: 'category',
-      data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      data: chartLabels.length > 0 ? chartLabels : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       axisLine: {
         lineStyle: {
           color: '#e5e7eb'
@@ -83,7 +111,7 @@ const Analytics = () => {
     series: [
       {
         name: 'Clicks',
-        data: [420, 532, 601, 734, 890, 1230, 1100],
+        data: chartValues.length > 0 ? chartValues : [420, 532, 601, 734, 890, 1230, 1100],
         type: 'line',
         smooth: true,
         lineStyle: {
