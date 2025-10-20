@@ -543,122 +543,12 @@ const EnhancedPageBuilder = () => {
                     }}
                   />
                 </div>
-                {/* Block-specific config UIs */}
-                {selectedBlock.type === 'link' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">URL</label>
-                    <input
-                      type="url"
-                      value={selectedBlock.data?.url || ''}
-                      placeholder="https://example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, url: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, url: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {selectedBlock.type === 'product' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
-                    <input
-                      type="text"
-                      value={selectedBlock.data?.price || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, price: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, price: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {['email', 'newsletter', 'waitlist'].includes(selectedBlock.type) && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-                    <input
-                      type="text"
-                      value={selectedBlock.data?.description || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, description: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, description: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {selectedBlock.type === 'promo' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Promo Code</label>
-                    <input
-                      type="text"
-                      value={selectedBlock.data?.promoCode || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, promoCode: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, promoCode: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {selectedBlock.type === 'discount' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Discount (%)</label>
-                    <input
-                      type="number"
-                      value={selectedBlock.data?.discount || 0}
-                      min={0}
-                      max={100}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, discount: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, discount: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {selectedBlock.type === 'analytics' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Analytics Source</label>
-                    <input
-                      type="text"
-                      value={selectedBlock.data?.source || ''}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      onChange={e => {
-                        const updatedBlocks = blocks.map(block =>
-                          block.id === selectedBlock.id ? { ...block, data: { ...block.data, source: e.target.value } } : block
-                        );
-                        setBlocks(updatedBlocks);
-                        setSelectedBlock({ ...selectedBlock, data: { ...selectedBlock.data, source: e.target.value } });
-                      }}
-                    />
-                  </div>
-                )}
-                {/* Add more block-specific config UIs as needed */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Style</label>
-                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                    <option>Default</option>
-                    <option>Gradient</option>
-                    <option>Outlined</option>
-                    <option>Minimal</option>
-                  </select>
-                </div>
+                
+                {/* Comprehensive block-specific form fields */}
+                <BlockFormFields 
+                  selectedBlock={selectedBlock} 
+                  updateBlockData={updateBlockData}
+                />
               </div>
             </div>
           ) : (
