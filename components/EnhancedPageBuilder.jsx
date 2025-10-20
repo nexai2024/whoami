@@ -236,47 +236,48 @@ const EnhancedPageBuilder = () => {
     }
   };
 
+  // Helper function to get block icon
+  const getBlockIcon = (type) => {
+    const iconMap = {
+      link: FiLink,
+      product: FiShoppingBag,
+      email: FiMail,
+      image: FiImage,
+      music: FiMusic,
+      video: FiVideo,
+      booking: FiCalendar,
+      analytics: FiEye,
+      promo: FiTag,
+      discount: FiTag,
+      social_share: FiShare2,
+      waitlist: FiMail,
+      newsletter: FiMail,
+      custom: FiEdit3
+    };
+    return iconMap[type] || FiLink;
+  };
+
+  // Helper function to render block summary
+  const renderBlockSummary = (block) => {
+    switch (block.type) {
+      case 'product':
+        return <p className="text-sm text-green-600 font-medium">{block.data?.price}</p>;
+      case 'email':
+      case 'newsletter':
+      case 'waitlist':
+        return <p className="text-sm text-gray-600">{block.data?.description}</p>;
+      case 'promo':
+        return <p className="text-sm text-yellow-600">Promo: {block.data?.promoCode}</p>;
+      case 'discount':
+        return <p className="text-sm text-amber-600">Discount: {block.data?.discount}%</p>;
+      case 'analytics':
+        return <p className="text-sm text-teal-600">Analytics Source: {block.data?.source}</p>;
+      default:
+        return null;
+    }
+  };
+
   const BlockPreview = ({ block }) => {
-    const getBlockIcon = (type) => {
-      const iconMap = {
-        link: FiLink,
-        product: FiShoppingBag,
-        email: FiMail,
-        image: FiImage,
-        music: FiMusic,
-        video: FiVideo,
-        booking: FiCalendar,
-        analytics: FiEye,
-        promo: FiTag,
-        discount: FiTag,
-        social_share: FiShare2,
-        waitlist: FiMail,
-        newsletter: FiMail,
-        custom: FiEdit3
-      };
-      return iconMap[type] || FiLink;
-    };
-
-    // Display block summary based on type
-    const renderBlockSummary = () => {
-      switch (block.type) {
-        case 'product':
-          return <p className="text-sm text-green-600 font-medium">{block.data?.price}</p>;
-        case 'email':
-        case 'newsletter':
-        case 'waitlist':
-          return <p className="text-sm text-gray-600">{block.data?.description}</p>;
-        case 'promo':
-          return <p className="text-sm text-yellow-600">Promo: {block.data?.promoCode}</p>;
-        case 'discount':
-          return <p className="text-sm text-amber-600">Discount: {block.data?.discount}%</p>;
-        case 'analytics':
-          return <p className="text-sm text-teal-600">Analytics Source: {block.data?.source}</p>;
-        default:
-          return null;
-      }
-    };
-
     return (
       <motion.div
         className={`bg-white rounded-xl p-4 border-2 cursor-pointer transition-all ${
@@ -294,7 +295,7 @@ const EnhancedPageBuilder = () => {
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{block.title}</h3>
-            {renderBlockSummary()}
+            {renderBlockSummary(block)}
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
