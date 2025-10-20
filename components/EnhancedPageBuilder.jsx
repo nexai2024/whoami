@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import * as FiIcons from 'react-icons/fi';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import { PageService } from '../lib/database/pages';
 import { AnalyticsService } from '../lib/database/analytics';
 import { logger } from '../lib/utils/logger';
@@ -145,6 +146,59 @@ const EnhancedPageBuilder = () => {
     setSelectedBlock(null);
   };
 
+  // Handle drag and drop reordering
+  const handleDragEnd = async (result) => {
+    const { destination, source } = result;
+
+    // Dropped outside the list
+    if (!destination) return;
+
+    // Same position
+    if (destination.index === source.index) return;
+
+    // Reorder blocks locally (optimistic update)
+    const reorderedBlocks = Array.from(blocks);
+    const [movedBlock] = reorderedBlocks.splice(source.index, 1);
+    reorderedBlocks.splice(destination.index, 0, movedBlock);
+
+    // Update local state immediately
+    setBlocks(reorderedBlocks);
+
+    // Update position values for all blocks
+    const updatedBlocks = reorderedBlocks.map((block, index) => ({
+      id: block.id,
+      position: index
+    }));
+
+    // Persist to database
+    const pageId = searchParams.get('page');
+    if (!pageId) return;
+
+    try {
+      const response = await fetch(`/api/pages/${pageId}/blocks/reorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blocks: updatedBlocks }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save order');
+      }
+    } catch (error) {
+      console.error('Reorder failed:', error);
+      // Revert to original order on error
+      const pageIdRetry = searchParams.get('page');
+      if (pageIdRetry) {
+        // Refetch original blocks
+        const res = await fetch(`/api/pages/${pageIdRetry}/blocks`);
+        if (res.ok) {
+          const data = await res.json();
+          setBlocks(data);
+        }
+      }
+    }
+  };
+
   const handleHeaderSave = (headerData) => {
     setPageData(prev => ({
       ...prev,
@@ -182,47 +236,48 @@ const EnhancedPageBuilder = () => {
     }
   };
 
+  // Helper function to get block icon
+  const getBlockIcon = (type) => {
+    const iconMap = {
+      link: FiLink,
+      product: FiShoppingBag,
+      email: FiMail,
+      image: FiImage,
+      music: FiMusic,
+      video: FiVideo,
+      booking: FiCalendar,
+      analytics: FiEye,
+      promo: FiTag,
+      discount: FiTag,
+      social_share: FiShare2,
+      waitlist: FiMail,
+      newsletter: FiMail,
+      custom: FiEdit3
+    };
+    return iconMap[type] || FiLink;
+  };
+
+  // Helper function to render block summary
+  const renderBlockSummary = (block) => {
+    switch (block.type) {
+      case 'product':
+        return <p className="text-sm text-green-600 font-medium">{block.data?.price}</p>;
+      case 'email':
+      case 'newsletter':
+      case 'waitlist':
+        return <p className="text-sm text-gray-600">{block.data?.description}</p>;
+      case 'promo':
+        return <p className="text-sm text-yellow-600">Promo: {block.data?.promoCode}</p>;
+      case 'discount':
+        return <p className="text-sm text-amber-600">Discount: {block.data?.discount}%</p>;
+      case 'analytics':
+        return <p className="text-sm text-teal-600">Analytics Source: {block.data?.source}</p>;
+      default:
+        return null;
+    }
+  };
+
   const BlockPreview = ({ block }) => {
-    const getBlockIcon = (type) => {
-      const iconMap = {
-        link: FiLink,
-        product: FiShoppingBag,
-        email: FiMail,
-        image: FiImage,
-        music: FiMusic,
-        video: FiVideo,
-        booking: FiCalendar,
-        analytics: FiEye,
-        promo: FiTag,
-        discount: FiTag,
-        social_share: FiShare2,
-        waitlist: FiMail,
-        newsletter: FiMail,
-        custom: FiEdit3
-      };
-      return iconMap[type] || FiLink;
-    };
-
-    // Display block summary based on type
-    const renderBlockSummary = () => {
-      switch (block.type) {
-        case 'product':
-          return <p className="text-sm text-green-600 font-medium">{block.data?.price}</p>;
-        case 'email':
-        case 'newsletter':
-        case 'waitlist':
-          return <p className="text-sm text-gray-600">{block.data?.description}</p>;
-        case 'promo':
-          return <p className="text-sm text-yellow-600">Promo: {block.data?.promoCode}</p>;
-        case 'discount':
-          return <p className="text-sm text-amber-600">Discount: {block.data?.discount}%</p>;
-        case 'analytics':
-          return <p className="text-sm text-teal-600">Analytics Source: {block.data?.source}</p>;
-        default:
-          return null;
-      }
-    };
-
     return (
       <motion.div
         className={`bg-white rounded-xl p-4 border-2 cursor-pointer transition-all ${
@@ -240,7 +295,7 @@ const EnhancedPageBuilder = () => {
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{block.title}</h3>
-            {renderBlockSummary()}
+            {renderBlockSummary(block)}
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
@@ -312,18 +367,75 @@ const EnhancedPageBuilder = () => {
             <p className="text-gray-600">Drag and drop blocks to rearrange them</p>
           </div>
 
-          {/* Blocks */}
-          <div className="space-y-4">
-            {blocks.map((block) => (
-              <BlockPreview key={block.id} block={block} />
-            ))}
-            {blocks.length === 0 && (
-              <div className="text-center py-12">
-                <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
-                <p className="text-gray-600">Add your first block to get started</p>
-              </div>
-            )}
-          </div>
+          {/* Blocks with Drag-Drop */}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="blocks">
+              {(provided, snapshot) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className={`space-y-4 ${snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg' : ''}`}
+                >
+                  {blocks.map((block, index) => (
+                    <Draggable key={block.id} draggableId={String(block.id)} index={index}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`${snapshot.isDragging ? 'opacity-80 shadow-2xl rotate-1' : ''}`}
+                        >
+                          <motion.div
+                            className={`bg-white rounded-xl p-4 border-2 cursor-pointer transition-all ${
+                              selectedBlock?.id === block.id
+                                ? 'border-indigo-500 shadow-lg'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                            onClick={() => setSelectedBlock(block)}
+                            whileHover={{ scale: snapshot.isDragging ? 1 : 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-indigo-100 rounded-lg">
+                                <SafeIcon icon={getBlockIcon(block.type)} className="text-indigo-600" />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-medium text-gray-900">{block.title}</h3>
+                                {renderBlockSummary(block)}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  {...provided.dragHandleProps}
+                                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors cursor-grab active:cursor-grabbing"
+                                >
+                                  <SafeIcon icon={FiMove} />
+                                </div>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteBlock(block.id);
+                                  }}
+                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                  <SafeIcon icon={FiTrash2} />
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                  {blocks.length === 0 && (
+                    <div className="text-center py-12">
+                      <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
+                      <p className="text-gray-600">Add your first block to get started</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         </div>
       </div>
 
