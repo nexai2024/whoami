@@ -7,6 +7,7 @@ import { PageService } from '../lib/database/pages';
 import { AnalyticsService } from '../lib/database/analytics';
 import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
+import EmailCaptureModal from './EmailCaptureModal';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo, 
@@ -20,6 +21,8 @@ const EnhancedPublicPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [selectedBlock, setSelectedBlock] = useState(null);
 
   useEffect(() => {
     loadPage();
@@ -114,7 +117,7 @@ const EnhancedPublicPage = () => {
         window.open(block.url, '_blank', 'noopener,noreferrer');
       } else if (block.type === 'PRODUCT') {
         handleProductPurchase(block);
-      } else if (block.type === 'EMAIL_CAPTURE') {
+      } else if (block.type === 'EMAIL_CAPTURE' || block.type === 'NEWSLETTER' || block.type === 'WAITLIST') {
         handleEmailCapture(block);
       }
     } catch (err) {
@@ -127,11 +130,8 @@ const EnhancedPublicPage = () => {
   };
 
   const handleEmailCapture = (block) => {
-    const email = prompt('Enter your email address:');
-    if (email && email.includes('@')) {
-      console.log('Email captured:', email);
-      alert('Thank you for subscribing!');
-    }
+    setSelectedBlock(block);
+    setShowEmailModal(true);
   };
 
   const shareUrl = () => {
@@ -328,6 +328,18 @@ const EnhancedPublicPage = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Email Capture Modal */}
+      {showEmailModal && selectedBlock && (
+        <EmailCaptureModal
+          block={selectedBlock}
+          pageId={page.id}
+          onClose={() => {
+            setShowEmailModal(false);
+            setSelectedBlock(null);
+          }}
+        />
+      )}
     </>
   );
 };
