@@ -10,6 +10,7 @@ import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
 import SafeIcon from '../common/SafeIcon';
 import HeaderCustomizer from './HeaderCustomizer';
+import { useAuth } from '../lib/auth/AuthContext.jsx';
 
 const { 
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
@@ -19,6 +20,7 @@ const {
 
 const EnhancedPageBuilder = () => {
   const searchParams = useSearchParams();
+  const { currUser } = useAuth();
   const [activeTab, setActiveTab] = useState('header');
   const [user , setUser] = useState(null);
   const [blocks, setBlocks] = useState([]);
@@ -66,14 +68,14 @@ const EnhancedPageBuilder = () => {
     { type: 'custom', label: 'Custom', icon: FiEdit3, color: 'gray' }
   ];
 
+  // Set user from currUser when it becomes available
   useEffect(() => {
-    async function fetchUser() {
-      const { currUser } = await useAuth();
+    if (currUser) {
       setUser(currUser);
       console.log("Current user in page builder:", currUser);
     }
-    fetchUser();
-  }, []);
+  }, [currUser]);
+
     const pageId = searchParams.get('page');
     const isNew = searchParams.get('new');
 
