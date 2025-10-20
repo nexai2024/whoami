@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useSearchParams } from 'next/navigation';
 import * as FiIcons from 'react-icons/fi';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { PageService } from '../lib/database/pages';
 import { AnalyticsService } from '../lib/database/analytics';
 import { logger } from '../lib/utils/logger';
@@ -17,6 +19,67 @@ const {
   FiLink, FiShoppingBag, FiMail, FiMusic, FiVideo, FiCalendar,
   FiUser, FiSettings, FiTag, FiShare2
 } = FiIcons;
+
+// SortableBlock component for drag-and-drop functionality
+const SortableBlock = ({ block, selectedBlock, setSelectedBlock, deleteBlock, getBlockIcon, renderBlockSummary }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: block.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <motion.div
+        className={`bg-white rounded-xl p-4 border-2 cursor-pointer transition-all ${
+          selectedBlock?.id === block.id
+            ? 'border-indigo-500 shadow-lg'
+            : 'border-gray-200 hover:border-gray-300'
+        }`}
+        onClick={() => setSelectedBlock(block)}
+        whileHover={{ scale: isDragging ? 1 : 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-100 rounded-lg">
+            <SafeIcon icon={getBlockIcon(block.type)} className="text-indigo-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900">{block.title}</h3>
+            {renderBlockSummary(block)}
+          </div>
+          <div className="flex items-center gap-2">
+            <div
+              {...listeners}
+              {...attributes}
+              className="p-2 text-gray-400 hover:text-gray-600 transition-colors cursor-grab active:cursor-grabbing"
+            >
+              <SafeIcon icon={FiIcons.FiMove} />
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteBlock(block.id);
+              }}
+              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <SafeIcon icon={FiIcons.FiTrash2} />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 const EnhancedPageBuilder = () => {
   const searchParams = useSearchParams();
@@ -370,74 +433,25 @@ const EnhancedPageBuilder = () => {
           </div>
 
           {/* Blocks with Drag-Drop */}
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="blocks">
-              {(provided, snapshot) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className={`space-y-4 ${snapshot.isDraggingOver ? 'bg-blue-50 rounded-lg' : ''}`}
-                >
-                  {blocks.map((block, index) => (
-                    <Draggable key={block.id} draggableId={String(block.id)} index={index}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`${snapshot.isDragging ? 'opacity-80 shadow-2xl rotate-1' : ''}`}
-                        >
-                          <motion.div
-                            className={`bg-white rounded-xl p-4 border-2 cursor-pointer transition-all ${
-                              selectedBlock?.id === block.id
-                                ? 'border-indigo-500 shadow-lg'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            onClick={() => setSelectedBlock(block)}
-                            whileHover={{ scale: snapshot.isDragging ? 1 : 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-indigo-100 rounded-lg">
-                                <SafeIcon icon={getBlockIcon(block.type)} className="text-indigo-600" />
-                              </div>
-                              <div className="flex-1">
-                                <h3 className="font-medium text-gray-900">{block.title}</h3>
-                                {renderBlockSummary(block)}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  {...provided.dragHandleProps}
-                                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors cursor-grab active:cursor-grabbing"
-                                >
-                                  <SafeIcon icon={FiMove} />
-                                </div>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteBlock(block.id);
-                                  }}
-                                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                                >
-                                  <SafeIcon icon={FiTrash2} />
-                                </button>
-                              </div>
-                            </div>
-                          </motion.div>
-                        </div>
-                      )}
-                    </Draggable>
+          <DndContext sensors={useSensors(PointerSensor)} onDragEnd={handleDragEnd}>
+            <SortableContext items={blocks} strategy={verticalListSortingStrategy}>
+              {(items) => (
+                <div className="space-y-4">
+                  {items.map((item) => (
+                    <SortableBlock
+                      key={item.id}
+                      block={item}
+                      selectedBlock={selectedBlock}
+                      setSelectedBlock={setSelectedBlock}
+                      deleteBlock={deleteBlock}
+                      getBlockIcon={getBlockIcon}
+                      renderBlockSummary={renderBlockSummary}
+                    />
                   ))}
-                  {provided.placeholder}
-                  {blocks.length === 0 && (
-                    <div className="text-center py-12">
-                      <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
-                      <p className="text-gray-600">Add your first block to get started</p>
-                    </div>
-                  )}
                 </div>
               )}
-            </Droppable>
-          </DragDropContext>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
 
