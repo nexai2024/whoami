@@ -138,6 +138,15 @@ const EnhancedPageBuilder = () => {
     { type: 'social_share', label: 'Social Share', icon: FiShare2, color: 'cyan' },
     { type: 'waitlist', label: 'Waitlist', icon: FiMail, color: 'lime' },
     { type: 'newsletter', label: 'Newsletter', icon: FiMail, color: 'rose' },
+    { type: 'tip', label: 'Tip Jar', icon: FiTag, color: 'emerald' },
+    { type: 'social_feed', label: 'Social Feed', icon: FiShare2, color: 'sky' },
+    { type: 'ama', label: 'Ask Me Anything', icon: FiMail, color: 'violet' },
+    { type: 'gated', label: 'Gated Content', icon: FiSettings, color: 'fuchsia' },
+    { type: 'rss', label: 'RSS Feed', icon: FiLink, color: 'orange' },
+    { type: 'portfolio', label: 'Portfolio', icon: FiImage, color: 'slate' },
+    { type: 'contact', label: 'Contact Form', icon: FiMail, color: 'zinc' },
+    { type: 'divider', label: 'Divider', icon: FiEdit3, color: 'stone' },
+    { type: 'text', label: 'Text Block', icon: FiEdit3, color: 'neutral' },
     { type: 'custom', label: 'Custom', icon: FiEdit3, color: 'gray' }
   ];
 
