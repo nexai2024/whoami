@@ -80,28 +80,28 @@ const Dashboard = () => {
     {
       label: 'Total Clicks',
       value: analytics.totals.totalClicks.toLocaleString(),
-      change: '+23%',
+      change: analytics.changes.totalClicks,
       icon: FiEye,
       color: 'blue'
     },
     {
       label: 'Revenue',
       value: `$${analytics.totals.revenue.toLocaleString()}`,
-      change: '+45%',
+      change: analytics.changes.revenue,
       icon: FiDollarSign,
       color: 'green'
     },
     {
       label: 'Page Views',
       value: analytics.totals.pageViews.toLocaleString(),
-      change: '+12%',
+      change: analytics.changes.pageViews,
       icon: FiUsers,
       color: 'purple'
     },
     {
       label: 'Unique Visitors',
       value: analytics.totals.uniqueVisitors.toLocaleString(),
-      change: '+8%',
+      change: analytics.changes.uniqueVisitors,
       icon: FiTrendingUp,
       color: 'orange'
     }
@@ -219,7 +219,7 @@ const Dashboard = () => {
                       <SafeIcon icon={FiEdit3} />
                     </Link>
                     <a
-                      href={`#/${page.slug}`}
+                      href={page.customDomain ? `https://${page.customDomain}` : `/${page.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
