@@ -217,12 +217,76 @@ const EnhancedPageBuilder = () => {
       title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
       data: {},
     };
-    // Provide sensible defaults for new block types
-    if (type === 'product') newBlock.data.price = '$0';
-    if (type === 'email' || type === 'newsletter' || type === 'waitlist') newBlock.data.description = 'Subscribe for updates';
-    if (type === 'promo') newBlock.data.promoCode = '';
-    if (type === 'discount') newBlock.data.discount = 0;
-    if (type === 'analytics') newBlock.data.source = '';
+    
+    // Provide sensible defaults for all block types
+    switch (type) {
+      case 'product':
+        newBlock.data = { price: 0, currency: 'USD', stockStatus: 'in_stock' };
+        break;
+      case 'link':
+        newBlock.data = { url: '', openInNewTab: true };
+        break;
+      case 'email':
+      case 'newsletter':
+      case 'waitlist':
+        newBlock.data = { description: 'Subscribe for updates', buttonText: 'Subscribe' };
+        break;
+      case 'promo':
+        newBlock.data = { promoCode: '', showCopyButton: true };
+        break;
+      case 'discount':
+        newBlock.data = { discountPercentage: 0, codeRequired: false };
+        break;
+      case 'analytics':
+        newBlock.data = { provider: 'google' };
+        break;
+      case 'image':
+        newBlock.data = { images: [], layout: 'grid', clickBehavior: 'lightbox' };
+        break;
+      case 'music':
+        newBlock.data = { trackTitle: '', audioUrl: '' };
+        break;
+      case 'video':
+        newBlock.data = { videoUrl: '', platform: 'youtube', showControls: true };
+        break;
+      case 'booking':
+        newBlock.data = { duration: 30, calendarIntegration: 'calendly' };
+        break;
+      case 'tip':
+        newBlock.data = { suggestedAmounts: [5, 10, 20], currency: 'USD', allowCustomAmount: true };
+        break;
+      case 'social_feed':
+        newBlock.data = { platform: 'instagram', layout: 'grid', itemCount: 9 };
+        break;
+      case 'social_share':
+        newBlock.data = { platforms: { facebook: true, twitter: true }, buttonStyle: 'icons' };
+        break;
+      case 'ama':
+        newBlock.data = { questionFormTitle: 'Ask Me Anything', answerFormat: 'text' };
+        break;
+      case 'contact':
+        newBlock.data = { submitButtonText: 'Send Message', enableCaptcha: true };
+        break;
+      case 'text':
+        newBlock.data = { content: '', headingLevel: 'p', textAlign: 'left', fontSize: 'medium' };
+        break;
+      case 'divider':
+        newBlock.data = { style: 'solid', thickness: 1, width: 100, color: '#E5E7EB' };
+        break;
+      case 'portfolio':
+        newBlock.data = { projectTitle: '', images: [], featured: false };
+        break;
+      case 'rss':
+        newBlock.data = { feedUrl: '', itemCount: 10, layout: 'list' };
+        break;
+      case 'gated':
+        newBlock.data = { contentType: 'file', accessRequirement: 'email' };
+        break;
+      case 'custom':
+        newBlock.data = { allowScripts: false };
+        break;
+    }
+    
     setBlocks([...blocks, newBlock]);
   };
 
