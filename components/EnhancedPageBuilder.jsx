@@ -443,24 +443,35 @@ const EnhancedPageBuilder = () => {
             <p className="text-gray-600">Drag and drop blocks to rearrange them</p>
           </div>
 
-          {/* Blocks with Drag-Drop */}
-          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <SortableContext items={blocks} strategy={verticalListSortingStrategy}>
-              {(items) => (
-                <div className="space-y-4">
-                  {items.map((item) => (
-                    <SortableBlock
-                      key={item.id}
-                      block={item}
-                      selectedBlock={selectedBlock}
-                      setSelectedBlock={setSelectedBlock}
-                      deleteBlock={deleteBlock}
-                      getBlockIcon={getBlockIcon}
-                      renderBlockSummary={renderBlockSummary}
-                    />
-                  ))}
-                </div>
-              )}
+          {/* Blocks with Drag-Drop using @dnd-kit */}
+          <DndContext 
+            sensors={sensors} 
+            collisionDetection={closestCenter} 
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext 
+              items={blocks.map(b => b.id)} 
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-4">
+                {blocks.map((block) => (
+                  <SortableBlock
+                    key={block.id}
+                    block={block}
+                    selectedBlock={selectedBlock}
+                    setSelectedBlock={setSelectedBlock}
+                    deleteBlock={deleteBlock}
+                    getBlockIcon={getBlockIcon}
+                    renderBlockSummary={renderBlockSummary}
+                  />
+                ))}
+                {blocks.length === 0 && (
+                  <div className="text-center py-12">
+                    <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
+                    <p className="text-gray-600">Add your first block to get started</p>
+                  </div>
+                )}
+              </div>
             </SortableContext>
           </DndContext>
         </div>
