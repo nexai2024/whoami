@@ -216,9 +216,30 @@ const EnhancedPageBuilder = () => {
     try {
       setLoading(true);
       const data = await PageService.getPageById(pageId);
-      setPageData(data);
+      
+      // Map API response to component structure
+      // API returns 'pageHeader' but component expects 'headerData'
+      const mappedData = {
+        ...data,
+        headerData: data.pageHeader?.data || {
+          displayName: '',
+          title: '',
+          company: '',
+          bio: '',
+          email: '',
+          phone: '',
+          website: '',
+          location: '',
+          customIntroduction: '',
+          headerStyle: 'minimal'
+        }
+      };
+      
+      setPageData(mappedData);
+      console.log('Page data loaded:', mappedData);
     } catch (error) {
       console.error('Error loading page data:', error);
+      toast.error('Failed to load page data');
     } finally {
       setLoading(false);
     }
