@@ -109,6 +109,20 @@ const EnhancedPageBuilder = () => {
         if (res.ok) {
           const data = await res.json();
           setBlocks(data);
+          
+          // Auto-select the most recently edited block after refresh
+          if (data && data.length > 0) {
+            // Find block with most recent updatedAt timestamp
+            let mostRecentBlock = data[0];
+            for (const block of data) {
+              if (block.updatedAt && (!mostRecentBlock.updatedAt || 
+                  new Date(block.updatedAt) > new Date(mostRecentBlock.updatedAt))) {
+                mostRecentBlock = block;
+              }
+            }
+            // Auto-select the most recently edited block
+            setSelectedBlock(mostRecentBlock);
+          }
         }
       } catch (err) {
         console.error('Failed to fetch blocks:', err);
@@ -295,11 +309,15 @@ const EnhancedPageBuilder = () => {
   const updateBlockData = (field, value) => {
     const updatedBlocks = blocks.map(block => {
       if (block.id === selectedBlock.id) {
+        // Update the updatedAt timestamp to track last edit
+        const now = new Date().toISOString();
+        
         // Handle nested fields (e.g., 'platforms.facebook')
         if (field.includes('.')) {
           const [parent, child] = field.split('.');
           return {
             ...block,
+            updatedAt: now,
             data: {
               ...block.data,
               [parent]: {
@@ -312,6 +330,7 @@ const EnhancedPageBuilder = () => {
         // Handle regular fields
         return {
           ...block,
+          updatedAt: now,
           data: { ...block.data, [field]: value }
         };
       }
