@@ -21,6 +21,15 @@ model User {
   subscriptions Subscription[]
   usage     UsageRecord[]
   forms     Form[]
+  
+  // New feature relations
+  campaigns           Campaign[]
+  repurposedContents  RepurposedContent[]
+  scheduledPosts      ScheduledPost[]
+  optimalTimeSlots    OptimalTimeSlot[]
+  schedulingPrefs     SchedulingPreferences?
+  leadMagnets         LeadMagnet[]
+  
   @@map("users")
 }
 
@@ -237,8 +246,10 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sales Sale[]
-  blocks Block[]
+  sales     Sale[]
+  blocks    Block[]
+  campaigns Campaign[]
+  
   @@map("products")
 }
 
@@ -516,4 +527,547 @@ enum WebhookEvent {
   EMAIL_SIGNUP
   PRODUCT_SALE
   TIP_RECEIVED
+}
+
+// ============================================
+// FEATURE #1: AUTO-CAMPAIGN GENERATOR
+// ============================================
+
+model Campaign {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  userId        String
+  status        CampaignStatus
+  
+  // Source content
+  productId     String?
+  blockId       String?
+  customContent Json?
+  
+  // Generated assets
+  assets        CampaignAsset[]
+  
+  // Campaign metadata
+  name          String
+  goal          String?
+  targetAudience String?
+  
+  // Performance tracking
+  analyticsId   String?
+  
+  user          User     @relation(fields: [userId], references: [id])
+  product       Product? @relation(fields: [productId], references: [id])
+  
+  @@index([userId, status])
+  @@map("campaigns")
+}
+
+enum CampaignStatus {
+  DRAFT
+  GENERATING
+  READY
+  FAILED
+}
+
+model CampaignAsset {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  campaignId   String
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  type         AssetType
+  platform     Platform?
+  
+  // Content
+  content      String   @db.Text
+  mediaUrl     String?
+  
+  // Scheduling
+  scheduledAt  DateTime?
+  publishedAt  DateTime?
+  status       AssetStatus
+  
+  // Performance
+  views        Int      @default(0)
+  clicks       Int      @default(0)
+  conversions  Int      @default(0)
+  
+  @@index([campaignId])
+  @@map("campaign_assets")
+}
+
+enum AssetType {
+  SOCIAL_POST
+  EMAIL
+  PAGE_VARIANT
+  IMAGE
+  VIDEO_CLIP
+}
+
+enum Platform {
+  TWITTER
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+  TIKTOK
+  EMAIL
+  LINK_IN_BIO
+}
+
+enum AssetStatus {
+  DRAFT
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+FAILED
+}
+
+// ============================================
+// FEATURE #3: CONTENT REPURPOSING STUDIO
+// ============================================
+
+model RepurposedContent {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  userId        String
+  
+  // Source content
+  sourceUrl     String
+  sourceType    SourceType
+  sourceTitle   String?
+  sourceMeta    Json?
+  
+  // Extracted data
+  transcript    String?  @db.Text
+  keyPoints     Json?
+  duration      Int?
+  
+  // Processing status
+  status        RepurposeStatus
+  error         String?
+  
+  // Generated assets
+  assets        RepurposedAsset[]
+  
+  // Settings
+  brandColors   Json?
+  brandLogo     String?
+  
+  user          User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId, status])
+  @@map("repurposed_contents")
+}
+
+enum SourceType {
+  YOUTUBE
+  TIKTOK
+  INSTAGRAM
+  VIMEO
+  BLOG
+  MEDIUM
+  SUBSTACK
+  LINKEDIN_ARTICLE
+  TWITTER_THREAD
+  PODCAST_RSS
+  PODCAST_MP3
+  SPOTIFY
+  APPLE_PODCASTS
+  MANUAL_TEXT
+}
+
+enum RepurposeStatus {
+  ANALYZING
+  EXTRACTING
+  GENERATING
+  READY
+  FAILED
+}
+
+model RepurposedAsset {
+  id                    String   @id @default(cuid())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  repurposedContentId   String
+  repurposedContent     RepurposedContent @relation(fields: [repurposedContentId], references: [id], onDelete: Cascade)
+  
+  type                  RepurposeAssetType
+  platform              Platform?
+  
+  // Content
+  content               String?  @db.Text
+  mediaUrl              String?
+  metadata              Json?
+  
+  // Publishing
+  published             Boolean  @default(false)
+  publishedAt           DateTime?
+  blockId               String?
+  
+  // User edits
+  edited                Boolean  @default(false)
+  originalContent       String?  @db.Text
+  
+  @@index([repurposedContentId])
+  @@map("repurposed_assets")
+}
+
+enum RepurposeAssetType {
+  TWITTER_THREAD
+  LINKEDIN_POST
+  INSTAGRAM_CAPTION
+  FACEBOOK_POST
+  EMAIL_NEWSLETTER
+  BLOG_SUMMARY
+  QUOTE_GRAPHIC
+  CAROUSEL_SLIDE
+  INFOGRAPHIC
+  VIDEO_CLIP
+  THUMBNAIL
+}
+
+// ============================================
+// FEATURE #6: SMART SCHEDULING ENGINE
+// ============================================
+
+model ScheduledPost {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String
+  
+  // Content
+  content         String   @db.Text
+  mediaUrls       String[]
+  
+  // Platform
+  platform        Platform
+  platformType    PostType
+  
+  // Scheduling
+  scheduledFor    DateTime
+  timezone        String   @default("UTC")
+  priority        Int      @default(0)
+  
+  // Publishing
+  status          ScheduleStatus
+  publishedAt     DateTime?
+  externalId      String?
+  externalUrl     String?
+  
+  // Mode
+  autoPost        Boolean  @default(false)
+  
+  // Source tracking
+  campaignAssetId String?
+  repurposedAssetId String?
+  
+  // Error handling
+  attempts        Int      @default(0)
+  lastError       String?
+  
+  // Performance
+  views           Int?
+  clicks          Int?
+  likes           Int?
+  comments        Int?
+  shares          Int?
+  
+  user            User     @relation(fields: [userId], references: [id])
+  
+  @@index([userId, scheduledFor, status])
+  @@index([scheduledFor, status])
+  @@map("scheduled_posts")
+}
+
+enum ScheduleStatus {
+  PENDING
+  PROCESSING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+enum PostType {
+  FEED_POST
+  STORY
+  REEL
+  TWEET
+  THREAD
+  LINKEDIN_POST
+  FACEBOOK_POST
+}
+
+model OptimalTimeSlot {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userIdString
+  
+  // Time slot
+  dayOfWeek       Int
+  hourOfDay       Int
+  
+  // Platform-specific
+  platform        Platform?
+  
+  // Metrics
+  avgEngagementRate Decimal @db.Decimal(5, 2)
+  totalViews      Int      @default(0)
+  totalClicks     Int      @default(0)
+  sampleSize      Int      @default(0)
+  
+  // Confidence
+  confidence      Decimal  @db.Decimal(5, 2)
+  
+  // Ranking
+  rank            Int
+  
+  // Analysis period
+  analyzedFrom    DateTime
+  analyzedTo      DateTime
+  
+  user            User     @relation(fields: [userId], references: [id])
+  
+  @@unique([userId, platform, dayOfWeek, hourOfDay])
+  @@index([userId, rank])
+  @@map("optimal_time_slots")
+}
+
+model SchedulingPreferences {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  
+  // Default settings
+  defaultMode     SchedulingMode @default(SUGGESTION)
+  timezone        String   @default("America/New_York")
+  
+  // Posting constraints
+  noPostBefore    Int      @default(8)
+  noPostAfter     Int      @default(22)
+  excludedDays    Int[]
+  
+  // Platform preferences
+  preferredPlatforms Platform[]
+  
+  // Spread settings
+  minHoursBetween Int      @default(4)
+  maxPostsPerDay  Int      @default(5)
+  
+  // Analysis
+  dataRequirement Int      @default(30)
+  
+  user            User     @relation(fields: [userId], references: [id])
+  
+  @@map("scheduling_preferences")
+}
+
+enum SchedulingMode {
+  SUGGESTION
+  AUTO_POST
+  HYBRID
+}
+
+// ============================================
+// FEATURE #7: LEAD MAGNET AUTOMATION SUITE
+// ============================================
+
+model LeadMagnet {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String
+  
+  // Magnet details
+  name            String
+  description     String?  @db.Text
+  type            MagnetType
+  
+  // Asset storage
+  fileUrl         String?
+  fileSize        Int?
+  fileName        String?
+  mimeType        String?
+  
+  // Multi-asset courses
+  assets          LeadMagnetAsset[]
+  
+  // Opt-in copy
+  headline        String
+  subheadline     String?
+  benefits        String[]
+  
+  // Branding
+  coverImageUrl   String?
+  brandColors     Json?
+  
+  // Delivery settings
+  deliveryMethod  DeliveryMethod
+  deliveryDelay   Int      @default(0)
+  
+  // Email drip settings
+  dripEnabled     Boolean  @default(false)
+  dripSchedule    Json?
+  
+  // Email template
+  emailSubject    String?
+  emailBody       String?  @db.Text
+  
+  // Performance tracking
+  views           Int      @default(0)
+  optIns          Int      @default(0)
+  downloads       Int      @default(0)
+  conversionRate  Decimal? @db.Decimal(5, 2)
+  
+  // Gating
+  emailCaptureBlockId String?
+  
+  // Status
+  status          MagnetStatus @default(DRAFT)
+  publishedAt     DateTime?
+  
+  user            User     @relation(fields: [userId], references: [id])
+  deliveries      LeadMagnetDelivery[]
+  
+  @@index([userId, status])
+  @@map("lead_magnets")
+}
+
+enum MagnetType {
+  PDF
+  EBOOK
+  TEMPLATE
+  CHECKLIST
+  WORKBOOK
+  VIDEO
+  VIDEO_COURSE
+  AUDIO
+  SPREADSHEET
+  ZIP_BUNDLE
+  CUSTOM
+}
+
+enum DeliveryMethod {
+  INSTANT_DOWNLOAD
+  EMAIL_DELIVERY
+  GATED_ACCESS
+  HYBRID
+  DRIP_COURSE
+}
+
+enum MagnetStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model LeadMagnetAsset {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  leadMagnetId    String
+  leadMagnet      LeadMagnet @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+  
+  // Asset details
+  name            String
+  description     String?
+  fileUrl         String
+  fileSize        Int
+  mimeType        String
+  
+  // Ordering
+  order           Int      @default(0)
+  
+  // Drip schedule
+  dripDay         Int?
+  
+  @@index([leadMagnetId, order])
+  @@map("lead_magnet_assets")
+}
+
+model LeadMagnetDelivery {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  leadMagnetId    String
+  leadMagnet      LeadMagnet @relation(fields: [leadMagnetId], references: [id])
+  
+  // Recipient
+  email           String
+  name            String?
+  emailSubscriberId String?
+  
+  // Delivery tracking
+  delivered       Boolean  @default(false)
+  deliveredAt     DateTime?
+  downloadedCount Int      @default(0)
+  lastDownloadAt  DateTime?
+  
+  // Email tracking
+  emailSent       Boolean  @default(false)
+  emailOpened     Boolean  @default(false)
+  emailClickedLink Boolean @default(false)
+  
+  // Drip course tracking
+  currentAssetIndex Int    @default(0)
+  completedAssets   String[]
+  
+  // Unique delivery token
+  deliveryToken   String   @unique
+  tokenExpiresAt  DateTime?
+  
+  // Attribution
+  source          String?
+  medium          String?
+  campaign        String?
+  
+  @@index([leadMagnetId, email])
+  @@index([deliveryToken])
+  @@map("lead_magnet_deliveries")
+}
+
+model LeadMagnetTemplate {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  
+  // Template details
+  name            String
+  description     String   @db.Text
+  category        TemplateCategory
+  type            MagnetType
+  
+  // Preview
+  thumbnailUrl    String
+  previewUrl      String?
+  
+  // Template file
+  templateUrl     String
+  
+  // Popularity
+  useCount        Int      @default(0)
+  featured        Boolean  @default(false)
+  
+  // Sample content
+  samplePrompt    String?  @db.Text
+  
+  @@map("lead_magnet_templates")
+}
+
+enum TemplateCategory {
+  CHECKLIST
+  WORKBOOK
+  CHEAT_SHEET
+  RESOURCE_LIST
+  SWIPE_FILE
+  GUIDE
+  PLANNER
+  TRACKER
+  EBOOK
+  MINI_COURSE
 }
