@@ -7,6 +7,7 @@ import { PageService } from '../lib/database/pages';
 import { AnalyticsService } from '../lib/database/analytics';
 import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
+import toast from 'react-hot-toast';
 
 const { FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo, FiCalendar, FiLink, FiDollarSign, FiHeart, FiShare2, FiMessageCircle } = FiIcons;
 
@@ -99,7 +100,7 @@ const PublicPage = () => {
     if (email && email.includes('@')) {
       // Save email subscriber
       console.log('Email captured:', email);
-      alert('Thank you for subscribing!');
+      toast.success('Thank you for subscribing!');
     }
   };
 
@@ -107,7 +108,7 @@ const PublicPage = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     setShareMenuOpen(false);
-    alert('Link copied to clipboard!');
+    toast.success('Link copied to clipboard!');
   };
 
   const getBlockIcon = (type) => {
