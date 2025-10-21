@@ -14,6 +14,7 @@ import SafeIcon from '../common/SafeIcon';
 import HeaderCustomizer from './HeaderCustomizer';
 import { useAuth } from '../lib/auth/AuthContext.jsx';
 import BlockFormFields from './BlockFormFields';
+import toast from 'react-hot-toast';
 
 const { 
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
@@ -399,10 +400,10 @@ const EnhancedPageBuilder = () => {
         // Optionally show a success message
         // const saved = await res.json();
       } else {
-        alert('Failed to save blocks');
+        toast.error('Failed to save blocks');
       }
     } catch (err) {
-      alert('Failed to save blocks');
+      toast.error('Failed to save blocks');
     }
   };
 
@@ -411,7 +412,7 @@ const EnhancedPageBuilder = () => {
       // Open the public page in a new tab
       window.open(`/#/${pageData.slug}`, '_blank', 'noopener,noreferrer');
     } else {
-      alert('Page preview is only available after saving the page with a valid slug.');
+      toast.error('Page preview is only available after saving the page with a valid slug.');
     }
   };
 
