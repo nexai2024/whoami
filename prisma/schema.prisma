@@ -807,7 +807,7 @@ model OptimalTimeSlot {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  userIdString
+  userId          String
   
   // Time slot
   dayOfWeek       Int
