@@ -6,8 +6,7 @@ import SafeIcon from '../common/SafeIcon';
 import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
 import { useUser } from "@stackframe/stack"
-
-
+import toast from 'react-hot-toast';
 
 const { 
   FiUser, FiLogOut, FiSettings, FiEye, FiPlus, FiChevronDown, 
@@ -62,7 +61,7 @@ const Header = () => {
 
   const handlePreview = () => {
     if (!currentPage) {
-      alert('No page selected for preview');
+      toast.error('No page selected for preview');
       return;
     }
     
@@ -78,7 +77,7 @@ const Header = () => {
       previewWindow.focus();
       logger.info(`Preview opened for page: ${currentPage.slug}`);
     } else {
-      alert('Please allow popups to use the preview feature');
+      toast.error('Please allow popups to use the preview feature');
     }
   };
 
@@ -86,7 +85,7 @@ const Header = () => {
     if (!currentPage) return;
     const pageUrl = `${window.location.origin}/#/${currentPage.slug}`;
     navigator.clipboard.writeText(pageUrl);
-    alert('Page URL copied to clipboard!');
+    toast.success('Page URL copied to clipboard!');
   };
 
   const handleCreateNewPage = () => {
