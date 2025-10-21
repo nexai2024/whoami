@@ -5,6 +5,7 @@ import SafeIcon from '../common/SafeIcon';
 import FileUpload from './FileUpload';
 import { FileUploadService } from '../lib/services/fileUpload';
 import { logger } from '../lib/utils/logger';
+import toast from 'react-hot-toast';
 
 const { FiImage, FiFile, FiTrash2, FiDownload, FiCopy, FiGrid, FiList, FiSearch, FiFilter } = FiIcons;
 
@@ -60,13 +61,13 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
       setSelectedFiles(prev => prev.filter(id => id !== fileId));
     } catch (err) {
       logger.error('Error deleting file:', err);
-      alert('Failed to delete file. Please try again.');
+      toast.error('Failed to delete file. Please try again.');
     }
   };
 
   const copyFileUrl = (url) => {
     navigator.clipboard.writeText(url);
-    alert('File URL copied to clipboard!');
+    toast.success('File URL copied to clipboard!');
   };
 
   const downloadFile = (file) => {
