@@ -5,7 +5,6 @@ import Link from 'next/link';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '@/common/SafeIcon';
 import { PageService } from '@/lib/database/pages';
-import { AnalyticsService } from '@/lib/database/analytics';
 import { useAuth } from '@/lib/auth/AuthContext.jsx';
 import { logger } from '@/lib/utils/logger';
 import toast from 'react-hot-toast';
@@ -36,10 +35,17 @@ const Dashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [pages, userAnalytics] = await Promise.all([
-        PageService.getUserPages(currUser.id),
-        AnalyticsService.getUserAnalytics(currUser.id, 30)
-      ]);
+      const pages = await PageService.getUserPages(currUser.id);
+      
+      // Fetch analytics via API route
+      const analyticsResponse = await fetch(`/api/analytics/user/${currUser.id}?days=30`);
+      let userAnalytics = null;
+      if (analyticsResponse.ok) {
+        userAnalytics = await analyticsResponse.json();
+      } else {
+        logger.error('Failed to fetch analytics');
+      }
+      
       setUserPages(pages);
       setAnalytics(userAnalytics);
     } catch (error) {
