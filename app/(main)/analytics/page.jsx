@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Analytics from '@/components/Analytics';
 import { PageService } from '@/lib/database/pages';
-import { AnalyticsService } from '@/lib/database/analytics';
 import { useAuth } from '@/lib/auth/AuthContext.jsx';
 import { logger } from '@/lib/utils/logger';
 
@@ -50,11 +49,19 @@ export default function AnalyticsPage() {
       setLoading(true);
       let data;
       if (pageId === 'all') {
-        // Fetch combined analytics for all pages
-        data = await AnalyticsService.getUserAnalytics(currUser.id, 30);
+        // Fetch combined analytics for all pages via API
+        const response = await fetch(`/api/analytics/user/${currUser.id}?days=30`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user analytics');
+        }
+        data = await response.json();
       } else {
-        // Fetch analytics for specific page
-        data = await AnalyticsService.getPageAnalytics(pageId, 30);
+        // Fetch analytics for specific page via API
+        const response = await fetch(`/api/analytics/page/${pageId}?days=30`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch page analytics');
+        }
+        data = await response.json();
       }
       setAnalyticsData(data);
     } catch (error) {
