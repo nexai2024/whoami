@@ -584,7 +584,7 @@ const EnhancedPageBuilder = () => {
     <div className="grid lg:grid-cols-4 gap-8">
       {/* Block Library */}
       <div className="lg:col-span-1">
-        <div className="bg-white rounded-2xl shadow-sm border p-6 sticky top-8">
+        <div className="bg-white rounded-2xl shadow-sm border p-6 sticky top-8" data-tour-id="block-library">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Add Blocks</h2>
           <div className="space-y-3">
             {blockTypes.map((blockType, index) => (
@@ -592,6 +592,7 @@ const EnhancedPageBuilder = () => {
                 key={index}
                 onClick={() => addBlock(blockType.type)}
                 className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-gray-200 hover:border-${blockType.color}-300 hover:bg-${blockType.color}-50 transition-colors group`}
+                data-tour-id={index === 0 ? "add-link-block" : undefined}
               >
                 <SafeIcon icon={blockType.icon} className={`text-${blockType.color}-600`} />
                 <span className="text-gray-700 group-hover:text-gray-900">{blockType.label}</span>
@@ -604,7 +605,7 @@ const EnhancedPageBuilder = () => {
 
       {/* Page Canvas */}
       <div className="lg:col-span-2">
-        <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <div className="bg-white rounded-2xl shadow-sm border p-6" data-tour-id="block-canvas">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-2">Content Blocks</h2>
             <p className="text-gray-600">Drag and drop blocks to rearrange them</p>
@@ -646,7 +647,7 @@ const EnhancedPageBuilder = () => {
 
       {/* Block Editor */}
       <div className="lg:col-span-1">
-        <div className="bg-white rounded-2xl shadow-sm border p-6 sticky top-8">
+        <div className="bg-white rounded-2xl shadow-sm border p-6 sticky top-8" data-tour-id="block-editor">
           {selectedBlock ? (
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Edit Block</h2>
@@ -697,6 +698,7 @@ const EnhancedPageBuilder = () => {
             value={pageData?.title || ''}
             onChange={(e) => setPageData(prev => ({ ...prev, title: e.target.value }))}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            data-tour-id="page-title-input"
           />
         </div>
         <div>
@@ -709,6 +711,7 @@ const EnhancedPageBuilder = () => {
               type="text"
               placeholder="your-username"
               className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              data-tour-id="page-slug-input"
             />
           </div>
         </div>
@@ -720,6 +723,7 @@ const EnhancedPageBuilder = () => {
             rows={3}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
             placeholder="Describe your page for search engines..."
+            data-tour-id="page-description-input"
           />
         </div>
       </div>
@@ -750,6 +754,7 @@ const EnhancedPageBuilder = () => {
               <button
                 onClick={handlePreview}
                 className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                data-tour-id="preview-button"
               >
                 <SafeIcon icon={FiEye} />
                 Preview
@@ -757,6 +762,7 @@ const EnhancedPageBuilder = () => {
               <button
                 onClick={handleSaveBlocks}
                 className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                data-tour-id="save-button"
               >
                 <SafeIcon icon={FiSave} />
                 Save Changes
@@ -769,7 +775,7 @@ const EnhancedPageBuilder = () => {
       {/* Tabs */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex">
+          <nav className="flex" data-tour-id="builder-tabs">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -779,6 +785,7 @@ const EnhancedPageBuilder = () => {
                     ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
+                data-tour-id={`${tab.id}-tab`}
               >
                 <SafeIcon icon={tab.icon} />
                 {tab.label}
