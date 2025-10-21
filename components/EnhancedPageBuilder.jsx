@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import * as FiIcons from 'react-icons/fi';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -85,6 +85,7 @@ const SortableBlock = ({ block, selectedBlock, setSelectedBlock, deleteBlock, ge
 
 const EnhancedPageBuilder = () => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { currUser } = useAuth();
   const [activeTab, setActiveTab] = useState('header');
   const [user , setUser] = useState(null);
@@ -204,17 +205,41 @@ const EnhancedPageBuilder = () => {
             headerStyle: 'minimal'
           }
         });
+        
+        // Update URL to include the new pageId so refreshing works
+        router.replace(`/builder?page=${newPage.id}`);
       }
     }
-  }, [pageId, isNew, user?.id, pageData?.id]);
+  }, [pageId, isNew, user?.id, pageData?.id, router]);
 
   const loadPageData = async (pageId) => {
     try {
       setLoading(true);
       const data = await PageService.getPageById(pageId);
-      setPageData(data);
+      
+      // Map API response to component structure
+      // API returns 'pageHeader' but component expects 'headerData'
+      const mappedData = {
+        ...data,
+        headerData: data.pageHeader?.data || {
+          displayName: '',
+          title: '',
+          company: '',
+          bio: '',
+          email: '',
+          phone: '',
+          website: '',
+          location: '',
+          customIntroduction: '',
+          headerStyle: 'minimal'
+        }
+      };
+      
+      setPageData(mappedData);
+      console.log('Page data loaded:', mappedData);
     } catch (error) {
       console.error('Error loading page data:', error);
+      toast.error('Failed to load page data');
     } finally {
       setLoading(false);
     }
@@ -400,32 +425,74 @@ const EnhancedPageBuilder = () => {
     }
   };
 
-  const handleHeaderSave = (headerData) => {
+  const handleHeaderSave = async (headerData) => {
+    // Update local state
     setPageData(prev => ({
       ...prev,
       headerData
     }));
+    
+    // Persist header to backend
+    const currentPageId = pageData?.id;
+    if (!currentPageId) {
+      toast.error('Cannot save: Page ID not found');
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/pages/${currentPageId}/header`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(headerData),
+      });
+      
+      if (res.ok) {
+        toast.success('Header saved successfully');
+      } else {
+        toast.error('Failed to save header');
+      }
+    } catch (err) {
+      console.error('Error saving header:', err);
+      toast.error('Failed to save header');
+    }
   };
 
-  // Save blocks to backend
-  const handleSaveBlocks = async () => {
-    const pageId = searchParams.get('page');
-    if (!pageId) return;
+  // Comprehensive save function for all page data
+  const handleSaveAll = async () => {
+    const currentPageId = searchParams.get('page') || pageData?.id;
+    if (!currentPageId) {
+      toast.error('Cannot save: Page not created yet');
+      return;
+    }
+
     try {
-      const res = await fetch(`/api/pages/${pageId}/blocks`, {
+      // Save page settings (title, description)
+      await PageService.updatePage(currentPageId, {
+        title: pageData?.title || 'Untitled Page',
+        description: pageData?.description || '',
+      });
+
+      // Save blocks
+      const res = await fetch(`/api/pages/${currentPageId}/blocks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(blocks),
       });
+
       if (res.ok) {
-        // Optionally show a success message
-        // const saved = await res.json();
+        toast.success('All changes saved successfully');
       } else {
-        toast.error('Failed to save blocks');
+        toast.error('Failed to save some changes');
       }
     } catch (err) {
-      toast.error('Failed to save blocks');
+      console.error('Error saving:', err);
+      toast.error('Failed to save changes');
     }
+  };
+
+  // Save blocks to backend (legacy function, now use handleSaveAll)
+  const handleSaveBlocks = async () => {
+    await handleSaveAll();
   };
 
   const handlePreview = () => {
