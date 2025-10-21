@@ -5,6 +5,7 @@ import SafeIcon from '../common/SafeIcon';
 import FileUpload from './FileUpload';
 import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
+import toast from 'react-hot-toast';
 
 const { 
   FiUser, FiEdit3, FiMail, FiPhone, FiGlobe, FiMapPin, 
@@ -111,11 +112,12 @@ console.log('Header Data State:', headerData);
     try {
       setSaving(true);
       await PageService.updatePageHeader(pageId, headerData);
+      toast.success('Header saved successfully!');
       if (onSave) onSave(headerData);
       logger.info('Header saved successfully');
     } catch (error) {
       logger.error('Error saving header:', error);
-      alert('Failed to save header. Please try again.');
+      toast.error('Failed to save header. Please try again.');
     } finally {
       setSaving(false);
     }
