@@ -131,7 +131,7 @@ export default function SchedulerDashboard() {
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-8" data-tour-id="scheduler-header">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Content Scheduler
         </h1>
@@ -141,7 +141,7 @@ export default function SchedulerDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-gray-200 mb-6" data-tour-id="scheduler-tabs">
         <nav className="flex space-x-8">
           {[
             { id: 'calendar', label: 'Calendar', count: posts.length },
@@ -181,6 +181,7 @@ export default function SchedulerDashboard() {
             <button
               onClick={() => setShowNewPostModal(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+              data-tour-id="schedule-post-button"
             >
               + Schedule New Post
             </button>
@@ -203,6 +204,7 @@ export default function SchedulerDashboard() {
                 <div
                   key={post.id}
                   className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                  data-tour-id="post-card"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -222,6 +224,7 @@ export default function SchedulerDashboard() {
                           className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
                             post.status
                           )}`}
+                          data-tour-id="post-status"
                         >
                           {post.status}
                         </span>
@@ -294,7 +297,7 @@ export default function SchedulerDashboard() {
 
       {/* Optimal Times Tab */}
       {activeTab === 'optimal' && (
-        <div>
+        <div data-tour-id="optimal-times-tab">
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Optimal Posting Times</h2>
             <p className="text-sm text-gray-600">
@@ -307,6 +310,7 @@ export default function SchedulerDashboard() {
               <div
                 key={index}
                 className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                data-tour-id="optimal-time-card"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center space-x-2">
@@ -332,7 +336,7 @@ export default function SchedulerDashboard() {
                 </div>
 
                 {time.engagementRate !== null && (
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm" data-tour-id="engagement-rate">
                     <span className="text-gray-600">Engagement</span>
                     <span className="font-medium text-green-600">
                       {time.engagementRate.toFixed(1)}%
