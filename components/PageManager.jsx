@@ -369,7 +369,7 @@ const PageManager = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b" data-tour-id="page-manager-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
             <div>
@@ -379,6 +379,7 @@ const PageManager = () => {
             <Link
               to="/builder?new=true"
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              data-tour-id="create-page-button"
             >
               <SafeIcon icon={FiPlus} />
               Create New Page
