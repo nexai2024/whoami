@@ -5,6 +5,7 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
+import toast from 'react-hot-toast';
 
 const { 
   FiPlus, FiEdit3, FiEye, FiCopy, FiTrash2, FiSettings, 
@@ -129,7 +130,7 @@ const PageManager = () => {
   const copyPageUrl = (slug) => {
     const pageUrl = `${window.location.origin}/#/${slug}`;
     navigator.clipboard.writeText(pageUrl);
-    alert('Page URL copied to clipboard!');
+    toast.success('Page URL copied to clipboard!');
   };
 
   const duplicatePage = async (page) => {

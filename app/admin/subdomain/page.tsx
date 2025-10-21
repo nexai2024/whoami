@@ -1,5 +1,6 @@
 "use client";
 import { useState, FormEvent } from "react";
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const [subdomain, setSubdomain] = useState<string>("");
@@ -16,9 +17,9 @@ export default function Home() {
     });
 
     if (response.ok) {
-      alert("Subdomain added successfully!");
+      toast.success("Subdomain added successfully!");
     } else {
-      alert("Failed to add subdomain");
+      toast.error("Failed to add subdomain");
     }
 
     setSubdomain("");

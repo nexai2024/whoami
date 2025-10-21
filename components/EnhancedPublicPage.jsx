@@ -9,6 +9,7 @@ import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
 import EmailCaptureModal from './EmailCaptureModal';
 import BlockRenderer from './BlockRenderer';
+import toast from 'react-hot-toast';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo, 
@@ -139,7 +140,7 @@ const EnhancedPublicPage = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
     setShareMenuOpen(false);
-    alert('Link copied to clipboard!');
+    toast.success('Link copied to clipboard!');
   };
 
   const getSocialIcon = (platform) => {

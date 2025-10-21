@@ -4,6 +4,7 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { CustomDomainService } from '../lib/services/customDomain';
 import { logger } from '../lib/utils/logger';
+import toast from 'react-hot-toast';
 
 const { FiGlobe, FiCheck, FiAlertCircle, FiCopy, FiRefreshCw } = FiIcons;
 
@@ -68,7 +69,7 @@ const CustomDomainSetup = ({ pageId, currentDomain, onDomainUpdate }) => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+    toast.success('Copied to clipboard!');
   };
 
   const retryVerification = async () => {

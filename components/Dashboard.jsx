@@ -8,6 +8,7 @@ import { AnalyticsService } from '../lib/database/analytics';
 import { useAuth } from '../lib/auth/AuthContext.jsx';
 import { logger } from '../lib/utils/logger';
 import MyAccountPage from './MyAccount';
+import toast from 'react-hot-toast';
 const {
   FiPlus, FiEdit3, FiBarChart3, FiSettings, FiEye, FiDollarSign,
   FiUsers, FiTrendingUp, FiExternalLink, FiCopy, FiMoreHorizontal
@@ -45,7 +46,7 @@ const Dashboard = () => {
   const copyPageUrl = (slug) => {
     const pageUrl = `${window.location.origin}/#/${slug}`;
     navigator.clipboard.writeText(pageUrl);
-    alert('Page URL copied to clipboard!');
+    toast.success('Page URL copied to clipboard!');
   };
 
   if (!currUser) {

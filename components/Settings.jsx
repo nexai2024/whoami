@@ -6,6 +6,7 @@ import FileUpload from './FileUpload';
 import CustomDomainSetup from './CustomDomainSetup';
 import { logger } from '../lib/utils/logger';
 import { useUser } from '@clerk/clerk-react';
+import toast from 'react-hot-toast';
 const { 
   FiUser, FiSettings, FiCreditCard, FiGlobe, FiShield, 
   FiMail, FiPhone, FiSave, FiTrash2, FiEye, FiEyeOff,
@@ -107,10 +108,10 @@ const Settings = () => {
         }
       });
       logger.info('User settings saved successfully');
-      alert('Settings saved successfully!');
+      toast.success('Settings saved successfully!');
     } catch (error) {
       logger.error('Error saving settings:', error);
-      alert('Failed to save settings. Please try again.');
+      toast.error('Failed to save settings. Please try again.');
     } finally {
       setSaving(false);
     }
