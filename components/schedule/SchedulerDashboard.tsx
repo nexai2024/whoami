@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { Platform, PostType, ScheduleStatus } from '@prisma/client';
+import toast from 'react-hot-toast';
 
 interface ScheduledPost {
   id: string;
@@ -87,11 +88,11 @@ export default function SchedulerDashboard() {
         setShowNewPostModal(false);
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to schedule post');
+        toast.error(error.error || 'Failed to schedule post');
       }
     } catch (error) {
       console.error('Error scheduling post:', error);
-      alert('Failed to schedule post');
+      toast.error('Failed to schedule post');
     }
   };
 
