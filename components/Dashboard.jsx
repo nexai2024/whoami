@@ -11,7 +11,8 @@ import MyAccountPage from './MyAccount';
 import toast from 'react-hot-toast';
 const {
   FiPlus, FiEdit3, FiBarChart3, FiSettings, FiEye, FiDollarSign,
-  FiUsers, FiTrendingUp, FiExternalLink, FiCopy, FiMoreHorizontal
+  FiUsers, FiTrendingUp, FiExternalLink, FiCopy, FiMoreHorizontal,
+  FiZap, FiRefreshCw, FiGift, FiCalendar, FiGrid
 } = FiIcons;
 
 const Dashboard = () => {
@@ -297,6 +298,78 @@ const Dashboard = () => {
                   <p className="text-sm text-gray-600">Manage account</p>
                 </div>
               {/* </Link> */}
+
+              {/* NEW: Marketing Category */}
+              <div className="pt-4 mt-4 border-t border-gray-200">
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                  Marketing
+                </h3>
+                
+                <Link
+                  to="/marketing/campaigns/new"
+                  className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-colors group mb-3"
+                >
+                  <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-700 transition-colors">
+                    <SafeIcon icon={FiZap} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Generate Campaign</h3>
+                    <p className="text-sm text-gray-600">AI multi-channel</p>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/marketing/repurpose"
+                  className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group mb-3"
+                >
+                  <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
+                    <SafeIcon icon={FiRefreshCw} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Repurpose Content</h3>
+                    <p className="text-sm text-gray-600">Transform content</p>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/marketing/lead-magnets"
+                  className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-xl hover:from-green-100 hover:to-teal-100 transition-colors group mb-3"
+                >
+                  <div className="p-2 bg-green-600 rounded-lg group-hover:bg-green-700 transition-colors">
+                    <SafeIcon icon={FiGift} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Lead Magnets</h3>
+                    <p className="text-sm text-gray-600">Build your list</p>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/marketing/schedule"
+                  className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl hover:from-orange-100 hover:to-red-100 transition-colors group mb-3"
+                >
+                  <div className="p-2 bg-orange-600 rounded-lg group-hover:bg-orange-700 transition-colors">
+                    <SafeIcon icon={FiCalendar} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Schedule Posts</h3>
+                    <p className="text-sm text-gray-600">Plan content</p>
+                  </div>
+                </Link>
+
+                <Link
+                  to="/marketing"
+                  className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-gray-100 hover:to-blue-100 transition-colors group"
+                >
+                  <div className="p-2 bg-gray-600 rounded-lg group-hover:bg-gray-700 transition-colors">
+                    <SafeIcon icon={FiGrid} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-gray-900">Marketing Hub</h3>
+                    <p className="text-sm text-gray-600">View all tools</p>
+                  </div>
+                </Link>
+              </div>
             </div>
           </motion.div>
         </div>
