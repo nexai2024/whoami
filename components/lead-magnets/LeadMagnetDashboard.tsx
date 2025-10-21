@@ -110,7 +110,7 @@ export default function LeadMagnetDashboard() {
   return (
     <div className="max-w-7xl mx-auto p-6">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-8" data-tour-id="lead-magnet-header">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Lead Magnets
         </h1>
@@ -120,7 +120,7 @@ export default function LeadMagnetDashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b border-gray-200 mb-6" data-tour-id="lead-magnet-tabs">
         <nav className="flex space-x-8">
           {[
             { id: 'magnets', label: 'My Lead Magnets', count: magnets.length },
@@ -159,6 +159,7 @@ export default function LeadMagnetDashboard() {
             <button
               onClick={() => setShowCreateModal(true)}
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+              data-tour-id="create-magnet-button"
             >
               + Create Lead Magnet
             </button>
@@ -218,7 +219,7 @@ export default function LeadMagnetDashboard() {
                     </p>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+                    <div className="grid grid-cols-3 gap-2 mb-4 text-center" data-tour-id="magnet-stats">
                       <div className="bg-gray-50 rounded p-2">
                         <div className="text-lg font-semibold text-gray-900">
                           {magnet.stats.views}
@@ -258,7 +259,7 @@ export default function LeadMagnetDashboard() {
 
       {/* Templates Tab */}
       {activeTab === 'templates' && (
-        <div>
+        <div data-tour-id="templates-tab">
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Featured Templates</h2>
             <p className="text-sm text-gray-600">
