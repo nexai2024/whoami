@@ -221,11 +221,13 @@ const EnhancedPageBuilder = () => {
   };
 
   const addBlock = (type) => {
+    const now = new Date().toISOString();
     const newBlock = {
       id: Date.now(),
       type,
       title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
       data: {},
+      updatedAt: now,
     };
     
     // Provide sensible defaults for all block types
@@ -656,11 +658,12 @@ const EnhancedPageBuilder = () => {
                     value={selectedBlock.title}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     onChange={(e) => {
+                      const now = new Date().toISOString();
                       const updatedBlocks = blocks.map(block =>
-                        block.id === selectedBlock.id ? { ...block, title: e.target.value } : block
+                        block.id === selectedBlock.id ? { ...block, title: e.target.value, updatedAt: now } : block
                       );
                       setBlocks(updatedBlocks);
-                      setSelectedBlock({ ...selectedBlock, title: e.target.value });
+                      setSelectedBlock({ ...selectedBlock, title: e.target.value, updatedAt: now });
                     }}
                   />
                 </div>
