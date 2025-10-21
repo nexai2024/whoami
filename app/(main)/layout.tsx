@@ -10,6 +10,9 @@ import { ensureOnboarded } from "./onboarding-functions";
 import { ErrorProvider } from '../../components/ErrorContext';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import ErrorConsole from '../../components/ErrorConsole';
+import { TourProvider } from '@/lib/tours/TourProvider';
+import { TourTooltip } from '@/components/tours/TourTooltip';
+import { HelpButton } from '@/components/tours/HelpButton';
 
 keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
@@ -24,10 +27,14 @@ export default function AppLayout({
       <StackTheme>
         <AuthProvider>
           <ErrorProvider>
+            <TourProvider>
               <ErrorBoundary>
                   {children}
-                   <ErrorConsole />
+                  <ErrorConsole />
+                  <TourTooltip />
+                  <HelpButton />
               </ErrorBoundary>
+            </TourProvider>
           </ErrorProvider>
         </AuthProvider>
       </StackTheme>
