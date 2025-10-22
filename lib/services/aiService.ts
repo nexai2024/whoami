@@ -1,14 +1,18 @@
 /**
  * AI Service
- * Shared service for interacting with Anthropic Claude API
+ * Shared service for interacting with Google Gemini API
  * Used by Campaign Generator, Content Repurposing, and Lead Magnet features
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-});
+// Initialize Google Gemini
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
+
+// Get the model instance
+function getModel(modelName: string = 'gemini-1.5-pro'): GenerativeModel {
+  return genAI.getGenerativeModel({ model: modelName });
+}
 
 export interface GenerateOptions {
   systemPrompt: string;
@@ -25,7 +29,7 @@ export interface RetryOptions {
 }
 
 /**
- * Generate content using Claude with automatic retry logic
+ * Generate content using Google Gemini with automatic retry logic
  */
 export async function generateContent(
   options: GenerateOptions,
@@ -36,7 +40,7 @@ export async function generateContent(
     userPrompt,
     maxTokens = 4096,
     temperature = 0.7,
-    model = 'claude-3-5-sonnet-20241022',
+    model = 'gemini-1.5-pro',
   } = options;
 
   const {
@@ -49,39 +53,37 @@ export async function generateContent(
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await anthropic.messages.create({
-        model,
-        max_tokens: maxTokens,
-        temperature,
-        system: systemPrompt,
-        messages: [
-          {
-            role: 'user',
-            content: userPrompt,
-          },
-        ],
+      const geminiModel = getModel(model);
+
+      // Combine system and user prompts for Gemini
+      const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+
+      const result = await geminiModel.generateContent({
+        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
+        generationConfig: {
+          maxOutputTokens: maxTokens,
+          temperature: temperature,
+        },
       });
 
-      // Extract text content from response
-      const textContent = response.content.find(
-        (block) => block.type === 'text'
-      );
+      const response = result.response;
+      const text = response.text();
 
-      if (!textContent || textContent.type !== 'text') {
-        throw new Error('No text content in Claude response');
+      if (!text) {
+        throw new Error('No text content in Gemini response');
       }
 
-      return textContent.text;
+      return text;
     } catch (error) {
       lastError = error as Error;
 
       // Don't retry on authentication errors
-      if (error instanceof Anthropic.AuthenticationError) {
-        throw new Error('Invalid Anthropic API key');
+      if (error instanceof Error && error.message.includes('API key')) {
+        throw new Error('Invalid Google Gemini API key');
       }
 
       // Don't retry on invalid request errors
-      if (error instanceof Anthropic.BadRequestError) {
+      if (error instanceof Error && error.message.includes('invalid')) {
         throw error;
       }
 
@@ -98,7 +100,7 @@ export async function generateContent(
   }
 
   throw new Error(
-    `Claude API request failed after ${maxRetries} attempts: ${lastError?.message}`
+    `Gemini API request failed after ${maxRetries} attempts: ${lastError?.message}`
   );
 }
 
@@ -109,17 +111,36 @@ export async function generateJSON<T = any>(
   options: GenerateOptions,
   retryOptions?: RetryOptions
 ): Promise<T> {
-  const content = await generateContent(options, retryOptions);
+  // Add JSON instruction to the prompt
+  const enhancedOptions = {
+    ...options,
+    userPrompt: `${options.userPrompt}\n\nIMPORTANT: Return ONLY valid JSON, no additional text or explanation.`,
+  };
+
+  const content = await generateContent(enhancedOptions, retryOptions);
 
   try {
     // Try to extract JSON from markdown code blocks if present
     const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
     const jsonString = jsonMatch ? jsonMatch[1] : content;
 
-    return JSON.parse(jsonString.trim()) as T;
+    // Remove any text before the first { or [
+    const trimmedJson = jsonString.trim();
+    const jsonStart = Math.max(
+      trimmedJson.indexOf('{') >= 0 ? trimmedJson.indexOf('{') : Infinity,
+      trimmedJson.indexOf('[') >= 0 ? trimmedJson.indexOf('[') : Infinity
+    );
+
+    if (jsonStart === Infinity) {
+      throw new Error('No JSON found in response');
+    }
+
+    const cleanedJson = trimmedJson.substring(jsonStart);
+
+    return JSON.parse(cleanedJson) as T;
   } catch (error) {
     throw new Error(
-      `Failed to parse Claude response as JSON: ${(error as Error).message}`
+      `Failed to parse Gemini response as JSON: ${(error as Error).message}`
     );
   }
 }
@@ -255,7 +276,7 @@ Return JSON with:
  * Check if API key is configured
  */
 export function isConfigured(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY;
+  return !!process.env.GOOGLE_GEMINI_API_KEY;
 }
 
 export default {
