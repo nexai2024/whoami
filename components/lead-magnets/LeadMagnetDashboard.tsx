@@ -313,6 +313,120 @@ export default function LeadMagnetDashboard() {
           </div>
         </div>
       )}
+
+      {/* Create Lead Magnet Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Create Lead Magnet
+                </h2>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Lead Magnet Name *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Free Email Marketing Checklist"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Type *
+                  </label>
+                  <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Choose a type...</option>
+                    <option value="PDF">PDF Document</option>
+                    <option value="EBOOK">eBook</option>
+                    <option value="TEMPLATE">Template</option>
+                    <option value="CHECKLIST">Checklist</option>
+                    <option value="WORKBOOK">Workbook</option>
+                    <option value="VIDEO">Video</option>
+                    <option value="VIDEO_COURSE">Video Course</option>
+                    <option value="AUDIO">Audio</option>
+                    <option value="SPREADSHEET">Spreadsheet</option>
+                    <option value="ZIP_BUNDLE">ZIP Bundle</option>
+                    <option value="CUSTOM">Custom</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Headline *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Your attention-grabbing headline"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder="Describe what subscribers will get..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Delivery Method *
+                  </label>
+                  <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Choose delivery method...</option>
+                    <option value="INSTANT_DOWNLOAD">Instant Download</option>
+                    <option value="EMAIL_DELIVERY">Email Delivery</option>
+                    <option value="GATED_ACCESS">Gated Access</option>
+                    <option value="DRIP_COURSE">Drip Course</option>
+                  </select>
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">
+                    💡 After creation, you can upload files, customize the opt-in page, and connect email integrations.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    // TODO: Implement create functionality
+                    alert('Create lead magnet functionality will be implemented here. This would call POST /api/lead-magnets with the form data.');
+                    setShowCreateModal(false);
+                  }}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  Create Lead Magnet
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
