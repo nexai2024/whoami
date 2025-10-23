@@ -31,6 +31,8 @@ export default function ProductsDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
