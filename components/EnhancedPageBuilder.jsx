@@ -327,9 +327,38 @@ const EnhancedPageBuilder = () => {
     setBlocks([...blocks, newBlock]);
   };
 
-  const deleteBlock = (id) => {
-    setBlocks(blocks.filter(block => block.id !== id));
-    setSelectedBlock(null);
+  const deleteBlock = async (blockId) => {
+    if (!confirm("Delete this block? This action cannot be undone.")) {
+      return;
+    }
+
+    const currentPageId = searchParams.get("page");
+    if (!currentPageId) {
+      toast.error("Cannot delete: Page ID not found");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/pages/${currentPageId}/blocks?blockId=${blockId}`,
+        {
+          method: "DELETE",
+          headers: { "x-user-id": "demo-user" }
+        }
+      );
+
+      if (response.ok) {
+        toast.success("Block deleted successfully");
+        setBlocks(blocks.filter(block => block.id !== blockId));
+        setSelectedBlock(null);
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Failed to delete block");
+      }
+    } catch (error) {
+      console.error("Error deleting block:", error);
+      toast.error("Failed to delete block");
+    }
   };
 
   // Helper function to update block data fields
