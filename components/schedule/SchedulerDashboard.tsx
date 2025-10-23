@@ -643,12 +643,21 @@ export default function SchedulerDashboard() {
           </div>
 
           <div className="mt-6 text-center">
-            <button
-              onClick={fetchOptimalTimes}
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              ↻ Refresh Analysis
-            </button>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowAnalyzeModal(true)}
+                disabled={analyzing}
+                className="bg-white border-2 border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 font-medium disabled:opacity-50"
+              >
+                🔍 {analyzing ? 'Analyzing...' : 'Analyze My Data'}
+              </button>
+              <button
+                onClick={fetchOptimalTimes}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                ↻ Refresh Analysis
+              </button>
+            </div>
           </div>
         </div>
       )}
