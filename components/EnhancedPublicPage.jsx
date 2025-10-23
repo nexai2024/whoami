@@ -40,13 +40,16 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
 
   const loadPage = async () => {
     try {
+      console.log('Loading page with slug:', pageSlug);
       setLoading(true);
       console.log('Loading page with slug:', pageSlug);
       const pageData = await PageService.getPageBySlug(pageSlug);
       setPage(pageData);
+      console.log('Page data loaded:', pageData);
       await recordPageView(pageData.id);
     } catch (err) {
       logger.error('Error loading public page:', err);
+      console.error('Error loading public page:', err); 
       setError(err.message);
     } finally {
       setLoading(false);
@@ -64,11 +67,12 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
         browser: getBrowserName(),
         os: getOSName()
       };
+      console.log('Recording page view:', visitorData);
       await AnalyticsService.recordClick(visitorData);
     } catch (err) {
       logger.error('Error recording page view:', err);
     }
-  };
+  };  
 
   const getVisitorIP = async () => {
     try {
