@@ -1103,6 +1103,414 @@ export default function LeadMagnetDashboard() {
           </div>
         </div>
       )}
+
+      {/* Lead Magnet Detail/Edit Modal */}
+      {showDetailModal && selectedMagnet && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  {detailModalMode === 'view' ? 'Lead Magnet Details' : 'Edit Lead Magnet'}
+                </h2>
+                <button
+                  onClick={handleCloseDetailModal}
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+
+              {detailModalMode === 'view' ? (
+                /* VIEW MODE */
+                <div className="space-y-6">
+                  {/* Basic Information */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Basic Information</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-2xl font-bold text-gray-900">{selectedMagnet.name}</p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Created: {new Date(selectedMagnet.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-3xl">{getTypeIcon(selectedMagnet.type)}</span>
+                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(selectedMagnet.status)}`}>
+                            {selectedMagnet.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Content Details */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Content</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Headline</p>
+                        <p className="text-gray-900 mt-1">{selectedMagnet.headline}</p>
+                      </div>
+                      {selectedMagnet.subheadline && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Subheadline</p>
+                          <p className="text-gray-900 mt-1">{selectedMagnet.subheadline}</p>
+                        </div>
+                      )}
+                      {selectedMagnet.description && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Description</p>
+                          <p className="text-gray-900 mt-1">{selectedMagnet.description}</p>
+                        </div>
+                      )}
+                      {selectedMagnet.benefits && selectedMagnet.benefits.length > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-600 mb-2">Benefits</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            {selectedMagnet.benefits.map((benefit: string, i: number) => (
+                              <li key={i} className="text-gray-900">{benefit}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Delivery Settings */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Delivery Settings</h3>
+                    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Delivery Method</p>
+                        <p className="text-gray-900 mt-1">{selectedMagnet.deliveryMethod.replace(/_/g, ' ')}</p>
+                      </div>
+                      {selectedMagnet.deliveryDelay > 0 && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Delivery Delay</p>
+                          <p className="text-gray-900 mt-1">{selectedMagnet.deliveryDelay} minutes after opt-in</p>
+                        </div>
+                      )}
+                      {selectedMagnet.emailSubject && (
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Email Subject</p>
+                          <p className="text-gray-900 mt-1">{selectedMagnet.emailSubject}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Performance Stats */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Performance</h3>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="bg-gray-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-gray-900">{selectedMagnet.views}</div>
+                        <div className="text-sm text-gray-600 mt-1">Views</div>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-blue-600">{selectedMagnet.optIns}</div>
+                        <div className="text-sm text-gray-600 mt-1">Opt-ins</div>
+                      </div>
+                      <div className="bg-green-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-green-600">{selectedMagnet.downloads}</div>
+                        <div className="text-sm text-gray-600 mt-1">Downloads</div>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-4 text-center">
+                        <div className="text-3xl font-bold text-purple-600">{selectedMagnet.conversionRate.toFixed(1)}%</div>
+                        <div className="text-sm text-gray-600 mt-1">Conversion</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Files & Assets */}
+                  {selectedMagnet.fileUrl && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">Files</h3>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Primary File</p>
+                            <p className="text-gray-900 mt-1">{selectedMagnet.fileName || 'File'}</p>
+                            {selectedMagnet.fileSize && (
+                              <p className="text-sm text-gray-500">
+                                {(selectedMagnet.fileSize / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            )}
+                          </div>
+                          <a
+                            href={selectedMagnet.fileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                          >
+                            Download →
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Integration Info */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">Integration</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Opt-in URL</label>
+                        <div className="flex gap-2 mt-1">
+                          <input
+                            type="text"
+                            readOnly
+                            value={selectedMagnet.optInUrl}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm"
+                          />
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedMagnet.optInUrl);
+                              toast.success('URL copied to clipboard!');
+                            }}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Embed Code</label>
+                        <div className="flex gap-2 mt-1">
+                          <textarea
+                            readOnly
+                            value={selectedMagnet.embedCode}
+                            rows={2}
+                            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-sm resize-none"
+                          />
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedMagnet.embedCode);
+                              toast.success('Embed code copied to clipboard!');
+                            }}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* EDIT MODE */
+                <div className="space-y-4">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                    <input
+                      type="text"
+                      value={editFormData.name || ''}
+                      onChange={(e) => {
+                        setEditFormData({ ...editFormData, name: e.target.value });
+                        setEditFormErrors({ ...editFormErrors, name: '' });
+                      }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        editFormErrors.name ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {editFormErrors.name && (
+                      <p className="text-red-500 text-sm mt-1">{editFormErrors.name}</p>
+                    )}
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Type *</label>
+                    <select
+                      value={editFormData.type || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, type: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="PDF">PDF Document</option>
+                      <option value="EBOOK">eBook</option>
+                      <option value="TEMPLATE">Template</option>
+                      <option value="CHECKLIST">Checklist</option>
+                      <option value="WORKBOOK">Workbook</option>
+                      <option value="VIDEO">Video</option>
+                      <option value="VIDEO_COURSE">Video Course</option>
+                      <option value="AUDIO">Audio</option>
+                      <option value="SPREADSHEET">Spreadsheet</option>
+                      <option value="ZIP_BUNDLE">ZIP Bundle</option>
+                      <option value="CUSTOM">Custom</option>
+                    </select>
+                  </div>
+
+                  {/* Headline */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Headline *</label>
+                    <input
+                      type="text"
+                      value={editFormData.headline || ''}
+                      onChange={(e) => {
+                        setEditFormData({ ...editFormData, headline: e.target.value });
+                        setEditFormErrors({ ...editFormErrors, headline: '' });
+                      }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        editFormErrors.headline ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {editFormErrors.headline && (
+                      <p className="text-red-500 text-sm mt-1">{editFormErrors.headline}</p>
+                    )}
+                  </div>
+
+                  {/* Subheadline */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Subheadline</label>
+                    <input
+                      type="text"
+                      value={editFormData.subheadline || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, subheadline: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                      rows={4}
+                      value={editFormData.description || ''}
+                      maxLength={1000}
+                      onChange={(e) => {
+                        setEditFormData({ ...editFormData, description: e.target.value });
+                        setEditFormErrors({ ...editFormErrors, description: '' });
+                      }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+                        editFormErrors.description ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {editFormErrors.description && (
+                      <p className="text-red-500 text-sm mt-1">{editFormErrors.description}</p>
+                    )}
+                  </div>
+
+                  {/* Delivery Method */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Method *</label>
+                    <select
+                      value={editFormData.deliveryMethod || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, deliveryMethod: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="INSTANT_DOWNLOAD">Instant Download</option>
+                      <option value="EMAIL_DELIVERY">Email Delivery</option>
+                      <option value="GATED_ACCESS">Gated Access</option>
+                      <option value="HYBRID">Hybrid</option>
+                      <option value="DRIP_COURSE">Drip Course</option>
+                    </select>
+                  </div>
+
+                  {/* Delivery Delay */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Delivery Delay (minutes)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editFormData.deliveryDelay || 0}
+                      onChange={(e) => setEditFormData({ ...editFormData, deliveryDelay: parseInt(e.target.value) || 0 })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Email Fields (if delivery method includes EMAIL) */}
+                  {(editFormData.deliveryMethod === 'EMAIL_DELIVERY' || editFormData.deliveryMethod === 'HYBRID') && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email Subject</label>
+                        <input
+                          type="text"
+                          value={editFormData.emailSubject || ''}
+                          onChange={(e) => setEditFormData({ ...editFormData, emailSubject: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email Body</label>
+                        <textarea
+                          rows={4}
+                          value={editFormData.emailBody || ''}
+                          onChange={(e) => setEditFormData({ ...editFormData, emailBody: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Status */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select
+                      value={editFormData.status || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="DRAFT">Draft</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="PAUSED">Paused</option>
+                      <option value="ARCHIVED">Archived</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Footer Buttons */}
+              <div className="flex gap-3 mt-6 pt-6 border-t border-gray-200">
+                {detailModalMode === 'view' ? (
+                  <>
+                    <button
+                      onClick={handleSwitchToEditMode}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={handleDeleteMagnet}
+                      className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      onClick={handleCloseDetailModal}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                    >
+                      Close
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setDetailModalMode('view')}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateMagnet}
+                      disabled={isUpdating}
+                      className={`flex-1 px-4 py-2 rounded-lg font-medium ${
+                        isUpdating
+                          ? 'bg-gray-400 cursor-not-allowed text-white'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {isUpdating ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
