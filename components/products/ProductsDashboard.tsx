@@ -458,6 +458,12 @@ export default function ProductsDashboard() {
                     )}
                     <div className="flex gap-2">
                       <button
+                        onClick={() => handleViewProduct(product.id)}
+                        className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm font-medium hover:bg-gray-200"
+                      >
+                        View
+                      </button>
+                      <button
                         onClick={() => handleEditProduct(product.id)}
                         className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-700"
                       >
