@@ -47,6 +47,19 @@ export default function SchedulerDashboard() {
   const [activeTab, setActiveTab] = useState<'calendar' | 'optimal' | 'history'>('calendar');
   const [showNewPostModal, setShowNewPostModal] = useState(false);
 
+  // Form state for schedule modal
+  const [formData, setFormData] = useState({
+    content: '',
+    platform: '',
+    postType: '',
+    date: '',
+    time: '',
+    mediaUrls: '',
+    autoPost: false
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Fetch scheduled posts
   useEffect(() => {
     fetchScheduledPosts();
@@ -107,6 +120,128 @@ export default function SchedulerDashboard() {
       LINK_IN_BIO: '🔗',
     };
     return icons[platform] || '📱';
+  };
+
+  const resetForm = () => {
+    setFormData({
+      content: '',
+      platform: '',
+      postType: '',
+      date: '',
+      time: '',
+      mediaUrls: '',
+      autoPost: false
+    });
+    setFormErrors({});
+    setIsSubmitting(false);
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.content || formData.content.trim().length < 10) {
+      errors.content = formData.content ? 'Content must be at least 10 characters' : 'Post content is required';
+    }
+
+    if (formData.content.length > 2000) {
+      errors.content = 'Content must be less than 2000 characters';
+    }
+
+    if (!formData.platform) {
+      errors.platform = 'Please select a platform';
+    }
+
+    if (!formData.postType) {
+      errors.postType = 'Please select a post type';
+    }
+
+    if (!formData.date) {
+      errors.date = 'Please select a date';
+    } else {
+      const selectedDate = new Date(formData.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        errors.date = 'Date cannot be in the past';
+      }
+    }
+
+    if (!formData.time) {
+      errors.time = 'Please select a time';
+    } else if (formData.date) {
+      const selectedDateTime = new Date(`${formData.date}T${formData.time}`);
+      const now = new Date();
+      const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60000);
+      if (selectedDateTime < fiveMinutesFromNow) {
+        errors.time = 'Time must be at least 5 minutes from now';
+      }
+    }
+
+    if (formData.mediaUrls) {
+      const urls = formData.mediaUrls.split(',').map(u => u.trim()).filter(Boolean);
+      for (const url of urls) {
+        try {
+          new URL(url);
+        } catch {
+          errors.mediaUrls = `Invalid URL format: ${url}`;
+          break;
+        }
+      }
+    }
+
+    return {
+      isValid: Object.keys(errors).length === 0,
+      errors
+    };
+  };
+
+  const handleSubmitPost = async () => {
+    const validation = validateForm();
+    if (!validation.isValid) {
+      setFormErrors(validation.errors);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const scheduledFor = new Date(`${formData.date}T${formData.time}`).toISOString();
+      const mediaUrlsArray = formData.mediaUrls
+        ? formData.mediaUrls.split(',').map(u => u.trim()).filter(Boolean)
+        : [];
+
+      const payload = {
+        content: formData.content,
+        platform: formData.platform,
+        postType: formData.postType,
+        scheduledFor,
+        mediaUrls: mediaUrlsArray,
+        autoPost: formData.autoPost,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      };
+
+      await handleSchedulePost(payload);
+      toast.success('Post scheduled successfully!');
+      resetForm();
+    } catch (error) {
+      console.error('Error submitting post:', error);
+      toast.error('Failed to schedule post');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getPostTypesByPlatform = (platform: string): string[] => {
+    const types: Record<string, string[]> = {
+      TWITTER: ['TWEET', 'THREAD'],
+      INSTAGRAM: ['FEED_POST', 'STORY', 'REEL'],
+      FACEBOOK: ['FACEBOOK_POST'],
+      LINKEDIN: ['LINKEDIN_POST'],
+      TIKTOK: ['FEED_POST'],
+      EMAIL: ['EMAIL'],
+      LINK_IN_BIO: ['FEED_POST']
+    };
+    return types[platform] || [];
   };
 
   const getStatusColor = (status: ScheduleStatus) => {
@@ -375,6 +510,233 @@ export default function SchedulerDashboard() {
       {activeTab === 'history' && (
         <div className="text-center py-12">
           <p className="text-gray-500">Post history coming soon</p>
+        </div>
+      )}
+
+      {/* Schedule New Post Modal */}
+      {showNewPostModal && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              resetForm();
+              setShowNewPostModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Schedule New Post
+                </h2>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setShowNewPostModal(false);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Post Content */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Post Content *
+                  </label>
+                  <textarea
+                    rows={6}
+                    placeholder="What do you want to post?"
+                    value={formData.content}
+                    maxLength={2000}
+                    onChange={(e) => {
+                      setFormData({ ...formData, content: e.target.value });
+                      setFormErrors({ ...formErrors, content: '' });
+                    }}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+                      formErrors.content ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-xs text-gray-500">
+                      {formData.content.length} / 2000 characters
+                    </span>
+                    {formErrors.content && (
+                      <p className="text-red-500 text-sm">{formErrors.content}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Platform */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Platform *
+                  </label>
+                  <select
+                    value={formData.platform}
+                    onChange={(e) => {
+                      setFormData({ ...formData, platform: e.target.value, postType: '' });
+                      setFormErrors({ ...formErrors, platform: '' });
+                    }}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.platform ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  >
+                    <option value="">Choose platform...</option>
+                    <option value="TWITTER">𝕏 (Twitter)</option>
+                    <option value="INSTAGRAM">📷 Instagram</option>
+                    <option value="FACEBOOK">👍 Facebook</option>
+                    <option value="LINKEDIN">💼 LinkedIn</option>
+                    <option value="TIKTOK">🎵 TikTok</option>
+                    <option value="EMAIL">📧 Email</option>
+                    <option value="LINK_IN_BIO">🔗 Link in Bio</option>
+                  </select>
+                  {formErrors.platform && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.platform}</p>
+                  )}
+                </div>
+
+                {/* Post Type */}
+                {formData.platform && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Post Type *
+                    </label>
+                    <select
+                      value={formData.postType}
+                      onChange={(e) => {
+                        setFormData({ ...formData, postType: e.target.value });
+                        setFormErrors({ ...formErrors, postType: '' });
+                      }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        formErrors.postType ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    >
+                      <option value="">Choose type...</option>
+                      {getPostTypesByPlatform(formData.platform).map((type) => (
+                        <option key={type} value={type}>
+                          {type.replace(/_/g, ' ')}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.postType && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.postType}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Scheduled Date and Time */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Scheduled Date *
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.date}
+                      min={new Date().toISOString().split('T')[0]}
+                      onChange={(e) => {
+                        setFormData({ ...formData, date: e.target.value });
+                        setFormErrors({ ...formErrors, date: '' });
+                      }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        formErrors.date ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {formErrors.date && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.date}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Scheduled Time *
+                    </label>
+                    <input
+                      type="time"
+                      value={formData.time}
+                      onChange={(e) => {
+                        setFormData({ ...formData, time: e.target.value });
+                        setFormErrors({ ...formErrors, time: '' });
+                      }}
+                      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        formErrors.time ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                    />
+                    {formErrors.time && (
+                      <p className="text-red-500 text-sm mt-1">{formErrors.time}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Media URLs */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Media URLs (optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter comma-separated image/video URLs"
+                    value={formData.mediaUrls}
+                    onChange={(e) => {
+                      setFormData({ ...formData, mediaUrls: e.target.value });
+                      setFormErrors({ ...formErrors, mediaUrls: '' });
+                    }}
+                    className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      formErrors.mediaUrls ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  {formErrors.mediaUrls && (
+                    <p className="text-red-500 text-sm mt-1">{formErrors.mediaUrls}</p>
+                  )}
+                </div>
+
+                {/* Auto-post */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="autoPost"
+                      checked={formData.autoPost}
+                      onChange={(e) => setFormData({ ...formData, autoPost: e.target.checked })}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <label htmlFor="autoPost" className="text-sm font-medium text-gray-700">
+                      Automatically publish (requires platform connection)
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 ml-6">
+                    Note: Platform must be connected in settings to auto-post
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setShowNewPostModal(false);
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitPost}
+                  disabled={isSubmitting}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium ${
+                    isSubmitting
+                      ? 'bg-gray-400 cursor-not-allowed text-white'
+                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                  }`}
+                >
+                  {isSubmitting ? 'Scheduling...' : 'Schedule Post'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

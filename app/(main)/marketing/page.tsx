@@ -53,6 +53,17 @@ export default function MarketingDashboard() {
         </a>
 
         <a
+          href="/marketing/products"
+          className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-8 text-white hover:shadow-xl transition-shadow group"
+        >
+          <div className="text-5xl mb-4">📦</div>
+          <h2 className="text-2xl font-bold mb-2 group-hover:underline">Products</h2>
+          <p className="text-indigo-100">
+            Manage digital products and track sales. Create products with Stripe integration for payment processing.
+          </p>
+        </a>
+
+        <a
           href="/marketing/schedule"
           className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-8 text-white hover:shadow-xl transition-shadow group"
         >
