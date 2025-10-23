@@ -63,6 +63,15 @@ export default function LeadMagnetDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
 
+  // Detail/Edit modal state
+  const [selectedMagnet, setSelectedMagnet] = useState<any>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailModalMode, setDetailModalMode] = useState<'view' | 'edit'>('view');
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [editFormData, setEditFormData] = useState<any>({});
+  const [editFormErrors, setEditFormErrors] = useState<Record<string, string>>({});
+  const [isUpdating, setIsUpdating] = useState(false);
+
   useEffect(() => {
     fetchLeadMagnets();
     fetchTemplates();
