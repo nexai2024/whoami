@@ -256,7 +256,7 @@ const Dashboard = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.6 }}
           >
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions 3</h2>
             
             <div className="space-y-4">
               <Link
@@ -285,21 +285,35 @@ const Dashboard = () => {
                 </div>
               </Link>
 
-              {/* <Link
+               <Link
                 to="/settings"
                 className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group"
-              > */}
+              >
                 <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
                   <SafeIcon icon={FiSettings} className="text-white" />
                 </div>
                 <div className="text-left">
-                  {/* <h3 className="font-medium text-gray-900">Settings</h3> */}
+                   <h3 className="font-medium text-gray-900">Settings</h3>
                   <MyAccountPage />
                   <p className="text-sm text-gray-600">Manage account</p>
                 </div>
-              {/* </Link> */}
+              </Link>
 
               {/* NEW: Marketing Category */}
+
+              <Link
+                to="/marketing"
+                className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl hover:from-green-100 hover:to-blue-100 transition-colors group"
+              >
+                <div className="p-2 bg-green-600 rounded-lg group-hover:bg-green-700 transition-colors">
+                  <SafeIcon icon={FiBarChart3} className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">Marketing</h3>
+                  <p className="text-sm text-gray-600">Marketing tools</p>
+                </div>
+              </Link>
+
               <div className="pt-4 mt-4 border-t border-gray-200">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                   Marketing

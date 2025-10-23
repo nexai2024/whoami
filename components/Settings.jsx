@@ -5,7 +5,7 @@ import SafeIcon from '../common/SafeIcon';
 import FileUpload from './FileUpload';
 import CustomDomainSetup from './CustomDomainSetup';
 import { logger } from '../lib/utils/logger';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@stackframe/stack';
 import toast from 'react-hot-toast';
 const { 
   FiUser, FiSettings, FiCreditCard, FiGlobe, FiShield, 
