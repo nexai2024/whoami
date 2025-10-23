@@ -31,6 +31,8 @@ export default function ProductsDashboard() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -194,6 +196,27 @@ export default function ProductsDashboard() {
       setShowCreateModal(true);
     } catch (error) {
       console.error('Error fetching product:', error);
+      toast.error('Failed to load product details');
+    }
+  };
+
+  const handleViewProduct = async (productId: string) => {
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        headers: { 'x-user-id': 'demo-user' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setViewingProduct(data);
+        setShowViewModal(true);
+      } else if (response.status === 404) {
+        toast.error('Product not found');
+      } else {
+        toast.error('Failed to load product details');
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error);
       toast.error('Failed to load product details');
     }
   };
@@ -435,6 +458,12 @@ export default function ProductsDashboard() {
                     )}
                     <div className="flex gap-2">
                       <button
+                        onClick={() => handleViewProduct(product.id)}
+                        className="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded text-sm font-medium hover:bg-gray-200"
+                      >
+                        View
+                      </button>
+                      <button
                         onClick={() => handleEditProduct(product.id)}
                         className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-700"
                       >
@@ -517,6 +546,12 @@ export default function ProductsDashboard() {
                         {new Date(product.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleViewProduct(product.id)}
+                          className="text-gray-600 hover:text-gray-900 mr-3"
+                        >
+                          View
+                        </button>
                         <button
                           onClick={() => handleEditProduct(product.id)}
                           className="text-blue-600 hover:text-blue-900 mr-3"
@@ -771,6 +806,138 @@ export default function ProductsDashboard() {
                   {isSubmitting
                     ? modalMode === 'create' ? 'Creating...' : 'Saving...'
                     : modalMode === 'create' ? 'Create Product' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Product Details Modal */}
+      {showViewModal && viewingProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Product Details</h2>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Product Info Grid */}
+              <div className="grid grid-cols-2 gap-6 mb-6">
+                {/* Left Column */}
+                <div>
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-500">Product Name</label>
+                    <p className="text-lg font-semibold text-gray-900">{viewingProduct.name}</p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-500">Description</label>
+                    <p className="text-gray-700">{viewingProduct.description || 'No description'}</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-500">Price</label>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {formatCurrency(viewingProduct.price, viewingProduct.currency)}
+                    </p>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-500">Status</label>
+                    <p>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        viewingProduct.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {viewingProduct.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div>
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-500">Total Sales</label>
+                    <p className="text-3xl font-bold text-gray-900">{viewingProduct.salesCount}</p>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-500">Total Revenue</label>
+                    <p className="text-2xl font-semibold text-green-600">
+                      {formatCurrency(viewingProduct.salesCount * viewingProduct.price, viewingProduct.currency)}
+                    </p>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="text-sm font-medium text-gray-500">Download Limit</label>
+                    <p className="text-gray-900">
+                      {viewingProduct.downloadLimit ? `${viewingProduct.downloadLimit} downloads per purchase` : 'Unlimited'}
+                    </p>
+                  </div>
+
+                  {viewingProduct.fileUrl && (
+                    <div className="mb-4">
+                      <label className="text-sm font-medium text-gray-500">Digital File</label>
+                      <a 
+                        href={viewingProduct.fileUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-blue-600 hover:underline text-sm flex items-center gap-1"
+                      >
+                        📎 View File
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Stripe Integration Info */}
+              {viewingProduct.stripeProductId && (
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <label className="text-sm font-medium text-gray-500 mb-2 block">Stripe Integration</label>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-gray-700">
+                      <span className="font-medium">Product ID:</span> {viewingProduct.stripeProductId}
+                    </p>
+                    {viewingProduct.stripePriceId && (
+                      <p className="text-gray-700">
+                        <span className="font-medium">Price ID:</span> {viewingProduct.stripePriceId}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Metadata */}
+              <div className="border-t pt-4 text-sm text-gray-500">
+                <p>Created: {new Date(viewingProduct.createdAt).toLocaleString()}</p>
+                <p>Last updated: {new Date(viewingProduct.updatedAt).toLocaleString()}</p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    handleEditProduct(viewingProduct.id);
+                  }}
+                  className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  Edit Product
+                </button>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                >
+                  Close
                 </button>
               </div>
             </div>

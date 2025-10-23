@@ -46,6 +46,9 @@ export default function SchedulerDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'calendar' | 'optimal' | 'history'>('calendar');
   const [showNewPostModal, setShowNewPostModal] = useState(false);
+  const [showAnalyzeModal, setShowAnalyzeModal] = useState(false);
+  const [showBulkScheduleModal, setShowBulkScheduleModal] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   // Form state for schedule modal
   const [formData, setFormData] = useState({
@@ -59,6 +62,18 @@ export default function SchedulerDashboard() {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Bulk schedule form state
+  const [bulkFormData, setBulkFormData] = useState({
+    postText: '',
+    platform: 'TWITTER',
+    postType: 'TWEET',
+    strategy: 'OPTIMAL' as 'OPTIMAL' | 'EVENLY' | 'MANUAL',
+    startDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+    autoPost: false,
+    minHoursBetween: 4
+  });
 
   // Fetch scheduled posts
   useEffect(() => {
@@ -106,6 +121,130 @@ export default function SchedulerDashboard() {
     } catch (error) {
       console.error('Error scheduling post:', error);
       toast.error('Failed to schedule post');
+    }
+  };
+
+  const handleAnalyzeEngagement = async () => {
+    setAnalyzing(true);
+    setShowAnalyzeModal(false);
+
+    try {
+      const response = await fetch('/api/schedule/analyze', {
+        method: 'POST',
+        headers: {
+          'x-user-id': 'demo-user',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+
+      if (response.ok) {
+        toast.success('Analyzing engagement patterns...');
+        
+        // Poll for results every 5 seconds for 2 minutes
+        let attempts = 0;
+        const maxAttempts = 24; // 2 minutes / 5 seconds
+        
+        const pollInterval = setInterval(async () => {
+          attempts++;
+          await fetchOptimalTimes();
+          
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            setAnalyzing(false);
+            toast.success('Analysis complete!');
+          }
+        }, 5000);
+        
+        // Stop polling after 2 minutes
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          setAnalyzing(false);
+        }, 120000);
+      } else {
+        const error = await response.json();
+        if (error.error?.includes('Insufficient data')) {
+          toast.error('Need at least 30 clicks to analyze. Keep growing your audience!');
+        } else {
+          toast.error(error.error || 'Analysis failed. Please try again later.');
+        }
+        setAnalyzing(false);
+      }
+    } catch (error) {
+      console.error('Error analyzing engagement:', error);
+      toast.error('Analysis failed. Please try again later.');
+      setAnalyzing(false);
+    }
+  };
+
+  const handleBulkSchedule = async () => {
+    // Validate bulk form
+    const lines = bulkFormData.postText.split('\n').filter(line => line.trim().length >= 10);
+    
+    if (lines.length < 2) {
+      toast.error('Please enter at least 2 posts');
+      return;
+    }
+    
+    if (lines.length > 20) {
+      toast.error('Maximum 20 posts allowed');
+      return;
+    }
+
+    try {
+      const posts = lines.map(content => ({
+        content: content.trim(),
+        platform: bulkFormData.platform,
+        postType: bulkFormData.postType
+      }));
+
+      const config = {
+        spread: bulkFormData.strategy,
+        startDate: bulkFormData.startDate,
+        endDate: bulkFormData.endDate,
+        autoPost: bulkFormData.autoPost,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        minHoursBetween: bulkFormData.minHoursBetween
+      };
+
+      const response = await fetch('/api/schedule/bulk', {
+        method: 'POST',
+        headers: {
+          'x-user-id': 'demo-user',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ posts, config })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(`Scheduled ${data.summary.total} posts!`);
+        setShowBulkScheduleModal(false);
+        setBulkFormData({
+          postText: '',
+          platform: 'TWITTER',
+          postType: 'TWEET',
+          strategy: 'OPTIMAL',
+          startDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+          autoPost: false,
+          minHoursBetween: 4
+        });
+        await fetchScheduledPosts();
+        setActiveTab('calendar');
+      } else {
+        const error = await response.json();
+        if (error.error?.includes('No posts provided')) {
+          toast.error('Please enter at least 2 posts');
+        } else if (error.error?.includes('Insufficient optimal times')) {
+          toast.error('Run engagement analysis first, or use Evenly Spaced mode');
+        } else {
+          toast.error(error.error || 'Failed to schedule posts');
+        }
+      }
+    } catch (error) {
+      console.error('Error bulk scheduling:', error);
+      toast.error('Failed to schedule posts. Please try again.');
     }
   };
 
@@ -313,13 +452,21 @@ export default function SchedulerDashboard() {
                 {posts.length} posts scheduled
               </p>
             </div>
-            <button
-              onClick={() => setShowNewPostModal(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
-              data-tour-id="schedule-post-button"
-            >
-              + Schedule New Post
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBulkScheduleModal(true)}
+                className="bg-white border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 font-medium"
+              >
+                📅 Bulk Schedule
+              </button>
+              <button
+                onClick={() => setShowNewPostModal(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                data-tour-id="schedule-post-button"
+              >
+                + Schedule New Post
+              </button>
+            </div>
           </div>
 
           {/* Posts List */}
@@ -496,12 +643,21 @@ export default function SchedulerDashboard() {
           </div>
 
           <div className="mt-6 text-center">
-            <button
-              onClick={fetchOptimalTimes}
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              ↻ Refresh Analysis
-            </button>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => setShowAnalyzeModal(true)}
+                disabled={analyzing}
+                className="bg-white border-2 border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 font-medium disabled:opacity-50"
+              >
+                🔍 {analyzing ? 'Analyzing...' : 'Analyze My Data'}
+              </button>
+              <button
+                onClick={fetchOptimalTimes}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                ↻ Refresh Analysis
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -733,6 +889,246 @@ export default function SchedulerDashboard() {
                   }`}
                 >
                   {isSubmitting ? 'Scheduling...' : 'Schedule Post'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Analyze Engagement Modal */}
+      {showAnalyzeModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Analyze Engagement Patterns
+            </h2>
+            <div className="space-y-4 mb-6">
+              <p className="text-gray-700">
+                We'll analyze your link-in-bio traffic from the past 90 days to find when your audience is most engaged
+              </p>
+              <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-green-600">✓</span>
+                  <span className="text-gray-700">Minimum 30 clicks required</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  Current data: Analyzing available traffic data
+                </div>
+              </div>
+              <p className="text-sm text-gray-600">
+                ⏱️ This analysis takes 1-2 minutes
+              </p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ This will replace your current optimal time slots
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowAnalyzeModal(false)}
+                className="flex-1 bg-gray-200 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-300 font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAnalyzeEngagement}
+                className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-medium"
+              >
+                Start Analysis
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Schedule Modal */}
+      {showBulkScheduleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Bulk Schedule Posts</h2>
+                  <p className="text-sm text-gray-600 mt-1">Schedule multiple posts with smart timing</p>
+                </div>
+                <button
+                  onClick={() => setShowBulkScheduleModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {/* Posts Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Posts to Schedule (one per line) *
+                  </label>
+                  <textarea
+                    rows={8}
+                    placeholder="Enter each post on a new line...&#10;&#10;Example:&#10;Check out our new product! 🚀&#10;Behind the scenes look at our process&#10;Customer success story from this week"
+                    value={bulkFormData.postText}
+                    onChange={(e) => setBulkFormData({ ...bulkFormData, postText: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                  <div className="flex justify-between items-center mt-1 text-xs text-gray-500">
+                    <span>
+                      {bulkFormData.postText.split('\n').filter(line => line.trim().length >= 10).length} posts • 
+                      {bulkFormData.postText.length} characters
+                    </span>
+                    <span>Min 2 posts, max 20 posts • Min 10 chars per post</span>
+                  </div>
+                </div>
+
+                {/* Platform and Post Type */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Platform *
+                    </label>
+                    <select
+                      value={bulkFormData.platform}
+                      onChange={(e) => setBulkFormData({ 
+                        ...bulkFormData, 
+                        platform: e.target.value,
+                        postType: getPostTypesByPlatform(e.target.value)[0] || ''
+                      })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="TWITTER">𝕏 (Twitter)</option>
+                      <option value="INSTAGRAM">📷 Instagram</option>
+                      <option value="FACEBOOK">👍 Facebook</option>
+                      <option value="LINKEDIN">💼 LinkedIn</option>
+                      <option value="TIKTOK">🎵 TikTok</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Post Type *
+                    </label>
+                    <select
+                      value={bulkFormData.postType}
+                      onChange={(e) => setBulkFormData({ ...bulkFormData, postType: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      {getPostTypesByPlatform(bulkFormData.platform).map((type) => (
+                        <option key={type} value={type}>
+                          {type.replace(/_/g, ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Timing Strategy */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Timing Strategy *
+                  </label>
+                  <div className="space-y-3">
+                    <label className="flex items-start gap-3 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500">
+                      <input
+                        type="radio"
+                        name="strategy"
+                        value="OPTIMAL"
+                        checked={bulkFormData.strategy === 'OPTIMAL'}
+                        onChange={(e) => setBulkFormData({ ...bulkFormData, strategy: 'OPTIMAL' })}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">Optimal Times</div>
+                        <div className="text-sm text-gray-600">Use AI-optimized times based on your audience engagement</div>
+                        {optimalTimes.length < 3 && (
+                          <div className="text-xs text-yellow-600 mt-1">⚠️ Run engagement analysis first for best results</div>
+                        )}
+                      </div>
+                    </label>
+
+                    <label className="flex items-start gap-3 p-3 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500">
+                      <input
+                        type="radio"
+                        name="strategy"
+                        value="EVENLY"
+                        checked={bulkFormData.strategy === 'EVENLY'}
+                        onChange={(e) => setBulkFormData({ ...bulkFormData, strategy: 'EVENLY' })}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">Evenly Spaced</div>
+                        <div className="text-sm text-gray-600 mb-2">Spread posts evenly over time</div>
+                        {bulkFormData.strategy === 'EVENLY' && (
+                          <div className="grid grid-cols-2 gap-3 mt-2">
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">Start Date</label>
+                              <input
+                                type="date"
+                                value={bulkFormData.startDate}
+                                min={new Date().toISOString().split('T')[0]}
+                                onChange={(e) => setBulkFormData({ ...bulkFormData, startDate: e.target.value })}
+                                className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-gray-600 mb-1">End Date</label>
+                              <input
+                                type="date"
+                                value={bulkFormData.endDate}
+                                min={bulkFormData.startDate}
+                                onChange={(e) => setBulkFormData({ ...bulkFormData, endDate: e.target.value })}
+                                className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm"
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Additional Settings */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Min Hours Between Posts
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="24"
+                      value={bulkFormData.minHoursBetween}
+                      onChange={(e) => setBulkFormData({ ...bulkFormData, minHoursBetween: parseInt(e.target.value) || 4 })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={bulkFormData.autoPost}
+                        onChange={(e) => setBulkFormData({ ...bulkFormData, autoPost: e.target.checked })}
+                        className="w-4 h-4 text-blue-600 rounded"
+                      />
+                      <span className="text-sm text-gray-700">Automatically publish</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setShowBulkScheduleModal(false)}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkSchedule}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  Schedule All Posts
                 </button>
               </div>
             </div>
