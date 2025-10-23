@@ -200,6 +200,27 @@ export default function ProductsDashboard() {
     }
   };
 
+  const handleViewProduct = async (productId: string) => {
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        headers: { 'x-user-id': 'demo-user' }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setViewingProduct(data);
+        setShowViewModal(true);
+      } else if (response.status === 404) {
+        toast.error('Product not found');
+      } else {
+        toast.error('Failed to load product details');
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      toast.error('Failed to load product details');
+    }
+  };
+
   const handleDeleteProduct = async (productId: string) => {
     if (!confirm('Delete this product? It will be deactivated but sales data will be preserved.')) {
       return;
