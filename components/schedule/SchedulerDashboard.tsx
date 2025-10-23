@@ -124,6 +124,130 @@ export default function SchedulerDashboard() {
     }
   };
 
+  const handleAnalyzeEngagement = async () => {
+    setAnalyzing(true);
+    setShowAnalyzeModal(false);
+
+    try {
+      const response = await fetch('/api/schedule/analyze', {
+        method: 'POST',
+        headers: {
+          'x-user-id': 'demo-user',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+
+      if (response.ok) {
+        toast.success('Analyzing engagement patterns...');
+        
+        // Poll for results every 5 seconds for 2 minutes
+        let attempts = 0;
+        const maxAttempts = 24; // 2 minutes / 5 seconds
+        
+        const pollInterval = setInterval(async () => {
+          attempts++;
+          await fetchOptimalTimes();
+          
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            setAnalyzing(false);
+            toast.success('Analysis complete!');
+          }
+        }, 5000);
+        
+        // Stop polling after 2 minutes
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          setAnalyzing(false);
+        }, 120000);
+      } else {
+        const error = await response.json();
+        if (error.error?.includes('Insufficient data')) {
+          toast.error('Need at least 30 clicks to analyze. Keep growing your audience!');
+        } else {
+          toast.error(error.error || 'Analysis failed. Please try again later.');
+        }
+        setAnalyzing(false);
+      }
+    } catch (error) {
+      console.error('Error analyzing engagement:', error);
+      toast.error('Analysis failed. Please try again later.');
+      setAnalyzing(false);
+    }
+  };
+
+  const handleBulkSchedule = async () => {
+    // Validate bulk form
+    const lines = bulkFormData.postText.split('\n').filter(line => line.trim().length >= 10);
+    
+    if (lines.length < 2) {
+      toast.error('Please enter at least 2 posts');
+      return;
+    }
+    
+    if (lines.length > 20) {
+      toast.error('Maximum 20 posts allowed');
+      return;
+    }
+
+    try {
+      const posts = lines.map(content => ({
+        content: content.trim(),
+        platform: bulkFormData.platform,
+        postType: bulkFormData.postType
+      }));
+
+      const config = {
+        spread: bulkFormData.strategy,
+        startDate: bulkFormData.startDate,
+        endDate: bulkFormData.endDate,
+        autoPost: bulkFormData.autoPost,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        minHoursBetween: bulkFormData.minHoursBetween
+      };
+
+      const response = await fetch('/api/schedule/bulk', {
+        method: 'POST',
+        headers: {
+          'x-user-id': 'demo-user',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ posts, config })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(`Scheduled ${data.summary.total} posts!`);
+        setShowBulkScheduleModal(false);
+        setBulkFormData({
+          postText: '',
+          platform: 'TWITTER',
+          postType: 'TWEET',
+          strategy: 'OPTIMAL',
+          startDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+          endDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+          autoPost: false,
+          minHoursBetween: 4
+        });
+        await fetchScheduledPosts();
+        setActiveTab('calendar');
+      } else {
+        const error = await response.json();
+        if (error.error?.includes('No posts provided')) {
+          toast.error('Please enter at least 2 posts');
+        } else if (error.error?.includes('Insufficient optimal times')) {
+          toast.error('Run engagement analysis first, or use Evenly Spaced mode');
+        } else {
+          toast.error(error.error || 'Failed to schedule posts');
+        }
+      }
+    } catch (error) {
+      console.error('Error bulk scheduling:', error);
+      toast.error('Failed to schedule posts. Please try again.');
+    }
+  };
+
   const getPlatformIcon = (platform: Platform) => {
     const icons: Record<Platform, string> = {
       TWITTER: '𝕏',
