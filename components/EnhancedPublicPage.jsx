@@ -1,3 +1,4 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -17,8 +18,12 @@ const {
   FiPhone, FiGlobe, FiInstagram, FiTwitter, FiLinkedin, FiFacebook, FiYoutube
 } = FiIcons;
 
-const EnhancedPublicPage = () => {
-  const { slug } = useParams();
+const EnhancedPublicPage = ({ subdomain, slug }) => {
+  // Get parameters from props or useParams
+  const params = useParams();
+  // In subdomain routing, the subdomain IS the slug
+  const pageSlug = slug || subdomain || params.slug || params.subdomain;
+  
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,13 +32,17 @@ const EnhancedPublicPage = () => {
   const [selectedBlock, setSelectedBlock] = useState(null);
 
   useEffect(() => {
-    loadPage();
-  }, [slug]);
+    console.log('EnhancedPublicPage - pageSlug:', pageSlug, 'subdomain:', subdomain, 'slug:', slug);
+    if (pageSlug) {
+      loadPage();
+    }
+  }, [pageSlug]);
 
   const loadPage = async () => {
     try {
       setLoading(true);
-      const pageData = await PageService.getPageBySlug(slug);
+      console.log('Loading page with slug:', pageSlug);
+      const pageData = await PageService.getPageBySlug(pageSlug);
       setPage(pageData);
       await recordPageView(pageData.id);
     } catch (err) {

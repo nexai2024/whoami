@@ -17,24 +17,29 @@ const {
 } = FiIcons;
 
 const DashboardPage = () => {
-  const { currUser } = useAuth();
-  console.log("currUser", currUser)
+  const { currUser, loading: authLoading } = useAuth();
+  console.log("currUser", currUser, "authLoading", authLoading)
   const [userPages, setUserPages] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) {
+      // Still loading authentication
+      return;
+    }
+    
     if (currUser) {
       console.log("Current Dashboard User", currUser)
       loadDashboardData();
     } else {
+      setLoading(false);
+      // Only redirect if we're sure user is not authenticated
       if (typeof window !== "undefined") {
         window.location.href = '/handler/sign-in';
       }
-      setLoading(false);
     }
-  }, [currUser]);
-
+  }, [currUser, authLoading]);
   const loadDashboardData = async () => {
     try {
       setLoading(true);
@@ -64,6 +69,19 @@ const DashboardPage = () => {
     toast.success('Page URL copied to clipboard!');
   };
 
+  // Show loading while authentication is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if not authenticated
   if (!currUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">

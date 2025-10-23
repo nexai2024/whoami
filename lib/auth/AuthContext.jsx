@@ -26,15 +26,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     function checkAuthStatus() {
       try {
-        // const userId = localStorage.getItem('userId');
-        // const token = localStorage.getItem('token');
-        // const authStatus = localStorage.getItem('isAuthenticated');
-        // const onboardingComplete = localStorage.getItem('onboardingComplete');
-
-        console.log("using coming from stack in auth providrr", user)
-        if (isSignedIn === 'true') {
+        console.log("Auth check - user:", user, "isSignedIn:", isSignedIn);
+        
+        if (user && isSignedIn) {
           setIsAuthenticated(true);
-          setCurrUser({ user });
+          setCurrUser(user);
         } else {
           setIsAuthenticated(false);
           setCurrUser(null);
@@ -52,7 +48,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     async function initUser() {
-      if (user) {
+      if (user && isSignedIn) {
         setCurrUser(user);
         setIsAuthenticated(true);
         console.log("Initializing user metadata if absent");
@@ -67,7 +63,7 @@ export const AuthProvider = ({ children }) => {
       }
     }
     initUser();
-  }, [user]);
+  }, [user, isSignedIn]);
 
   // Log currUser whenever it changes
   useEffect(() => {

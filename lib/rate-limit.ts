@@ -1,5 +1,5 @@
 // lib/rate-limit.ts
-import { prisma } from './prisma'
+import prisma from './prisma'
 
 export type RateLimitResult = {
   allowed: boolean

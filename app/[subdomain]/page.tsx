@@ -1,13 +1,21 @@
 import React from 'react'
+import EnhancedPublicPage from '@/components/EnhancedPublicPage';
 
 type Props = {
-    sudomain: string;
+    params: {
+        subdomain: string;
+    };
 }
 
-const BioPage = (props: Props) => {
-    const { sudomain } = props; // Adjust based on how you pass the subdomain prop
-  return (
-    <div>Bio Page for {sudomain}</div>
-  )
+const BioPage = async ({ params }: Props) => {
+    const { subdomain } = await params;
+    
+    return (
+        <EnhancedPublicPage 
+            subdomain={subdomain}
+            slug={subdomain} // Use subdomain as the slug for now
+        />
+    )
 }
+
 export default BioPage;
