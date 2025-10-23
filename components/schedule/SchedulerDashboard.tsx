@@ -46,6 +46,9 @@ export default function SchedulerDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'calendar' | 'optimal' | 'history'>('calendar');
   const [showNewPostModal, setShowNewPostModal] = useState(false);
+  const [showAnalyzeModal, setShowAnalyzeModal] = useState(false);
+  const [showBulkScheduleModal, setShowBulkScheduleModal] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   // Form state for schedule modal
   const [formData, setFormData] = useState({
@@ -59,6 +62,18 @@ export default function SchedulerDashboard() {
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Bulk schedule form state
+  const [bulkFormData, setBulkFormData] = useState({
+    postText: '',
+    platform: 'TWITTER',
+    postType: 'TWEET',
+    strategy: 'OPTIMAL' as 'OPTIMAL' | 'EVENLY' | 'MANUAL',
+    startDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+    autoPost: false,
+    minHoursBetween: 4
+  });
 
   // Fetch scheduled posts
   useEffect(() => {
