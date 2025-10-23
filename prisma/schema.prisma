@@ -29,6 +29,10 @@ model User {
   optimalTimeSlots   OptimalTimeSlot[]
   schedulingPrefs    SchedulingPreferences?
   leadMagnets        LeadMagnet[]
+  productTemplates    ProductTemplate[]
+  postTemplates       PostTemplate[]
+  campaignTemplates   CampaignTemplate[]
+  onboarding          UserOnboarding?
 
   @@map("users")
 }
