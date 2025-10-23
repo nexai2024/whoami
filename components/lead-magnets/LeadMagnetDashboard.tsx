@@ -305,6 +305,168 @@ export default function LeadMagnetDashboard() {
     }
   };
 
+  const handleViewDetails = async (magnetId: string) => {
+    setDetailLoading(true);
+    try {
+      const response = await fetch(`/api/lead-magnets/${magnetId}`, {
+        headers: { 'x-user-id': 'demo-user' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedMagnet(data);
+        setDetailModalMode('view');
+        setShowDetailModal(true);
+      } else {
+        toast.error('Failed to load lead magnet details');
+      }
+    } catch (error) {
+      console.error('Error fetching magnet details:', error);
+      toast.error('Failed to load lead magnet details');
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleEdit = async (magnetId: string) => {
+    setDetailLoading(true);
+    try {
+      const response = await fetch(`/api/lead-magnets/${magnetId}`, {
+        headers: { 'x-user-id': 'demo-user' }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedMagnet(data);
+        setEditFormData({
+          name: data.name,
+          type: data.type,
+          headline: data.headline,
+          subheadline: data.subheadline || '',
+          description: data.description || '',
+          benefits: data.benefits || [],
+          deliveryMethod: data.deliveryMethod,
+          deliveryDelay: data.deliveryDelay || 0,
+          coverImageUrl: data.coverImageUrl || '',
+          emailSubject: data.emailSubject || '',
+          emailBody: data.emailBody || '',
+          status: data.status
+        });
+        setDetailModalMode('edit');
+        setShowDetailModal(true);
+      } else {
+        toast.error('Failed to load lead magnet details');
+      }
+    } catch (error) {
+      console.error('Error fetching magnet details:', error);
+      toast.error('Failed to load lead magnet details');
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleSwitchToEditMode = () => {
+    if (!selectedMagnet) return;
+    setEditFormData({
+      name: selectedMagnet.name,
+      type: selectedMagnet.type,
+      headline: selectedMagnet.headline,
+      subheadline: selectedMagnet.subheadline || '',
+      description: selectedMagnet.description || '',
+      benefits: selectedMagnet.benefits || [],
+      deliveryMethod: selectedMagnet.deliveryMethod,
+      deliveryDelay: selectedMagnet.deliveryDelay || 0,
+      coverImageUrl: selectedMagnet.coverImageUrl || '',
+      emailSubject: selectedMagnet.emailSubject || '',
+      emailBody: selectedMagnet.emailBody || '',
+      status: selectedMagnet.status
+    });
+    setDetailModalMode('edit');
+  };
+
+  const handleUpdateMagnet = async () => {
+    if (!selectedMagnet) return;
+
+    // Validate edit form
+    const errors: Record<string, string> = {};
+    if (!editFormData.name || editFormData.name.length < 3 || editFormData.name.length > 100) {
+      errors.name = 'Name must be 3-100 characters';
+    }
+    if (!editFormData.headline || editFormData.headline.length < 10 || editFormData.headline.length > 200) {
+      errors.headline = 'Headline must be 10-200 characters';
+    }
+    if (editFormData.description && editFormData.description.length > 1000) {
+      errors.description = 'Description must be less than 1000 characters';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setEditFormErrors(errors);
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/lead-magnets/${selectedMagnet.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': 'demo-user'
+        },
+        body: JSON.stringify(editFormData)
+      });
+
+      if (response.ok) {
+        toast.success('Lead magnet updated successfully!');
+        await fetchLeadMagnets();
+        setShowDetailModal(false);
+        setSelectedMagnet(null);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || 'Failed to update lead magnet');
+      }
+    } catch (error) {
+      console.error('Error updating magnet:', error);
+      toast.error('Failed to update lead magnet');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteMagnet = async () => {
+    if (!selectedMagnet) return;
+    
+    if (!confirm('Are you sure you want to delete this lead magnet? It will be archived.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/lead-magnets/${selectedMagnet.id}`, {
+        method: 'DELETE',
+        headers: { 'x-user-id': 'demo-user' }
+      });
+
+      if (response.ok) {
+        toast.success('Lead magnet deleted successfully');
+        await fetchLeadMagnets();
+        setShowDetailModal(false);
+        setSelectedMagnet(null);
+      } else {
+        toast.error('Failed to delete lead magnet');
+      }
+    } catch (error) {
+      console.error('Error deleting magnet:', error);
+      toast.error('Failed to delete lead magnet');
+    }
+  };
+
+  const handleCloseDetailModal = () => {
+    setShowDetailModal(false);
+    setSelectedMagnet(null);
+    setDetailModalMode('view');
+    setEditFormData({});
+    setEditFormErrors({});
+  };
+
   const getTypeIcon = (type: MagnetType) => {
     const icons: Record<MagnetType, string> = {
       PDF: '📄',
