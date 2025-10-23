@@ -452,13 +452,21 @@ export default function SchedulerDashboard() {
                 {posts.length} posts scheduled
               </p>
             </div>
-            <button
-              onClick={() => setShowNewPostModal(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
-              data-tour-id="schedule-post-button"
-            >
-              + Schedule New Post
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowBulkScheduleModal(true)}
+                className="bg-white border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 font-medium"
+              >
+                📅 Bulk Schedule
+              </button>
+              <button
+                onClick={() => setShowNewPostModal(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                data-tour-id="schedule-post-button"
+              >
+                + Schedule New Post
+              </button>
+            </div>
           </div>
 
           {/* Posts List */}
