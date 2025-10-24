@@ -4,7 +4,7 @@ import { logger } from '@/lib/utils/logger';
 import { generateSlug } from '@/lib/utils/slug';
 import { stackServerApp } from "@/stack/server";
 // Dummy in-memory data store
-let pages: { id: number; title: string; content: string }[] = [
+const pages: { id: number; title: string; content: string }[] = [
     { id: 1, title: 'Home', content: 'Welcome to the homepage.' },
     { id: 2, title: 'About', content: 'About us page.' },
 ];

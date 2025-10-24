@@ -24,7 +24,7 @@ export interface PlatformCredentials {
   accessToken: string;
   refreshToken?: string;
   expiresAt?: Date;
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, string>;
 }
 
 /**
@@ -56,7 +56,7 @@ abstract class BasePlatformPublisher {
 class TwitterPublisher extends BasePlatformPublisher {
   async publish(
     content: PostContent,
-    postType: PostType
+    //postType: PostType
   ): Promise<PublishResult> {
     try {
       // Twitter API v2 endpoint
@@ -111,6 +111,7 @@ class TwitterPublisher extends BasePlatformPublisher {
   private async uploadMedia(urls: string[]): Promise<string[]> {
     // Simplified - in production, download media and upload to Twitter
     // Twitter requires media to be uploaded separately before posting
+    console.log('uploadMedia', urls);
     return [];
   }
 }
@@ -123,6 +124,7 @@ class LinkedInPublisher extends BasePlatformPublisher {
     content: PostContent,
     postType: PostType
   ): Promise<PublishResult> {
+    console.log('publish', content, postType);
     try {
       const personUrn = this.credentials.additionalData?.personUrn;
 
@@ -201,6 +203,7 @@ class InstagramPublisher extends BasePlatformPublisher {
     content: PostContent,
     postType: PostType
   ): Promise<PublishResult> {
+    console.log('publish', content, postType);
     try {
       const instagramAccountId = this.credentials.additionalData?.instagramAccountId;
 
@@ -291,6 +294,7 @@ class FacebookPublisher extends BasePlatformPublisher {
     content: PostContent,
     postType: PostType
   ): Promise<PublishResult> {
+    console.log('publish', content, postType);
     try {
       const pageId = this.credentials.additionalData?.pageId;
 
@@ -359,6 +363,7 @@ class TikTokPublisher extends BasePlatformPublisher {
     content: PostContent,
     postType: PostType
   ): Promise<PublishResult> {
+    console.log('publish', content, postType);
     // TikTok API implementation would go here
     // Note: TikTok API access is limited and requires approval
     return {
@@ -520,9 +525,9 @@ export function getPlatformLimits(platform: Platform): {
   return limits[platform];
 }
 
-export default {
-  publish,
-  publishBatch,
-  validateCredentials,
-  getPlatformLimits,
-};
+// export default {
+//   publish,
+//   publishBatch,
+//   validateCredentials,
+//   getPlatformLimits,
+// };

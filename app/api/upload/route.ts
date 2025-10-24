@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import storageService from '@/lib/services/storageService';
+import { uploadFile } from '@/lib/services/storageService';
 import path from 'path';
 
 // Allowed file types
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     // Upload to storage
     try {
-      const uploadResult = await storageService.uploadFile(
+      const uploadResult = await uploadFile(
         buffer,
         file.name,
         {
@@ -96,14 +96,7 @@ export async function POST(request: NextRequest) {
           contentType: file.type
         }
       );
-
-      // Return file metadata
-      return NextResponse.json({
-        fileUrl: uploadResult.url,
-        fileName: file.name,
-        fileSize: file.size,
-        mimeType: file.type
-      });
+      return NextResponse.json(uploadResult);
     } catch (uploadError) {
       console.error('Storage upload error:', uploadError);
       return NextResponse.json(

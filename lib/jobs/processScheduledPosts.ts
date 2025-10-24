@@ -177,13 +177,13 @@ async function getPlatformCredentials(
     }
 
     // Extract credentials from encrypted config
-    const config = integration.config as any;
+    const config = integration.config as Record<string, string | undefined>;
 
     return {
       accessToken: config.accessToken || '',
       refreshToken: config.refreshToken,
       expiresAt: config.expiresAt ? new Date(config.expiresAt) : undefined,
-      additionalData: config.additionalData || {},
+      additionalData: typeof config.additionalData === 'string' ? {} : config.additionalData || {},
     };
   } catch (error) {
     console.error('Error getting platform credentials:', error);
@@ -254,8 +254,8 @@ export async function cancelScheduledPost(
   }
 }
 
-export default {
-  processScheduledPosts,
-  retryFailedPost,
-  cancelScheduledPost,
-};
+// export default {
+//   processScheduledPosts,
+//   retryFailedPost,
+//   cancelScheduledPost,
+// };

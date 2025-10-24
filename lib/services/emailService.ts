@@ -372,13 +372,13 @@ export function isConfigured(): boolean {
   return false;
 }
 
-export default {
-  sendEmail,
-  sendBatchEmails,
-  renderTemplate,
-  sendLeadMagnetDelivery,
-  sendCampaignNotification,
-  sendPostFailureNotification,
-  sendDripCourseEmail,
-  isConfigured,
-};
+// export default {
+//   sendEmail,
+//   sendBatchEmails,
+//   renderTemplate,
+//   sendLeadMagnetDelivery,
+//   sendCampaignNotification,
+//   sendPostFailureNotification,
+//   sendDripCourseEmail,
+//   isConfigured,
+// };

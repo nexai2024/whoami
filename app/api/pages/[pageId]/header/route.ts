@@ -19,6 +19,7 @@ export async function POST(
     });
     
     if (!page) {
+      console.log('Page not found:', pageId);
       return NextResponse.json(
         { error: 'Page not found' }, 
         { status: 404 }
@@ -31,6 +32,7 @@ export async function POST(
     
     // Step 2: Validate header data structure
     if (!headerData || typeof headerData !== 'object' || Array.isArray(headerData)) {
+      console.log('Invalid headerData:', headerData);
       return NextResponse.json(
         { error: 'Invalid header data structure' },
         { status: 400 }
@@ -40,6 +42,7 @@ export async function POST(
     // Validate headerStyle enum
     const validHeaderStyles = ['minimal', 'card', 'gradient', 'split'];
     if (headerData.headerStyle && !validHeaderStyles.includes(headerData.headerStyle)) {
+      console.log('Invalid headerStyle:', headerData.headerStyle);
       return NextResponse.json(
         { error: 'Invalid headerStyle. Must be: minimal, card, gradient, or split' },
         { status: 400 }
@@ -51,7 +54,7 @@ export async function POST(
       displayName: 100,
       title: 100,
       company: 100,
-      bio: 500,
+      bio: 2500,
       phone: 50,
       location: 100,
       customIntroduction: 1000
@@ -59,6 +62,7 @@ export async function POST(
     
     for (const [field, maxLength] of Object.entries(stringLimits)) {
       if (headerData[field] && headerData[field].length > maxLength) {
+        console.log('Field exceeds maximum length:', field, headerData[field], maxLength);
         return NextResponse.json(
           { error: `${field} exceeds maximum length of ${maxLength} characters` },
           { status: 400 }
@@ -70,6 +74,7 @@ export async function POST(
     if (headerData.email && headerData.email.length > 0) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(headerData.email)) {
+        console.log('Invalid email format:', headerData.email);
         return NextResponse.json(
           { error: 'Invalid email format' },
           { status: 400 }
@@ -84,6 +89,7 @@ export async function POST(
         try {
           new URL(headerData[field]);
         } catch {
+          console.log('Invalid URL format:', field, headerData[field]);
           return NextResponse.json(
             { error: `Invalid ${field} URL format` },
             { status: 400 }
@@ -97,6 +103,7 @@ export async function POST(
       const validPlatforms = ['instagram', 'twitter', 'linkedin', 'facebook', 'youtube'];
       for (const [platform, url] of Object.entries(headerData.socialLinks)) {
         if (!validPlatforms.includes(platform)) {
+          console.log('Invalid social platform:', platform);
           return NextResponse.json(
             { error: `Invalid social platform: ${platform}` },
             { status: 400 }
@@ -107,6 +114,7 @@ export async function POST(
           try {
             new URL(url);
           } catch {
+            console.log('Invalid URL for social platform:', platform, url);
             return NextResponse.json(
               { error: `Invalid URL for social platform: ${platform}` },
               { status: 400 }
@@ -120,6 +128,7 @@ export async function POST(
     const booleanFields = ['showContactInfo', 'showSocialLinks', 'showLocation'];
     for (const field of booleanFields) {
       if (headerData[field] !== undefined && typeof headerData[field] !== 'boolean') {
+        console.log('Invalid boolean field:', field, headerData[field]);
         return NextResponse.json(
           { error: `${field} must be a boolean` },
           { status: 400 }

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 /**
  * Settings Dashboard Overview
  * Main settings page with navigation to settings sub-pages
@@ -19,7 +21,7 @@ export default function SettingsDashboard() {
 
       {/* Settings Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <a
+        <Link
           href="/settings/billing"
           className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-8 text-white hover:shadow-xl transition-shadow group"
         >
@@ -28,7 +30,7 @@ export default function SettingsDashboard() {
           <p className="text-blue-100">
             Manage your subscription plan, view usage, and update billing information.
           </p>
-        </a>
+        </Link>
 
         <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl p-8 text-white cursor-not-allowed opacity-60">
           <div className="text-5xl mb-4">👤</div>

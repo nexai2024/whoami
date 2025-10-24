@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import storageService from '@/lib/services/storageService';
+import { generateDownloadUrl } from '@/lib/services/storageService';
 
 const prisma = new PrismaClient();
 
@@ -111,10 +111,12 @@ export async function GET(
     }
 
     // Generate signed URL for secure download
-    const signedUrl = await storageService.generateDownloadUrl(
-      extractKeyFromUrl(fileUrl),
-      3600 // 1 hour expiry
+    console.log('fileUrl', fileUrl);
+    const signedUrl = await generateDownloadUrl(
+      fileUrl,
     );
+
+    console.log('signedUrl', signedUrl);
 
     // Redirect to signed URL
     return NextResponse.redirect(signedUrl);

@@ -107,7 +107,7 @@ export async function generateContent(
 /**
  * Generate structured JSON content with automatic parsing
  */
-export async function generateJSON<T = any>(
+export async function generateJSON<T = Record<string, string>>(
   options: GenerateOptions,
   retryOptions?: RetryOptions
 ): Promise<T> {
@@ -279,12 +279,12 @@ export function isConfigured(): boolean {
   return !!process.env.GOOGLE_GEMINI_API_KEY;
 }
 
-export default {
-  generateContent,
-  generateJSON,
-  extractKeyPoints,
-  generateCopyVariants,
-  summarizeForPlatform,
-  generateOptInCopy,
-  isConfigured,
-};
+// export default {
+//   generateContent,
+//   generateJSON,
+//   extractKeyPoints,
+//   generateCopyVariants,
+//   summarizeForPlatform,
+//   generateOptInCopy,
+//   isConfigured,
+// };

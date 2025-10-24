@@ -1,7 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Tour, tours, getTourById, getAutoTriggerTour } from './tourConfig';
+//import { Tour, tours, getTourById, getAutoTriggerTour } from './tourConfig';
+import { Tour, getTourById, getAutoTriggerTour } from './tourConfig';
 import { usePathname } from 'next/navigation';
 
 type TourProgress = {

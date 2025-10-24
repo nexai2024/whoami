@@ -254,15 +254,15 @@ export function isConfigured(): boolean {
   );
 }
 
-export default {
-  uploadFile,
-  uploadFromUrl,
-  generateUploadUrl,
-  generateDownloadUrl,
-  deleteFile,
-  getPublicUrl,
-  uploadMultipleFiles,
-  validateFileType,
-  validateFileSize,
-  isConfigured,
-};
+// export default {
+//   uploadFile,
+//   uploadFromUrl,
+//   generateUploadUrl,
+//   generateDownloadUrl,
+//   deleteFile,
+//   getPublicUrl,
+//   uploadMultipleFiles,
+//   validateFileType,
+//   validateFileSize,
+//   isConfigured,
+// };

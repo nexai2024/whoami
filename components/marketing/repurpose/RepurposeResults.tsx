@@ -5,7 +5,7 @@
  * Display repurposed content with generated assets
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FiCopy, FiCalendar, FiEdit2, FiDownload, FiArrowLeft } from 'react-icons/fi';
 import toast from 'react-hot-toast';
@@ -15,7 +15,7 @@ interface RepurposedAsset {
   platform: string;
   type: string;
   content: string;
-  metadata?: any;
+  metadata?: Record<string, string>;
 }
 
 interface RepurposedContent {
@@ -250,7 +250,7 @@ export default function RepurposeResults() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as 'all' | 'social' | 'email' | 'longform')}
               className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                 activeTab === tab.id
                   ? 'border-purple-500 text-purple-600'
