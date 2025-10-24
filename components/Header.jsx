@@ -1,5 +1,7 @@
+"use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation, redirect } from 'react-router';
+import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
@@ -21,13 +23,15 @@ const Header = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [pagesDropdownOpen, setPagesDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const location = useLocation();
+  const pathname = usePathname();
+  const router = useRouter();
   const dropdownRef = useRef(null);
   const pagesDropdownRef = useRef(null);
+  const stackUser = useUser();
 
   useEffect(() => {
     loadUserData();
-  }, []);
+  }, [stackUser]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -46,10 +50,10 @@ const Header = () => {
   const loadUserData = async () => {
     try {
       setLoading(true);
-      // Simulate getting current user (in real app, this would come from auth context)
-      const userData =  await useUser();
-      const pages = await PageService.getUserPages(userData.user.id);
-      setUser(userData);
+      if (!stackUser) return;
+      
+      const pages = await PageService.getUserPages(stackUser.id);
+      setUser(stackUser);
       setUserPages(pages);
       setCurrentPage(pages[0] || null);
     } catch (error) {
@@ -66,7 +70,7 @@ const Header = () => {
     }
     
     // Open preview in new window
-    const previewUrl = `${window.location.origin}/#/page/${currentPage.slug}`;
+    const previewUrl = `${window.location.origin}/${currentPage.slug}`;
     const previewWindow = window.open(
       previewUrl,
       'preview',
@@ -83,13 +87,13 @@ const Header = () => {
 
   const copyPageUrl = () => {
     if (!currentPage) return;
-    const pageUrl = `${window.location.origin}/#/${currentPage.slug}`;
+    const pageUrl = `${window.location.origin}/${currentPage.slug}`;
     navigator.clipboard.writeText(pageUrl);
     toast.success('Page URL copied to clipboard!');
   };
 
   const handleCreateNewPage = () => {
-    redirect('/builder?new=true');
+    router.push('/builder?new=true');
   };
 
   const navigationItems = [
@@ -118,19 +122,10 @@ const Header = () => {
     <header className="bg-white shadow-sm border-b sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-        <header>
-      <SignedOut>
-        <SignInButton />
-      </SignedOut>
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
-    </header>
-
           {/* Left side - Logo and Navigation */}
           <div className="flex items-center gap-8">
             <Link
-              to="/dashboard"
+              href="/dashboard"
               className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent hover:from-indigo-700 hover:to-purple-700 transition-all"
             >
               WhoAmI
@@ -141,9 +136,9 @@ const Header = () => {
               {navigationItems.map((item) => (
                 <Link
                   key={item.path}
-                  to={item.path}
+                  href={item.path}
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    location.pathname === item.path
+                    pathname === item.path
                       ? 'bg-indigo-100 text-indigo-700'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
@@ -251,24 +246,24 @@ const Header = () => {
                 className="flex items-center gap-3 hover:bg-gray-100 rounded-lg p-2 transition-colors"
               >
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-                  {user?.profile?.avatar ? (
+                  {user?.profileImageUrl ? (
                     <img
-                      src={user.profile.avatar}
-                      alt={user.profile.displayName}
+                      src={user.profileImageUrl}
+                      alt={user.displayName || 'User'}
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <span className="text-white text-sm font-bold">
-                      {user?.profile?.displayName?.charAt(0) || 'U'}
+                      {user?.displayName?.charAt(0) || 'U'}
                     </span>
                   )}
                 </div>
                 <div className="hidden sm:block text-left">
                   <div className="text-sm font-medium text-gray-900">
-                    {user?.profile?.displayName || 'User'}
+                    {user?.displayName || 'User'}
                   </div>
                   <div className="text-xs text-gray-500 capitalize">
-                    {user?.profile?.plan?.toLowerCase() || 'Free'} Plan
+                    {user?.plan?.toLowerCase() || 'Free'} Plan
                   </div>
                 </div>
                 <SafeIcon icon={FiChevronDown} className="text-gray-400" />
@@ -284,15 +279,15 @@ const Header = () => {
                   >
                     <div className="px-4 py-3 border-b">
                       <div className="font-medium text-gray-900">
-                        {user?.profile?.displayName}
+                        {user?.displayName}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {user?.email}
+                        {user?.primaryEmail}
                       </div>
                     </div>
 
                     <Link
-                      to="/settings"
+                      href="/settings"
                       className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => setDropdownOpen(false)}
                     >
@@ -301,7 +296,7 @@ const Header = () => {
                     </Link>
 
                     <Link
-                      to="/help"
+                      href="/help"
                       className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => setDropdownOpen(false)}
                     >
@@ -313,8 +308,11 @@ const Header = () => {
                       <button
                         onClick={() => {
                           setDropdownOpen(false);
-                          // Handle logout
-                          navigate('/');
+                          // Handle logout with Stack
+                          if (stackUser && typeof stackUser.signOut === 'function') {
+                            stackUser.signOut();
+                          }
+                          router.push('/');
                         }}
                         className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors w-full text-left"
                       >
@@ -335,9 +333,9 @@ const Header = () => {
             {navigationItems.map((item) => (
               <Link
                 key={item.path}
-                to={item.path}
+                href={item.path}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  location.pathname === item.path
+                  pathname === item.path
                     ? 'bg-indigo-100 text-indigo-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
