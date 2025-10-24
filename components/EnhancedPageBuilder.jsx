@@ -839,13 +839,29 @@ const EnhancedPageBuilder = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {pageData?.title || 'Page Builder'}
-            </h1>
+      {/* Tabs */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
+            <nav className="flex" data-tour-id="builder-tabs">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                  data-tour-id={`${tab.id}-tab`}
+                >
+                  <SafeIcon icon={tab.icon} />
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+            
+            {/* Action buttons in tabs area */}
             <div className="flex items-center gap-4">
               <button
                 onClick={handlePreview}
@@ -865,29 +881,6 @@ const EnhancedPageBuilder = () => {
               </button>
             </div>
           </div>
-        </div>
-      </header>
-
-      {/* Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex" data-tour-id="builder-tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                }`}
-                data-tour-id={`${tab.id}-tab`}
-              >
-                <SafeIcon icon={tab.icon} />
-                {tab.label}
-              </button>
-            ))}
-          </nav>
         </div>
       </div>
 
