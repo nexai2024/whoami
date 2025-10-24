@@ -29,6 +29,10 @@ model User {
   optimalTimeSlots   OptimalTimeSlot[]
   schedulingPrefs    SchedulingPreferences?
   leadMagnets        LeadMagnet[]
+  productTemplates    ProductTemplate[]
+  postTemplates       PostTemplate[]
+  campaignTemplates   CampaignTemplate[]
+  onboarding          UserOnboarding?
 
   @@map("users")
 }
@@ -1114,4 +1118,117 @@ enum TemplateCategory {
   TRACKER
   EBOOK
   MINI_COURSE
+}
+
+// ============================================
+// TEMPLATES SYSTEM
+// ============================================
+
+model ProductTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+
+  // Template details
+  name        String
+  description String?
+  price       Float
+  currency    String @default("USD")
+  downloadLimit Int?
+  
+  // Category
+  category String // "Course", "Ebook", "Template", "Digital Art", etc.
+  
+  // Preview
+  thumbnailUrl String?
+  
+  // Popularity
+  useCount Int     @default(0)
+  featured Boolean @default(false)
+  isPublic Boolean @default(false)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([featured, useCount])
+  @@map("product_templates")
+}
+
+model PostTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+
+  // Template details
+  name        String
+  description String?
+  content     String @db.Text
+  platform    Platform
+  postType    PostType
+  mediaUrls   String[]
+  
+  // Category
+  category String // "Promotional", "Educational", "Engagement", etc.
+  
+  // Popularity
+  useCount Int     @default(0)
+  featured Boolean @default(false)
+  isPublic Boolean @default(false)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, platform])
+  @@index([featured, useCount])
+  @@map("post_templates")
+}
+
+model CampaignTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+
+  // Template details
+  name           String
+  description    String?
+  goal           String?
+  targetAudience String?
+  platforms      Platform[]
+  tone           String?
+  
+  // Category
+  category String // "Product Launch", "Lead Generation", "Awareness", etc.
+  
+  // Popularity
+  useCount Int     @default(0)
+  featured Boolean @default(false)
+  isPublic Boolean @default(false)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([featured, useCount])
+  @@map("campaign_templates")
+}
+
+// ============================================
+// USER ONBOARDING
+// ============================================
+
+model UserOnboarding {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Progress tracking
+  completedSteps   String[]
+  currentStep      String?
+  skipped          Boolean  @default(false)
+  completedAt      DateTime?
+  tourCompleted    Boolean  @default(false)
+  checklistProgress Json    @default("{}")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_onboarding")
 }
