@@ -367,6 +367,44 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+model ErrorLog {
+  id     String  @id @default(cuid())
+  userId String?
+
+  // Error details
+  message   String @db.Text
+  stack     String? @db.Text
+  errorType String? // "runtime", "boundary", "api", "validation"
+
+  // App state capture
+  url       String?
+  pathname  String?
+  userAgent String?
+
+  // Component context
+  componentStack String? @db.Text
+
+  // User context (denormalized for quick access)
+  userEmail String?
+  userPlan  String?
+
+  // Additional context
+  context Json? // Flexible field for any extra data
+
+  // Status tracking
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime?
+  resolvedBy String?
+  notes      String?   @db.Text
+
+  timestamp DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([resolved, timestamp])
+  @@index([errorType, timestamp])
+  @@map("error_logs")
+}
+
 // Subscription plans
 model Plan {
   id          String   @id @default(cuid())
