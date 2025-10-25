@@ -340,10 +340,10 @@ Header fields to populate:
 - headerStyle: One of: minimal, card, gradient, split
 
 ${input.templateType === 'FULL_PAGE' ? `
-Block types available: link, product, email_capture, image_gallery, music_player, video_embed, booking_calendar, tip_jar, social_feed, ama_block, gated_content, rss_feed, portfolio, contact_form, divider, text_block, analytics, promo, discount, social_share, waitlist, newsletter, custom
+Block types available: LINK, PRODUCT, EMAIL_CAPTURE, IMAGE_GALLERY, MUSIC_PLAYER, VIDEO_EMBED, BOOKING_CALENDAR, TIP_JAR, SOCIAL_FEED, AMA_BLOCK, GATED_CONTENT, RSS_FEED, PORTFOLIO, CONTACT_FORM, DIVIDER, TEXT_BLOCK, ANALYTICS, PROMO, DISCOUNT, SOCIAL_SHARE, WAITLIST, NEWSLETTER, CUSTOM
 
 For each block provide:
-- type: BlockType (one of the available types)
+- type: BlockType in UPPERCASE (e.g., "LINK", "PRODUCT", "CONTACT_FORM")
 - position: Sequential integer starting from 0
 - title: Block title (string)
 - description: Optional description (string or null)
@@ -401,6 +401,14 @@ Return ONLY valid JSON, no markdown formatting.`;
 
   if (input.templateType === 'FULL_PAGE' && !Array.isArray(result.blocksData)) {
     throw new Error('FULL_PAGE template must have blocksData array');
+  }
+
+  // Ensure all block types are UPPERCASE (post-process to handle any AI variance)
+  if (Array.isArray(result.blocksData)) {
+    result.blocksData = result.blocksData.map((block: any) => ({
+      ...block,
+      type: block.type ? block.type.toUpperCase() : block.type
+    }));
   }
 
   return result as any;

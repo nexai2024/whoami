@@ -119,7 +119,7 @@ const templates = [
     },
     blocksData: [
       {
-        type: "portfolio",
+        type: "PORTFOLIO",
         position: 0,
         title: "Featured Work",
         description: "Selected projects from recent collaborations",
@@ -138,7 +138,7 @@ const templates = [
         }
       },
       {
-        type: "divider",
+        type: "DIVIDER",
         position: 1,
         title: "",
         description: null,
@@ -150,7 +150,7 @@ const templates = [
         data: {style: "line", thickness: 1}
       },
       {
-        type: "contact_form",
+        type: "CONTACT_FORM",
         position: 2,
         title: "Let's Work Together",
         description: "Have a project in mind? Send me a message!",
@@ -171,7 +171,7 @@ const templates = [
         }
       },
       {
-        type: "social_share",
+        type: "SOCIAL_SHARE",
         position: 3,
         title: "Share My Portfolio",
         description: "Know someone who needs a designer?",
@@ -224,7 +224,7 @@ const templates = [
     },
     blocksData: [
       {
-        type: "link",
+        type: "LINK",
         position: 0,
         title: "🎥 My Latest YouTube Video",
         description: "5-Minute Morning Workout Routine",
@@ -236,7 +236,7 @@ const templates = [
         data: {icon: "youtube", featured: true}
       },
       {
-        type: "link",
+        type: "LINK",
         position: 1,
         title: "📅 Book a 1-on-1 Coaching Call",
         description: "Limited spots available",
@@ -248,7 +248,7 @@ const templates = [
         data: {icon: "calendar", featured: false}
       },
       {
-        type: "link",
+        type: "LINK",
         position: 2,
         title: "📥 Free 30-Day Workout Plan",
         description: "Download my beginner-friendly guide",
@@ -260,7 +260,7 @@ const templates = [
         data: {icon: "download", featured: false}
       },
       {
-        type: "email_capture",
+        type: "EMAIL_CAPTURE",
         position: 3,
         title: "Join My Weekly Newsletter",
         description: "Fitness tips delivered every Monday",
@@ -277,7 +277,7 @@ const templates = [
         }
       },
       {
-        type: "link",
+        type: "LINK",
         position: 4,
         title: "🛒 Shop My Fitness Gear",
         description: "Equipment I use and recommend",
@@ -289,7 +289,7 @@ const templates = [
         data: {icon: "shopping-bag", featured: false}
       },
       {
-        type: "link",
+        type: "LINK",
         position: 5,
         title: "💬 Join My Community Discord",
         description: "Connect with 1000+ members",
@@ -339,7 +339,7 @@ const templates = [
     },
     blocksData: [
       {
-        type: "product",
+        type: "PRODUCT",
         position: 0,
         title: "Get Instant Access",
         description: "Includes lifetime updates and bonus templates",
@@ -357,7 +357,7 @@ const templates = [
         }
       },
       {
-        type: "text_block",
+        type: "TEXT_BLOCK",
         position: 1,
         title: "What You'll Learn",
         description: null,
@@ -372,7 +372,7 @@ const templates = [
         }
       },
       {
-        type: "promo",
+        type: "PROMO",
         position: 2,
         title: "Limited Time Bonus",
         description: "Get these extras free when you order today",
@@ -391,7 +391,7 @@ const templates = [
         }
       },
       {
-        type: "divider",
+        type: "DIVIDER",
         position: 3,
         title: "",
         description: null,
@@ -403,7 +403,7 @@ const templates = [
         data: {style: "line", thickness: 1}
       },
       {
-        type: "email_capture",
+        type: "EMAIL_CAPTURE",
         position: 4,
         title: "Not Ready to Buy?",
         description: "Get the first chapter free + email course",
@@ -458,7 +458,7 @@ const templates = [
     },
     blocksData: [
       {
-        type: "text_block",
+        type: "TEXT_BLOCK",
         position: 0,
         title: "My Courses",
         description: "Comprehensive programs for every skill level",
@@ -473,7 +473,7 @@ const templates = [
         }
       },
       {
-        type: "product",
+        type: "PRODUCT",
         position: 1,
         title: "Photography Foundations",
         description: "Master camera settings, composition, and lighting in 8 weeks",
@@ -490,7 +490,7 @@ const templates = [
         }
       },
       {
-        type: "product",
+        type: "PRODUCT",
         position: 2,
         title: "Advanced Portrait Techniques",
         description: "Take your portraits to the next level with pro techniques",
@@ -507,7 +507,7 @@ const templates = [
         }
       },
       {
-        type: "product",
+        type: "PRODUCT",
         position: 3,
         title: "Photography Business Blueprint",
         description: "Build a $5K/month photography business from scratch",
@@ -524,7 +524,7 @@ const templates = [
         }
       },
       {
-        type: "newsletter",
+        type: "NEWSLETTER",
         position: 4,
         title: "Weekly Photography Tips",
         description: "Free lessons delivered to your inbox every Wednesday",
@@ -541,7 +541,7 @@ const templates = [
         }
       },
       {
-        type: "booking_calendar",
+        type: "BOOKING_CALENDAR",
         position: 5,
         title: "Book a Free Strategy Call",
         description: "Not sure which course is right for you? Let's chat!",
@@ -632,7 +632,7 @@ const templates = [
     },
     blocksData: [
       {
-        type: "text_block",
+        type: "TEXT_BLOCK",
         position: 0,
         title: "Why Attend?",
         description: null,
@@ -647,7 +647,7 @@ const templates = [
         }
       },
       {
-        type: "waitlist",
+        type: "WAITLIST",
         position: 1,
         title: "Save Your Spot",
         description: "Early Bird: $299 (Regular: $499)",
@@ -664,7 +664,7 @@ const templates = [
         }
       },
       {
-        type: "divider",
+        type: "DIVIDER",
         position: 2,
         title: "",
         description: null,
@@ -676,7 +676,7 @@ const templates = [
         data: {style: "dots", thickness: 2}
       },
       {
-        type: "text_block",
+        type: "TEXT_BLOCK",
         position: 3,
         title: "Featured Speakers",
         description: "Learn from the best in the industry",
@@ -691,7 +691,7 @@ const templates = [
         }
       },
       {
-        type: "newsletter",
+        type: "NEWSLETTER",
         position: 4,
         title: "Stay Updated",
         description: "Get speaker announcements and schedule updates",
@@ -746,7 +746,7 @@ const templates = [
     },
     blocksData: [
       {
-        type: "text_block",
+        type: "TEXT_BLOCK",
         position: 0,
         title: "Our Services",
         description: "Comprehensive growth solutions",
@@ -761,7 +761,7 @@ const templates = [
         }
       },
       {
-        type: "link",
+        type: "LINK",
         position: 1,
         title: "📊 View Case Studies",
         description: "See how we've helped companies scale",
@@ -773,7 +773,7 @@ const templates = [
         data: {icon: "bar-chart", featured: true}
       },
       {
-        type: "booking_calendar",
+        type: "BOOKING_CALENDAR",
         position: 2,
         title: "Book a Strategy Call",
         description: "30-minute consultation to discuss your growth goals",
@@ -789,7 +789,7 @@ const templates = [
         }
       },
       {
-        type: "contact_form",
+        type: "CONTACT_FORM",
         position: 3,
         title: "Get a Custom Proposal",
         description: "Tell us about your business and goals",
@@ -810,7 +810,7 @@ const templates = [
         }
       },
       {
-        type: "social_share",
+        type: "SOCIAL_SHARE",
         position: 4,
         title: "Refer a Company",
         description: "Know a SaaS company that needs help scaling?",
@@ -863,7 +863,7 @@ const templates = [
     },
     blocksData: [
       {
-        type: "newsletter",
+        type: "NEWSLETTER",
         position: 0,
         title: "Get Weekly Insights",
         description: "One actionable lesson each week",
@@ -880,7 +880,7 @@ const templates = [
         }
       },
       {
-        type: "text_block",
+        type: "TEXT_BLOCK",
         position: 1,
         title: "What You'll Get",
         description: null,
@@ -895,7 +895,7 @@ const templates = [
         }
       },
       {
-        type: "divider",
+        type: "DIVIDER",
         position: 2,
         title: "",
         description: null,
@@ -907,7 +907,7 @@ const templates = [
         data: {style: "line", thickness: 1}
       },
       {
-        type: "text_block",
+        type: "TEXT_BLOCK",
         position: 3,
         title: "Recent Issues",
         description: "See what you've been missing",
@@ -922,7 +922,7 @@ const templates = [
         }
       },
       {
-        type: "link",
+        type: "LINK",
         position: 4,
         title: "📖 Browse the Archive",
         description: "Read past issues before subscribing",
@@ -934,7 +934,7 @@ const templates = [
         data: {icon: "book-open", featured: false}
       },
       {
-        type: "social_share",
+        type: "SOCIAL_SHARE",
         position: 5,
         title: "Spread the Word",
         description: "Share with your network",

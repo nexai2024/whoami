@@ -102,7 +102,7 @@ console.log('blocksData', blocksData);
           await tx.block.createMany({
             data: blocksData.map((block: any) => ({
               pageId,
-              type: block.type.toUpperCase(),
+              type: block.type,
               position: block.position,
               title: block.title,
               description: block.description || null,
