@@ -130,7 +130,7 @@ const Dashboard = () => {
               </p>
             </div>
             <Link
-              to="/builder?new=true"
+              href="/builder?new=true"
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <SafeIcon icon={FiPlus} />
@@ -172,7 +172,7 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Your Pages</h2>
               <Link
-                to="/builder?new=true"
+                href="/builder?new=true"
                 className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
               >
                 <SafeIcon icon={FiPlus} />
@@ -238,7 +238,7 @@ const Dashboard = () => {
                   <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">No pages created yet</p>
                   <Link
-                    to="/builder?new=true"
+                    href="/builder?new=true"
                     className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
                   >
                     <SafeIcon icon={FiPlus} />
@@ -260,7 +260,7 @@ const Dashboard = () => {
 
             <div className="space-y-4">
               <Link
-                to="/courses"
+                href="/courses"
                 className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-colors group"
               >
                 <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-700 transition-colors">
@@ -273,7 +273,7 @@ const Dashboard = () => {
               </Link>
 
               <Link
-                to="/workflows"
+                href="/workflows"
                 className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group"
               >
                 <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
@@ -286,7 +286,7 @@ const Dashboard = () => {
               </Link>
 
                <Link
-                to="/settings"
+                href="/settings"
                 className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl hover:from-gray-100 hover:to-slate-100 transition-colors group"
               >
                 <div className="p-2 bg-gray-600 rounded-lg group-hover:bg-gray-700 transition-colors">
@@ -306,7 +306,7 @@ const Dashboard = () => {
                 </h3>
 
                 <Link
-                  to="/marketing/campaigns/new"
+                  href="/marketing/campaigns/new"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-700 transition-colors">
@@ -319,7 +319,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link
-                  to="/marketing/repurpose"
+                  href="/marketing/repurpose"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
@@ -332,7 +332,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link
-                  to="/marketing/lead-magnets"
+                  href="/marketing/lead-magnets"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-xl hover:from-green-100 hover:to-teal-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-green-600 rounded-lg group-hover:bg-green-700 transition-colors">
@@ -345,7 +345,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link
-                  to="/marketing/schedule"
+                  href="/marketing/schedule"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl hover:from-orange-100 hover:to-red-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-orange-600 rounded-lg group-hover:bg-orange-700 transition-colors">
@@ -358,7 +358,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link
-                  to="/marketing"
+                  href="/marketing"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-gray-100 hover:to-blue-100 transition-colors group"
                 >
                   <div className="p-2 bg-gray-600 rounded-lg group-hover:bg-gray-700 transition-colors">
