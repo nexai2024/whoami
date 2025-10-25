@@ -273,18 +273,244 @@ Return JSON with:
 }
 
 /**
+ * Generate complete page template from natural language description
+ */
+export async function generatePageTemplate(input: {
+  prompt: string;
+  templateType: 'BIO_ONLY' | 'FULL_PAGE';
+  preferences?: {
+    headerStyle?: 'minimal' | 'card' | 'gradient' | 'split';
+    colorScheme?: string;
+    includeBlocks?: string[];
+  };
+}): Promise<{
+  name: string;
+  description: string;
+  category: string;
+  headerData: Record<string, any>;
+  blocksData: Record<string, any>[];
+  suggestedTags: string[];
+}> {
+  const systemPrompt = 'You are a professional web designer creating page templates.';
+
+  const blockDataExamples = `
+Example block data structures:
+- link block: {url: "https://example.com", icon: "link", featured: false}
+- product block: {productId: null, price: 99, currency: "USD", ctaText: "Buy Now", originalPrice: null}
+- email_capture block: {placeholder: "Enter your email", buttonText: "Subscribe", successMessage: "Thank you!", formId: null}
+- portfolio block: {items: [{title: "Project Name", description: "Description", imageUrl: null, projectUrl: "https://...", tags: ["tag1"]}]}
+- contact_form block: {fields: [{name: "name", type: "text", required: true, placeholder: "Your Name"}], submitButtonText: "Send", successMessage: "Message sent!"}
+- text_block: {content: "Your text content here", alignment: "left"}
+- newsletter: {placeholder: "Email address", buttonText: "Subscribe", successMessage: "Welcome!", frequency: "weekly"}
+- social_share: {platforms: ["twitter", "linkedin", "facebook", "email"], shareText: "Check this out!"}
+- divider: {style: "line", thickness: 1}
+- promo: {items: ["Bonus 1", "Bonus 2"], expiresAt: null}
+`;
+
+  const userPrompt = `Generate a JSON structure for a ${input.templateType} template.
+
+User request: ${input.prompt}
+
+Requirements:
+- headerStyle: ${input.preferences?.headerStyle || 'select most appropriate: minimal, card, gradient, or split'}
+- colorScheme: ${input.preferences?.colorScheme || 'modern and professional'}
+${input.templateType === 'FULL_PAGE' ? `- Include these block types if specified: ${input.preferences?.includeBlocks?.join(', ') || '3-8 relevant blocks based on the request'}` : '- No blocks (bio-only template)'}
+
+Generate a complete template with:
+1. Inferred category from: Bio, Portfolio, Link-in-Bio, E-commerce, Course Creator, Event Landing, Newsletter Signup, Service Business, Product Launch, Minimalist
+2. Professional name (descriptive, no generic prefixes)
+3. Compelling description (50-150 characters)
+4. Complete headerData with realistic placeholder content
+5. ${input.templateType === 'FULL_PAGE' ? 'Array of 3-8 blocks with complete configurations' : 'Empty blocks array'}
+6. Suggested tags (3-5 relevant keywords)
+
+Header fields to populate:
+- displayName: Professional name placeholder (or empty string if not applicable)
+- title: Role/position placeholder (or empty string)
+- company: Company name if relevant (or empty string)
+- bio: Compelling bio text (50-200 words) matching template purpose
+- email: Realistic placeholder or empty string
+- phone: Placeholder or empty string  
+- website: Placeholder or empty string
+- location: "City, Country" format or empty string
+- avatar: null
+- backgroundImage: null
+- socialLinks: Object with platforms: {twitter: "username" or "", instagram: "", linkedin: "", facebook: "", github: "", youtube: "", tiktok: "", custom: []}
+- customIntroduction: Optional highlighted message or empty string
+- headerStyle: One of: minimal, card, gradient, split
+
+${input.templateType === 'FULL_PAGE' ? `
+Block types available: link, product, email_capture, image_gallery, music_player, video_embed, booking_calendar, tip_jar, social_feed, ama_block, gated_content, rss_feed, portfolio, contact_form, divider, text_block, analytics, promo, discount, social_share, waitlist, newsletter, custom
+
+For each block provide:
+- type: BlockType (one of the available types)
+- position: Sequential integer starting from 0
+- title: Block title (string)
+- description: Optional description (string or null)
+- url: URL if applicable (string or null)
+- imageUrl: null (user will upload)
+- backgroundColor: Hex color matching colorScheme
+- textColor: Hex color for contrast
+- borderRadius: 8 or higher for modern look
+- data: Type-specific data object
+
+${blockDataExamples}
+` : ''}
+
+Return JSON with this exact structure:
+{
+  "name": "template name",
+  "description": "template description",
+  "category": "category name",
+  "headerData": {
+    "displayName": "...",
+    "title": "...",
+    "company": "...",
+    "bio": "...",
+    "email": "...",
+    "phone": "...",
+    "website": "...",
+    "location": "...",
+    "avatar": null,
+    "backgroundImage": null,
+    "socialLinks": {...},
+    "customIntroduction": "...",
+    "headerStyle": "..."
+  },
+  "blocksData": [...],
+  "suggestedTags": ["tag1", "tag2", "tag3"]
+}
+
+Return ONLY valid JSON, no markdown formatting.`;
+
+  const result = await generateJSON({
+    systemPrompt,
+    userPrompt,
+    maxTokens: 8000,
+    temperature: 0.8,
+  }, { maxRetries: 2 });
+
+  // Validate required fields
+  if (!result.name || !result.category || !result.headerData) {
+    throw new Error('Generated template missing required fields');
+  }
+
+  if (!result.headerData.headerStyle || !['minimal', 'card', 'gradient', 'split'].includes(result.headerData.headerStyle)) {
+    throw new Error('Invalid or missing headerStyle in generated template');
+  }
+
+  if (input.templateType === 'FULL_PAGE' && !Array.isArray(result.blocksData)) {
+    throw new Error('FULL_PAGE template must have blocksData array');
+  }
+
+  return result as any;
+}
+
+/**
+ * Regenerate specific section of existing template
+ */
+export async function regenerateTemplateSection(input: {
+  currentTemplate: {
+    name: string;
+    category: string;
+    templateType: 'BIO_ONLY' | 'FULL_PAGE';
+    headerData: Record<string, any>;
+    blocksData: Record<string, any>[];
+  };
+  section: 'header' | 'block';
+  blockIndex?: number;
+  prompt: string;
+}): Promise<Record<string, any>> {
+  const systemPrompt = 'You are a professional web designer refining page templates based on user feedback.';
+
+  if (input.section === 'header') {
+    const userPrompt = `Regenerate the header/bio section of this template based on user feedback.
+
+Current header data:
+${JSON.stringify(input.currentTemplate.headerData, null, 2)}
+
+User feedback: ${input.prompt}
+
+Regenerate the header while:
+- Preserving the overall headerStyle unless user requests change
+- Keeping structural elements (fields, social platforms) unless user requests changes
+- Applying the requested modifications
+- Maintaining professional quality and visual appeal
+
+Return complete headerData JSON with all required fields:
+- displayName, title, company, bio, email, phone, website, location
+- avatar: null, backgroundImage: null
+- socialLinks object with all platforms
+- customIntroduction
+- headerStyle (must be one of: minimal, card, gradient, split)
+
+Return ONLY valid JSON, no markdown formatting.`;
+
+    const result = await generateJSON({
+      systemPrompt,
+      userPrompt,
+      maxTokens: 4000,
+      temperature: 0.7,
+    }, { maxRetries: 2 });
+
+    if (!result.headerStyle || !['minimal', 'card', 'gradient', 'split'].includes(result.headerStyle)) {
+      throw new Error('Invalid headerStyle in regenerated header');
+    }
+
+    return result;
+  } else if (input.section === 'block') {
+    if (input.blockIndex === undefined || input.blockIndex < 0 || input.blockIndex >= input.currentTemplate.blocksData.length) {
+      throw new Error('Invalid blockIndex for block regeneration');
+    }
+
+    const currentBlock = input.currentTemplate.blocksData[input.blockIndex];
+
+    const userPrompt = `Regenerate this page block based on user feedback.
+
+Current block:
+${JSON.stringify(currentBlock, null, 2)}
+
+User feedback: ${input.prompt}
+
+Regenerate the block while:
+- Preserving the block type unless user requests change
+- Maintaining position: ${input.blockIndex}
+- Applying the requested modifications
+- Keeping styling consistent with template
+
+Block must have these fields:
+- type (block type string)
+- position (integer)
+- title (string)
+- description (string or null)
+- url (string or null)
+- imageUrl (null)
+- backgroundColor (hex color)
+- textColor (hex color)
+- borderRadius (integer)
+- data (type-specific object)
+
+Return complete block JSON, no markdown formatting.`;
+
+    const result = await generateJSON({
+      systemPrompt,
+      userPrompt,
+      maxTokens: 2000,
+      temperature: 0.7,
+    }, { maxRetries: 2 });
+
+    // Ensure position is maintained
+    result.position = input.blockIndex;
+
+    return result;
+  }
+
+  throw new Error('Invalid section specified for regeneration');
+}
+
+/**
  * Check if API key is configured
  */
 export function isConfigured(): boolean {
   return !!process.env.GOOGLE_GEMINI_API_KEY;
 }
-
-// export default {
-//   generateContent,
-//   generateJSON,
-//   extractKeyPoints,
-//   generateCopyVariants,
-//   summarizeForPlatform,
-//   generateOptInCopy,
-//   isConfigured,
-// };

@@ -15,11 +15,12 @@ import HeaderCustomizer from './HeaderCustomizer';
 import { useAuth } from '../lib/auth/AuthContext.jsx';
 import BlockFormFields from './BlockFormFields';
 import toast from 'react-hot-toast';
+import TemplateBrowser from './TemplateBrowser';
 
 const { 
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
   FiLink, FiShoppingBag, FiMail, FiMusic, FiVideo, FiCalendar,
-  FiUser, FiSettings, FiTag, FiShare2
+  FiUser, FiSettings, FiTag, FiShare2, FiLayout
 } = FiIcons;
 
 // SortableBlock component for drag-and-drop functionality
@@ -138,6 +139,7 @@ const EnhancedPageBuilder = () => {
   const tabs = [
     { id: 'header', label: 'Header', icon: FiUser },
     { id: 'blocks', label: 'Content Blocks', icon: FiLink },
+    { id: 'templates', label: 'Templates', icon: FiLayout },
     { id: 'settings', label: 'Page Settings', icon: FiSettings }
   ];
 
@@ -655,6 +657,29 @@ const EnhancedPageBuilder = () => {
     );
   };
 
+  const renderTemplatesTab = () => (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4">
+        <h3 className="font-medium text-purple-900 mb-2">Template Gallery</h3>
+        <p className="text-sm text-purple-800">
+          Browse our collection of professionally designed templates. Apply any template to instantly
+          update your page with beautiful, production-ready content. You can also use AI to generate
+          custom templates tailored to your needs.
+        </p>
+      </div>
+      
+      <TemplateBrowser
+        templateType="ALL"
+        pageId={pageData?.id}
+        onApply={(templateId) => {
+          // Template will be applied and page will reload
+          console.log('Template applied:', templateId);
+        }}
+        showAIGenerate={true}
+      />
+    </div>
+  );
+
   const renderHeaderTab = () => (
     <div className="space-y-6">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -888,6 +913,7 @@ const EnhancedPageBuilder = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'header' && renderHeaderTab()}
         {activeTab === 'blocks' && renderBlocksTab()}
+        {activeTab === 'templates' && renderTemplatesTab()}
         {activeTab === 'settings' && renderSettingsTab()}
       </div>
     </div>

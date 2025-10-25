@@ -6,11 +6,12 @@ import FileUpload from './FileUpload';
 import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
 import toast from 'react-hot-toast';
+import TemplateBrowser from './TemplateBrowser';
 
 const { 
   FiUser, FiEdit3, FiMail, FiPhone, FiGlobe, FiMapPin, 
   FiBuilding, FiCamera, FiSave, FiEye, FiType, FiImage,
-  FiInstagram, FiTwitter, FiLinkedin, FiFacebook, FiYoutube
+  FiInstagram, FiTwitter, FiLinkedin, FiFacebook, FiYoutube, FiLayout
 } = FiIcons;
 
 /**
@@ -73,6 +74,7 @@ console.log('Header Data State:', headerData);
     { id: 'basic', label: 'Basic Info', icon: FiUser },
     { id: 'contact', label: 'Contact', icon: FiMail },
     { id: 'social', label: 'Social Links', icon: FiInstagram },
+    { id: 'templates', label: 'Bio Templates', icon: FiLayout },
     { id: 'style', label: 'Style', icon: FiType },
     { id: 'preview', label: 'Preview', icon: FiEye }
   ];
@@ -358,6 +360,28 @@ console.log('Header Data State:', headerData);
     </div>
   );
 
+  const renderTemplates = () => (
+    <div className="space-y-4">
+      <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <h3 className="font-medium text-purple-900 mb-2">Bio Templates</h3>
+        <p className="text-sm text-purple-800">
+          Choose from professionally designed bio templates to quickly set up your profile.
+          These templates include pre-written content that you can customize.
+        </p>
+      </div>
+      
+      <TemplateBrowser
+        templateType="BIO_ONLY"
+        pageId={pageId}
+        onApply={(templateId) => {
+          // Template will be applied and page will reload
+          console.log('Bio template applied:', templateId);
+        }}
+        showAIGenerate={true}
+      />
+    </div>
+  );
+
   const renderStyleOptions = () => (
     <div className="space-y-6">
       <div>
@@ -502,6 +526,7 @@ console.log('Header Data State:', headerData);
             {activeTab === 'basic' && renderBasicInfo()}
             {activeTab === 'contact' && renderContactInfo()}
             {activeTab === 'social' && renderSocialLinks()}
+            {activeTab === 'templates' && renderTemplates()}
             {activeTab === 'style' && renderStyleOptions()}
             {activeTab === 'preview' && renderPreview()}
           </motion.div>
