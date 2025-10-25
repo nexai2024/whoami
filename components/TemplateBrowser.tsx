@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import BlockRenderer from './BlockRenderer';
 
 const {
   FiSearch, FiX, FiEye, FiDownload, FiGrid, FiFilter, FiStar,
@@ -43,6 +44,8 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [applying, setApplying] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
 
