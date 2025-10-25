@@ -207,14 +207,14 @@ const Dashboard = () => {
                       <SafeIcon icon={FiCopy} />
                     </button>
                     <Link
-                      to={`/analytics?page=${page.id}`}
+                      href={`/analytics?page=${page.id}`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                       title="View Analytics"
                     >
                       <SafeIcon icon={FiBarChart3} />
                     </Link>
                     <Link
-                      to={`/builder?page=${page.id}`}
+                      href={`/builder?page=${page.id}`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                       title="Edit Page"
                     >
