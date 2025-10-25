@@ -7,6 +7,9 @@ import React from 'react';
  */
 
 const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
+  // Normalize block type to lowercase for consistent matching
+  const blockType = selectedBlock.type?.toLowerCase() || '';
+  
   // Helper to add item to array
   const addToArray = (field, value = '') => {
     const current = selectedBlock.data?.[field] || [];
