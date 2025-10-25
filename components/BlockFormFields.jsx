@@ -136,7 +136,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   };
 
   // PRODUCT Block
-  if (selectedBlock.type === 'product') {
+  if (blockType === 'product') {
     return (
       <div className="space-y-4 max-h-[600px] overflow-y-auto">
         {renderNumberField('Price', 'price', 0)}
@@ -165,7 +165,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // LINK Block
-  if (selectedBlock.type === 'link') {
+  if (blockType === 'link') {
     return (
       <div className="space-y-4">
         {renderTextField('URL', 'url', 'https://example.com', 'url')}
@@ -184,7 +184,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // EMAIL_CAPTURE / NEWSLETTER / WAITLIST Blocks
-  if (['email', 'newsletter', 'waitlist'].includes(selectedBlock.type)) {
+  if (['email', 'email_capture', 'newsletter', 'waitlist'].includes(blockType)) {
     return (
       <div className="space-y-4 max-h-[600px] overflow-y-auto">
         {renderTextArea('Description', 'description', 'Subscribe for updates')}
@@ -203,7 +203,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
           { value: 'convertkit', label: 'ConvertKit' },
           { value: 'custom', label: 'Custom' }
         ])}
-        {selectedBlock.type === 'waitlist' && (
+        {blockType === 'waitlist' && (
           <>
             {renderCheckbox('Show waitlist position', 'waitlistPosition')}
             {renderCheckbox('Show total waitlist count', 'totalWaitlist')}
@@ -215,7 +215,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // IMAGE_GALLERY Block
-  if (selectedBlock.type === 'image') {
+  if (blockType === 'image' || blockType === 'image_gallery') {
     return (
       <div className="space-y-4 max-h-[600px] overflow-y-auto">
         {renderStringArray('Image URLs', 'images', 'https://example.com/image.jpg')}
@@ -239,7 +239,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // MUSIC_PLAYER Block
-  if (selectedBlock.type === 'music') {
+  if (blockType === 'music' || blockType === 'music_player') {
     return (
       <div className="space-y-4">
         {renderTextField('Track Title', 'trackTitle', 'Song name')}
@@ -258,7 +258,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // VIDEO_EMBED Block
-  if (selectedBlock.type === 'video') {
+  if (blockType === 'video' || blockType === 'video_embed') {
     return (
       <div className="space-y-4">
         {renderTextField('Video URL', 'videoUrl', 'https://youtube.com/watch?v=...', 'url')}
@@ -279,7 +279,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // BOOKING_CALENDAR Block
-  if (selectedBlock.type === 'booking') {
+  if (blockType === 'booking' || blockType === 'booking_calendar') {
     return (
       <div className="space-y-4">
         {renderTextField('Service Type', 'serviceType', 'Consultation')}
@@ -303,7 +303,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // PROMO Block
-  if (selectedBlock.type === 'promo') {
+  if (blockType === 'promo') {
     return (
       <div className="space-y-4 max-h-[600px] overflow-y-auto">
         {renderTextField('Promo Code', 'promoCode', 'SAVE20')}
@@ -322,7 +322,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // DISCOUNT Block
-  if (selectedBlock.type === 'discount') {
+  if (blockType === 'discount') {
     return (
       <div className="space-y-4">
         {renderNumberField('Discount Percentage', 'discountPercentage', 0, 100)}
@@ -340,7 +340,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // ANALYTICS Block
-  if (selectedBlock.type === 'analytics') {
+  if (blockType === 'analytics') {
     return (
       <div className="space-y-4">
         {renderSelect('Provider', 'provider', [
@@ -357,7 +357,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // TIP_JAR Block
-  if (selectedBlock.type === 'tip') {
+  if (blockType === 'tip' || blockType === 'tip_jar') {
     return (
       <div className="space-y-4">
         {renderTextArea('Message', 'message', 'Support my work!')}
@@ -379,7 +379,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // SOCIAL_FEED Block
-  if (selectedBlock.type === 'social_feed') {
+  if (blockType === 'social_feed') {
     return (
       <div className="space-y-4">
         {renderSelect('Platform', 'platform', [
@@ -407,7 +407,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // SOCIAL_SHARE Block
-  if (selectedBlock.type === 'social_share') {
+  if (blockType === 'social_share') {
     return (
       <div className="space-y-4">
         <div>
@@ -435,7 +435,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // AMA_BLOCK
-  if (selectedBlock.type === 'ama') {
+  if (blockType === 'ama' || blockType === 'ama_block') {
     return (
       <div className="space-y-4">
         {renderTextField('Form Title', 'questionFormTitle', 'Ask Me Anything')}
@@ -455,7 +455,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // CONTACT_FORM Block
-  if (selectedBlock.type === 'contact') {
+  if (blockType === 'contact' || blockType === 'contact_form') {
     return (
       <div className="space-y-4 max-h-[600px] overflow-y-auto">
         {renderTextField('Submit Button Text', 'submitButtonText', 'Send Message')}
@@ -472,7 +472,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // TEXT_BLOCK
-  if (selectedBlock.type === 'text') {
+  if (blockType === 'text' || blockType === 'text_block') {
     return (
       <div className="space-y-4">
         {renderTextArea('Content', 'content', 'Your text content here...', 5)}
@@ -508,7 +508,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // DIVIDER Block
-  if (selectedBlock.type === 'divider') {
+  if (blockType === 'divider') {
     return (
       <div className="space-y-4">
         {renderSelect('Style', 'style', [
@@ -530,7 +530,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // PORTFOLIO Block
-  if (selectedBlock.type === 'portfolio') {
+  if (blockType === 'portfolio') {
     return (
       <div className="space-y-4 max-h-[600px] overflow-y-auto">
         {renderTextField('Project Title', 'projectTitle', 'Project Name')}
@@ -550,7 +550,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // RSS_FEED Block
-  if (selectedBlock.type === 'rss') {
+  if (blockType === 'rss' || blockType === 'rss_feed') {
     return (
       <div className="space-y-4">
         {renderTextField('Feed URL', 'feedUrl', 'https://example.com/feed.xml', 'url')}
@@ -575,7 +575,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // GATED_CONTENT Block
-  if (selectedBlock.type === 'gated') {
+  if (blockType === 'gated' || blockType === 'gated_content') {
     return (
       <div className="space-y-4">
         {renderSelect('Content Type', 'contentType', [
@@ -603,7 +603,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   }
 
   // CUSTOM Block
-  if (selectedBlock.type === 'custom') {
+  if (blockType === 'custom') {
     return (
       <div className="space-y-4">
         {renderTextArea('HTML Content', 'htmlContent', '<div>Your HTML here</div>', 6)}
