@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 const {
   FiPlus, FiEdit3, FiBarChart3, FiSettings, FiEye, FiDollarSign,
   FiUsers, FiTrendingUp, FiExternalLink, FiCopy, FiMoreHorizontal,
-  FiZap, FiRefreshCw, FiGift, FiCalendar, FiGrid
+  FiZap, FiRefreshCw, FiGift, FiCalendar, FiGrid, FiBook, FiGitBranch
 } = FiIcons;
 
 const Dashboard = () => {
@@ -125,12 +125,12 @@ const Dashboard = () => {
                 Welcome back, {currUser.profile?.displayName || currUser.profile?.username}!
               </h1>
               <p className="text-gray-600">
-                You have {userPages.length} page{userPages.length !== 1 ? 's' : ''} • 
+                You have {userPages.length} page{userPages.length !== 1 ? 's' : ''} •
                 Total views: {analytics?.totals.pageViews.toLocaleString() || 0}
               </p>
             </div>
             <Link
-              to="/builder?new=true"
+              href="/builder?new=true"
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <SafeIcon icon={FiPlus} />
@@ -172,14 +172,14 @@ const Dashboard = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Your Pages</h2>
               <Link
-                to="/builder?new=true"
+                href="/builder?new=true"
                 className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
               >
                 <SafeIcon icon={FiPlus} />
                 New Page
               </Link>
             </div>
-            
+
             <div className="space-y-4">
               {userPages.map((page, index) => (
                 <div
@@ -197,7 +197,7 @@ const Dashboard = () => {
                       <span>{page.isActive ? 'Active' : 'Inactive'}</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => copyPageUrl(page.slug)}
@@ -207,14 +207,14 @@ const Dashboard = () => {
                       <SafeIcon icon={FiCopy} />
                     </button>
                     <Link
-                      to={`/analytics?page=${page.id}`}
+                      href={`/analytics?page=${page.id}`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                       title="View Analytics"
                     >
                       <SafeIcon icon={FiBarChart3} />
                     </Link>
                     <Link
-                      to={`/builder?page=${page.id}`}
+                      href={`/builder?page=${page.id}`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                       title="Edit Page"
                     >
@@ -232,13 +232,13 @@ const Dashboard = () => {
                   </div>
                 </div>
               ))}
-              
+
               {userPages.length === 0 && (
                 <div className="text-center py-12">
                   <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">No pages created yet</p>
                   <Link
-                    to="/builder?new=true"
+                    href="/builder?new=true"
                     className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
                   >
                     <SafeIcon icon={FiPlus} />
@@ -256,40 +256,40 @@ const Dashboard = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.6 }}
           >
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions 3</h2>
-            
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
+
             <div className="space-y-4">
               <Link
-                to="/builder"
-                className="flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl hover:from-indigo-100 hover:to-purple-100 transition-colors group"
+                href="/courses"
+                className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-colors group"
               >
-                <div className="p-2 bg-indigo-600 rounded-lg group-hover:bg-indigo-700 transition-colors">
-                  <SafeIcon icon={FiEdit3} className="text-white" />
+                <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-700 transition-colors">
+                  <SafeIcon icon={FiBook} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">Edit Page</h3>
-                  <p className="text-sm text-gray-600">Customize your layout</p>
+                  <h3 className="font-medium text-gray-900">Micro-Courses</h3>
+                  <p className="text-sm text-gray-600">Create lead magnets</p>
                 </div>
               </Link>
 
               <Link
-                to="/analytics"
-                className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl hover:from-green-100 hover:to-blue-100 transition-colors group"
+                href="/workflows"
+                className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group"
               >
-                <div className="p-2 bg-green-600 rounded-lg group-hover:bg-green-700 transition-colors">
-                  <SafeIcon icon={FiBarChart3} className="text-white" />
+                <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
+                  <SafeIcon icon={FiGitBranch} className="text-white" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">View Analytics</h3>
-                  <p className="text-sm text-gray-600">Track performance</p>
+                  <h3 className="font-medium text-gray-900">Automations</h3>
+                  <p className="text-sm text-gray-600">Build workflows</p>
                 </div>
               </Link>
 
                <Link
-                to="/settings"
-                className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group"
+                href="/settings"
+                className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl hover:from-gray-100 hover:to-slate-100 transition-colors group"
               >
-                <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
+                <div className="p-2 bg-gray-600 rounded-lg group-hover:bg-gray-700 transition-colors">
                   <SafeIcon icon={FiSettings} className="text-white" />
                 </div>
                 <div className="text-left">
@@ -299,28 +299,14 @@ const Dashboard = () => {
                 </div>
               </Link>
 
-              {/* NEW: Marketing Category */}
-
-              <Link
-                to="/marketing"
-                className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl hover:from-green-100 hover:to-blue-100 transition-colors group"
-              >
-                <div className="p-2 bg-green-600 rounded-lg group-hover:bg-green-700 transition-colors">
-                  <SafeIcon icon={FiBarChart3} className="text-white" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Marketing</h3>
-                  <p className="text-sm text-gray-600">Marketing tools</p>
-                </div>
-              </Link>
-
+              {/* Marketing Section */}
               <div className="pt-4 mt-4 border-t border-gray-200">
                 <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
                   Marketing
                 </h3>
-                
+
                 <Link
-                  to="/marketing/campaigns/new"
+                  href="/marketing/campaigns/new"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-700 transition-colors">
@@ -333,7 +319,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link
-                  to="/marketing/repurpose"
+                  href="/marketing/repurpose"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
@@ -346,7 +332,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link
-                  to="/marketing/lead-magnets"
+                  href="/marketing/lead-magnets"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-xl hover:from-green-100 hover:to-teal-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-green-600 rounded-lg group-hover:bg-green-700 transition-colors">
@@ -359,7 +345,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link
-                  to="/marketing/schedule"
+                  href="/marketing/schedule"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl hover:from-orange-100 hover:to-red-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-orange-600 rounded-lg group-hover:bg-orange-700 transition-colors">
@@ -372,7 +358,7 @@ const Dashboard = () => {
                 </Link>
 
                 <Link
-                  to="/marketing"
+                  href="/marketing"
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-gray-100 hover:to-blue-100 transition-colors group"
                 >
                   <div className="p-2 bg-gray-600 rounded-lg group-hover:bg-gray-700 transition-colors">
