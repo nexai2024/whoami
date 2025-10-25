@@ -102,7 +102,7 @@ export async function POST(
           await tx.block.createMany({
             data: blocksData.map((block: any) => ({
               pageId,
-              type: block.type,
+              type: block.type.toUpperCase() as any, // Convert to uppercase for Prisma enum
               position: block.position,
               title: block.title,
               description: block.description || null,
