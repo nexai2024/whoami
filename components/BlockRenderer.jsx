@@ -324,6 +324,31 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     );
   }
 
+  // CONTACT_FORM Block
+  if (block.type === 'CONTACT_FORM') {
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200`} onClick={() => onBlockClick(block)}>
+        <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+        {block.description && (
+          <p className="text-sm text-gray-600 mb-4">{block.description}</p>
+        )}
+        <div className="space-y-3">
+          {block.data?.fields && block.data.fields.slice(0, 3).map((field, idx) => (
+            <div key={idx} className="bg-white rounded-lg p-3 border border-gray-200">
+              <p className="text-sm text-gray-500">{field.placeholder || field.name}</p>
+            </div>
+          ))}
+          {block.data?.fields && block.data.fields.length > 3 && (
+            <p className="text-xs text-gray-500 text-center">+ {block.data.fields.length - 3} more fields</p>
+          )}
+          <div className="bg-indigo-600 text-white rounded-lg p-3 text-center mt-4">
+            <p className="text-sm font-medium">{block.data?.submitButtonText || 'Submit'}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Default rendering for other block types
   return (
     <div className={baseStyles} onClick={() => onBlockClick(block)}>
