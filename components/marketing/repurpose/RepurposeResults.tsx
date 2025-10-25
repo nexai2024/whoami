@@ -33,7 +33,7 @@ interface RepurposedContent {
 export default function RepurposeResults() {
   const params = useParams();
   const router = useRouter();
-  const contentId = params?.id as string;
+  const contentId = await params?.id as string;
 
   const [content, setContent] = useState<RepurposedContent | null>(null);
   const [loading, setLoading] = useState(true);

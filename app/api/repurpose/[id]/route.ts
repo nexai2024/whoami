@@ -29,7 +29,7 @@ export async function GET(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     const repurposedContent = await prisma.repurposedContent.findFirst({
       where: {

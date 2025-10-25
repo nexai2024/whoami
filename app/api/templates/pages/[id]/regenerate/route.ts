@@ -22,7 +22,7 @@ export async function POST(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { section, blockIndex, prompt, applyToTemplate } = body;
 

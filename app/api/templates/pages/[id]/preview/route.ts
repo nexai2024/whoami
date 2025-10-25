@@ -12,7 +12,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const userId = request.headers.get('x-user-id');
 
     const template = await prisma.pageTemplate.findUnique({

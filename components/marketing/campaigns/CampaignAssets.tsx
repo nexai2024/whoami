@@ -38,7 +38,7 @@ interface Campaign {
 export default function CampaignAssets() {
   const params = useParams();
   const router = useRouter();
-  const campaignId = params?.id as string;
+  const campaignId = await params?.id as string;
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loading, setLoading] = useState(true);

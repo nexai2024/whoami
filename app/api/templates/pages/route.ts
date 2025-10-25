@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.pageTemplate.count({ where })
     ]);
-
+console.log('templates', templates);
     return NextResponse.json({
       templates: templates.map(t => ({
         ...t,

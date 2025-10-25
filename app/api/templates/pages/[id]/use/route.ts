@@ -21,7 +21,7 @@ export async function POST(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const { pageId } = body;
 
@@ -91,7 +91,7 @@ export async function POST(
       // For FULL_PAGE templates, replace blocks
       if (template.templateType === 'FULL_PAGE') {
         const blocksData = template.blocksData as any[];
-
+console.log('blocksData', blocksData);
         // Delete existing blocks
         await tx.block.deleteMany({
           where: { pageId }
@@ -102,7 +102,7 @@ export async function POST(
           await tx.block.createMany({
             data: blocksData.map((block: any) => ({
               pageId,
-              type: block.type,
+              type: block.type.toUpperCase(),
               position: block.position,
               title: block.title,
               description: block.description || null,

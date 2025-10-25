@@ -20,7 +20,7 @@ export async function GET(
   { params }: RouteParams
 ) {
   try {
-    const { token } = params;
+    const { token } = await params;
 
     // Look up delivery by token
     const delivery = await prisma.leadMagnetDelivery.findUnique({

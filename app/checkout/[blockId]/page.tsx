@@ -13,7 +13,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY 
 export default function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
-  const blockId = params.blockId as string;
+  const blockId = await params.blockId as string;
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
