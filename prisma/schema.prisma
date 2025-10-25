@@ -34,6 +34,8 @@ model User {
   campaignTemplates   CampaignTemplate[]
   onboarding          UserOnboarding?
   pageTemplates       PageTemplate[]
+  courses             Course[]
+  workflows           Workflow[]
 
   @@map("users")
 }
@@ -1251,6 +1253,509 @@ model PageTemplate {
   @@index([featured, useCount])
   @@index([category, templateType])
   @@map("page_templates")
+}
+
+// ============================================
+// MICRO-COURSE SYSTEM
+// ============================================
+
+model Course {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Course details
+  title       String
+  description String?      @db.Text
+  slug        String       @unique
+  category    String?
+  tags        String[]
+
+  // Course metadata
+  level          CourseLevel    @default(BEGINNER)
+  estimatedTime  Int?           // in minutes
+  language       String         @default("en")
+  
+  // Media
+  coverImageUrl  String?
+  promoVideoUrl  String?
+
+  // Access control
+  accessType     CourseAccessType @default(FREE)
+  price          Decimal?        @db.Decimal(10, 2)
+  currency       String          @default("USD")
+
+  // Lead magnet settings
+  leadMagnetId   String?
+  isLeadMagnet   Boolean         @default(false)
+  requiresEmail  Boolean         @default(false)
+
+  // Publishing
+  status         CourseStatus    @default(DRAFT)
+  publishedAt    DateTime?
+
+  // Analytics
+  enrollmentCount Int            @default(0)
+  completionRate  Decimal?       @db.Decimal(5, 2)
+  averageRating   Decimal?       @db.Decimal(3, 2)
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Relations
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessons     CourseLesson[]
+  enrollments CourseEnrollment[]
+  reviews     CourseReview[]
+
+  @@index([userId, status])
+  @@index([slug])
+  @@index([category, status])
+  @@map("courses")
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum CourseAccessType {
+  FREE
+  PAID
+  EMAIL_GATE
+  MEMBERSHIP
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model CourseLesson {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courseId  String
+
+  // Lesson details
+  title       String
+  description String?      @db.Text
+  order       Int
+  
+  // Content
+  contentType LessonContentType
+  content     String?      @db.Text  // For text/markdown
+  videoUrl    String?                // For video
+  videoLength Int?                   // in seconds
+  audioUrl    String?                // For audio
+  
+  // Additional resources
+  resources   LessonResource[]
+  
+  // Quiz/Assessment
+  hasQuiz     Boolean      @default(false)
+  quizData    Json?
+  
+  // Drip settings
+  dripDay     Int?                   // Release after N days of enrollment
+  dripAfterLesson String?            // Release after completing specific lesson
+  
+  // Analytics
+  viewCount      Int       @default(0)
+  completionRate Decimal?  @db.Decimal(5, 2)
+  avgTimeSpent   Int?      // in seconds
+  
+  // Publishing
+  isPublished Boolean      @default(true)
+  isFree      Boolean      @default(false) // Preview lesson
+
+  // Relations
+  course    Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress  CourseLessonProgress[]
+
+  @@index([courseId, order])
+  @@map("course_lessons")
+}
+
+enum LessonContentType {
+  TEXT
+  VIDEO
+  AUDIO
+  EMBED
+  PDF
+  MIXED
+}
+
+model LessonResource {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  lessonId  String
+
+  // Resource details
+  name        String
+  description String?
+  type        ResourceType
+  url         String
+  fileSize    Int?
+  
+  // Download tracking
+  downloadCount Int @default(0)
+
+  // Relations
+  lesson CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@map("lesson_resources")
+}
+
+enum ResourceType {
+  PDF
+  DOCUMENT
+  SPREADSHEET
+  VIDEO
+  AUDIO
+  IMAGE
+  ARCHIVE
+  LINK
+  OTHER
+}
+
+model CourseEnrollment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courseId  String
+  userId    String?
+
+  // Enrollment details
+  email              String
+  name               String?
+  enrollmentSource   String?            // Where they enrolled from
+  
+  // Payment (for paid courses)
+  paymentStatus      String?            // "pending", "completed", "failed"
+  paymentAmount      Decimal?           @db.Decimal(10, 2)
+  stripePaymentId    String?
+  
+  // Progress tracking
+  currentLessonId    String?
+  progressPercentage Int                @default(0)
+  completedAt        DateTime?
+  
+  // Certificate
+  certificateIssued  Boolean            @default(false)
+  certificateUrl     String?
+  certificateIssuedAt DateTime?
+  
+  // Access
+  expiresAt          DateTime?
+  accessRevoked      Boolean            @default(false)
+  
+  // Engagement
+  lastAccessedAt     DateTime?
+  totalTimeSpent     Int                @default(0) // in seconds
+  
+  // Relations
+  course          Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonProgress  CourseLessonProgress[]
+
+  @@unique([courseId, email])
+  @@index([courseId, progressPercentage])
+  @@index([email])
+  @@map("course_enrollments")
+}
+
+model CourseLessonProgress {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  enrollmentId String
+  lessonId     String
+
+  // Progress
+  status         LessonProgressStatus @default(NOT_STARTED)
+  progressPercent Int                 @default(0)
+  completedAt    DateTime?
+  
+  // Engagement
+  timeSpent      Int                  @default(0) // in seconds
+  lastPosition   Int?                 // Video/audio position in seconds
+  viewCount      Int                  @default(0)
+  
+  // Quiz results
+  quizAttempts   Int                  @default(0)
+  quizScore      Decimal?             @db.Decimal(5, 2)
+  quizPassedAt   DateTime?
+  
+  // Notes
+  notes          String?              @db.Text
+
+  // Relations
+  enrollment CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson     CourseLesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId, status])
+  @@map("course_lesson_progress")
+}
+
+enum LessonProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model CourseReview {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courseId  String
+
+  // Reviewer
+  email     String
+  name      String?
+  
+  // Review
+  rating    Int      // 1-5
+  comment   String?  @db.Text
+  
+  // Moderation
+  approved  Boolean  @default(false)
+  featured  Boolean  @default(false)
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, approved])
+  @@map("course_reviews")
+}
+
+// ============================================
+// AUTOMATION WORKFLOW SYSTEM
+// ============================================
+
+model Workflow {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Workflow details
+  name        String
+  description String?      @db.Text
+  
+  // Visual canvas data (node positions, connections)
+  canvasData  Json?
+  
+  // Status
+  status      WorkflowStatus @default(DRAFT)
+  lastRunAt   DateTime?
+  
+  // Performance
+  totalRuns      Int         @default(0)
+  successfulRuns Int         @default(0)
+  failedRuns     Int         @default(0)
+  
+  // Settings
+  enabled     Boolean      @default(true)
+  
+  // Relations
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trigger    WorkflowTrigger?
+  steps      WorkflowStep[]
+  executions WorkflowExecution[]
+
+  @@index([userId, status])
+  @@index([userId, enabled])
+  @@map("workflows")
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model WorkflowTrigger {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  workflowId String   @unique
+
+  // Trigger configuration
+  triggerType TriggerType
+  config      Json        // Stores type-specific configuration
+  
+  // Filter conditions
+  filters     Json?
+  
+  // Relations
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([triggerType])
+  @@map("workflow_triggers")
+}
+
+enum TriggerType {
+  NEW_SUBSCRIBER          // When someone subscribes to email list
+  NEW_COURSE_ENROLLMENT   // When someone enrolls in course
+  LESSON_COMPLETED        // When lesson is completed
+  COURSE_COMPLETED        // When entire course is completed
+  FORM_SUBMITTED          // When a form is submitted
+  PRODUCT_PURCHASED       // When product is purchased
+  PAGE_VIEWED             // When page is viewed
+  BLOCK_CLICKED           // When specific block is clicked
+  TAG_ADDED               // When tag is added to subscriber
+  TAG_REMOVED             // When tag is removed
+  SCHEDULE                // Time-based trigger
+  WEBHOOK                 // External webhook trigger
+  MANUAL                  // Manually triggered
+}
+
+model WorkflowStep {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  workflowId String
+
+  // Step details
+  name        String
+  type        StepType
+  order       Int
+  
+  // Action/Condition configuration
+  config      Json
+  
+  // Conditional branching
+  parentStepId String?  // For conditional branches
+  condition    Json?    // If this is a conditional branch
+  
+  // Delay settings
+  delayAmount  Int?     // Amount of time
+  delayUnit    DelayUnit?
+  
+  // Relations
+  workflow   Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  logs       WorkflowStepLog[]
+
+  @@index([workflowId, order])
+  @@map("workflow_steps")
+}
+
+enum StepType {
+  // Actions
+  SEND_EMAIL
+  ADD_TAG
+  REMOVE_TAG
+  SUBSCRIBE_TO_LIST
+  UNSUBSCRIBE_FROM_LIST
+  ENROLL_IN_COURSE
+  GRANT_ACCESS
+  REVOKE_ACCESS
+  SEND_SMS
+  SEND_WEBHOOK
+  CREATE_TASK
+  UPDATE_SUBSCRIBER
+  SEND_NOTIFICATION
+  
+  // Control flow
+  WAIT
+  DELAY
+  CONDITION
+  BRANCH
+  SPLIT_TEST
+  
+  // Integrations
+  ZAPIER_WEBHOOK
+  MAILCHIMP_ACTION
+  CONVERTKIT_ACTION
+  STRIPE_ACTION
+}
+
+enum DelayUnit {
+  MINUTES
+  HOURS
+  DAYS
+  WEEKS
+}
+
+model WorkflowExecution {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  workflowId String
+
+  // Execution details
+  status        ExecutionStatus @default(RUNNING)
+  startedAt     DateTime        @default(now())
+  completedAt   DateTime?
+  
+  // Trigger context
+  triggerData   Json            // Data that triggered the workflow
+  subscriberEmail String?       // If triggered by subscriber action
+  
+  // Error handling
+  error         String?         @db.Text
+  errorStep     String?         // Which step failed
+  retryCount    Int             @default(0)
+  
+  // Relations
+  workflow Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  stepLogs WorkflowStepLog[]
+
+  @@index([workflowId, status])
+  @@index([status, createdAt])
+  @@index([subscriberEmail])
+  @@map("workflow_executions")
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  WAITING       // Waiting for delay/schedule
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model WorkflowStepLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  executionId String
+  stepId      String
+
+  // Step execution
+  status      StepExecutionStatus @default(PENDING)
+  startedAt   DateTime?
+  completedAt DateTime?
+  
+  // Step data
+  input       Json?
+  output      Json?
+  
+  // Error details
+  error       String?  @db.Text
+  
+  // Relations
+  execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  step      WorkflowStep      @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([executionId, stepId])
+  @@map("workflow_step_logs")
+}
+
+enum StepExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
 }
 
 // ============================================
