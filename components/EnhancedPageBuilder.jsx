@@ -537,14 +537,22 @@ const EnhancedPageBuilder = () => {
 
   // Helper function to get block icon
   const getBlockIcon = (type) => {
+    // Normalize to lowercase for matching (handles both 'LINK' and 'link')
+    const normalizedType = type?.toLowerCase() || '';
+    
     const iconMap = {
       link: FiLink,
       product: FiShoppingBag,
       email: FiMail,
+      email_capture: FiMail,
       image: FiImage,
+      image_gallery: FiImage,
       music: FiMusic,
+      music_player: FiMusic,
       video: FiVideo,
+      video_embed: FiVideo,
       booking: FiCalendar,
+      booking_calendar: FiCalendar,
       analytics: FiEye,
       promo: FiTag,
       discount: FiTag,
@@ -553,26 +561,37 @@ const EnhancedPageBuilder = () => {
       newsletter: FiMail,
       custom: FiEdit3,
       tip: FiTag,
+      tip_jar: FiTag,
       social_feed: FiShare2,
       ama: FiMail,
+      ama_block: FiMail,
       gated: FiSettings,
+      gated_content: FiSettings,
       rss: FiLink,
+      rss_feed: FiLink,
       portfolio: FiImage,
       contact: FiMail,
+      contact_form: FiMail,
       divider: FiEdit3,
-      text: FiEdit3
+      text: FiEdit3,
+      text_block: FiEdit3
     };
-    return iconMap[type] || FiLink;
+    return iconMap[normalizedType] || FiLink;
   };
 
   // Helper function to render block summary
   const renderBlockSummary = (block) => {
-    switch (block.type.toLowerCase()) {
+
+    // Normalize type to lowercase for matching
+    const normalizedType = block.type?.toLowerCase() || '';
+    
+    switch (normalizedType) {
       case 'product':
         return <p className="text-sm text-green-600 font-medium">${block.data?.price || '0'}</p>;
       case 'link':
         return <p className="text-sm text-blue-600 truncate">{block.data?.url || 'No URL'}</p>;
       case 'email':
+      case 'email_capture':
       case 'newsletter':
       case 'waitlist':
         return <p className="text-sm text-gray-600">{block.data?.description || 'Email capture'}</p>;
@@ -583,30 +602,40 @@ const EnhancedPageBuilder = () => {
       case 'analytics':
         return <p className="text-sm text-teal-600">{block.data?.provider || block.data?.source || 'Analytics'}</p>;
       case 'music':
+      case 'music_player':
         return <p className="text-sm text-orange-600">{block.data?.trackTitle || 'Music track'}</p>;
       case 'video':
+      case 'video_embed':
         return <p className="text-sm text-red-600">{block.data?.platform || 'Video'}</p>;
       case 'booking':
+      case 'booking_calendar':
         return <p className="text-sm text-indigo-600">{block.data?.serviceType || 'Booking'}</p>;
       case 'tip':
+      case 'tip_jar':
         return <p className="text-sm text-emerald-600">Tip Jar - {block.data?.currency || 'USD'}</p>;
       case 'social_feed':
         return <p className="text-sm text-sky-600">{block.data?.platform || 'Social'} - @{block.data?.username || 'user'}</p>;
       case 'ama':
+      case 'ama_block':
         return <p className="text-sm text-violet-600">Q&A Block</p>;
       case 'gated':
+      case 'gated_content':
         return <p className="text-sm text-fuchsia-600">{block.data?.accessRequirement || 'Gated'} access</p>;
       case 'rss':
+      case 'rss_feed':
         return <p className="text-sm text-orange-600 truncate">{block.data?.feedUrl || 'RSS Feed'}</p>;
       case 'portfolio':
         return <p className="text-sm text-slate-600">{block.data?.projectTitle || 'Portfolio item'}</p>;
       case 'contact':
+      case 'contact_form':
         return <p className="text-sm text-zinc-600">Contact Form</p>;
       case 'text':
+      case 'text_block':
         return <p className="text-sm text-neutral-600">{block.data?.headingLevel || 'Text'}</p>;
       case 'divider':
         return <p className="text-sm text-stone-600">{block.data?.style || 'solid'} line</p>;
       case 'image':
+      case 'image_gallery':
         const imgCount = block.data?.images?.length || 0;
         return <p className="text-sm text-pink-600">{imgCount} image{imgCount !== 1 ? 's' : ''}</p>;
       case 'social_share':

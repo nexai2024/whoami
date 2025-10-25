@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import BlockRenderer from './BlockRenderer';
 
 const {
   FiSearch, FiX, FiEye, FiDownload, FiGrid, FiFilter, FiStar,
@@ -43,6 +44,8 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [applying, setApplying] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
 
@@ -160,8 +163,30 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
     }
   };
 
-  const handlePreview = (template: Template) => {
+  const handlePreview = async (template: Template) => {
     setPreviewTemplate(template);
+    setLoadingPreview(true);
+    setPreviewData(null);
+    
+    try {
+      const response = await fetch(`/api/templates/pages/${template.id}/preview`, {
+        headers: {
+          'x-user-id': 'demo-user'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPreviewData(data.preview);
+      } else {
+        toast.error('Failed to load template preview');
+      }
+    } catch (error) {
+      console.error('Error loading preview:', error);
+      toast.error('Failed to load template preview');
+    } finally {
+      setLoadingPreview(false);
+    }
   };
 
   const categories = [
@@ -396,7 +421,10 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            onClick={() => setPreviewTemplate(null)}
+            onClick={() => {
+              setPreviewTemplate(null);
+              setPreviewData(null);
+            }}
           >
             <motion.div
               initial={{ scale: 0.9 }}
@@ -405,30 +433,89 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
               className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6 border-b flex items-center justify-between">
+              <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-white z-10">
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">{previewTemplate.name}</h3>
                   <p className="text-gray-600 mt-1">{previewTemplate.description}</p>
                 </div>
                 <button
-                  onClick={() => setPreviewTemplate(null)}
+                  onClick={() => {
+                    setPreviewTemplate(null);
+                    setPreviewData(null);
+                  }}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <FiX className="text-2xl" />
                 </button>
               </div>
+              
               <div className="p-6">
-                <img
-                  src={previewTemplate.thumbnailUrl}
-                  alt={previewTemplate.name}
-                  className="w-full rounded-lg"
-                />
-                {pageId && (
-                  <div className="mt-6 flex gap-3">
+                {loadingPreview ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                  </div>
+                ) : previewData ? (
+                  <div className="space-y-6">
+                    {/* Header Preview */}
+                    {previewData.header && (
+                      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6 border border-indigo-100">
+                        <div className="text-center">
+                          {previewData.header.displayName && (
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                              {previewData.header.displayName}
+                            </h2>
+                          )}
+                          {previewData.header.title && (
+                            <p className="text-lg text-gray-700 mb-2">{previewData.header.title}</p>
+                          )}
+                          {previewData.header.company && (
+                            <p className="text-sm text-gray-600 mb-3">{previewData.header.company}</p>
+                          )}
+                          {previewData.header.bio && (
+                            <p className="text-gray-700 max-w-2xl mx-auto mb-4">{previewData.header.bio}</p>
+                          )}
+                          {previewData.header.customIntroduction && (
+                            <p className="text-sm text-indigo-700 font-medium">
+                              {previewData.header.customIntroduction}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Blocks Preview */}
+                    {previewData.blocks && previewData.blocks.length > 0 && (
+                      <div className="space-y-4">
+                        <h4 className="font-semibold text-gray-900">Content Blocks</h4>
+                        {previewData.blocks.map((block: any, index: number) => (
+                          <BlockRenderer
+                            key={index}
+                            block={block}
+                            onBlockClick={() => {}}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    
+                    {previewData.templateType === 'BIO_ONLY' && (!previewData.blocks || previewData.blocks.length === 0) && (
+                      <div className="text-center py-8 text-gray-500">
+                        This is a Bio Only template with no content blocks
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    Failed to load preview
+                  </div>
+                )}
+                
+                {pageId && !loadingPreview && (
+                  <div className="mt-6 flex gap-3 pt-6 border-t">
                     <button
                       onClick={() => {
                         handleApplyTemplate(previewTemplate);
                         setPreviewTemplate(null);
+                        setPreviewData(null);
                       }}
                       disabled={applying}
                       className="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
