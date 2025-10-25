@@ -537,14 +537,22 @@ const EnhancedPageBuilder = () => {
 
   // Helper function to get block icon
   const getBlockIcon = (type) => {
+    // Normalize to lowercase for matching (handles both 'LINK' and 'link')
+    const normalizedType = type?.toLowerCase() || '';
+    
     const iconMap = {
       link: FiLink,
       product: FiShoppingBag,
       email: FiMail,
+      email_capture: FiMail,
       image: FiImage,
+      image_gallery: FiImage,
       music: FiMusic,
+      music_player: FiMusic,
       video: FiVideo,
+      video_embed: FiVideo,
       booking: FiCalendar,
+      booking_calendar: FiCalendar,
       analytics: FiEye,
       promo: FiTag,
       discount: FiTag,
@@ -553,16 +561,22 @@ const EnhancedPageBuilder = () => {
       newsletter: FiMail,
       custom: FiEdit3,
       tip: FiTag,
+      tip_jar: FiTag,
       social_feed: FiShare2,
       ama: FiMail,
+      ama_block: FiMail,
       gated: FiSettings,
+      gated_content: FiSettings,
       rss: FiLink,
+      rss_feed: FiLink,
       portfolio: FiImage,
       contact: FiMail,
+      contact_form: FiMail,
       divider: FiEdit3,
-      text: FiEdit3
+      text: FiEdit3,
+      text_block: FiEdit3
     };
-    return iconMap[type] || FiLink;
+    return iconMap[normalizedType] || FiLink;
   };
 
   // Helper function to render block summary
