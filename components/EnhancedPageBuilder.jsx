@@ -567,7 +567,7 @@ const EnhancedPageBuilder = () => {
 
   // Helper function to render block summary
   const renderBlockSummary = (block) => {
-    switch (block.type) {
+    switch (block.type.toLowerCase()) {
       case 'product':
         return <p className="text-sm text-green-600 font-medium">${block.data?.price || '0'}</p>;
       case 'link':
