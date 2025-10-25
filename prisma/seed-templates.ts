@@ -789,7 +789,7 @@ const templates = [
         }
       },
       {
-        type: "EMAIL_CAPTURE",
+        type: "CONTACT_FORM",
         position: 3,
         title: "Get a Custom Proposal",
         description: "Tell us about your business and goals",
@@ -895,7 +895,7 @@ const templates = [
         }
       },
       {
-        type: "divider",
+        type: "DIVIDER",
         position: 2,
         title: "",
         description: null,
