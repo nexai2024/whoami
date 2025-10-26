@@ -195,7 +195,7 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
           <div className="border-t pt-6">
             {course.isEnrolled ? (
               <button
-                onClick={() => router.push(`/courses/${slug}/learn`)}
+                onClick={() => router.push(`/c/${slug}/learn`)}
                 className="w-full bg-green-600 text-white px-6 py-4 rounded-lg hover:bg-green-700 transition-colors text-lg font-semibold flex items-center justify-center gap-2"
               >
                 <FiCheckCircle size={24} />
