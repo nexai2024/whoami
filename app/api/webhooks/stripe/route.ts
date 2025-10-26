@@ -46,6 +46,10 @@ export async function POST(req: NextRequest) {
         await handlePaymentIntentFailed(event.data.object as Stripe.PaymentIntent);
         break;
 
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+
       default:
         logger.info(`Unhandled event type: ${event.type}`);
     }
