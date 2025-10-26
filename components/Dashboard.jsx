@@ -293,7 +293,6 @@ export default function Dashboard() {
                 </div>
                 <div className="text-left">
                    <h3 className="font-medium text-gray-900">Settings</h3>
-                  <MyAccountPage />
                   <p className="text-sm text-gray-600">Manage account</p>
                 </div>
               </Link>
