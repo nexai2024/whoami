@@ -74,8 +74,8 @@ export async function POST(
         }
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || request.headers.get('origin')}/courses/${course.slug}/learn?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || request.headers.get('origin')}/courses/${course.slug}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || request.headers.get('origin')}/c/${course.slug}/learn?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || request.headers.get('origin')}/c/${course.slug}`,
       metadata: {
         userId,
         courseId: course.id
