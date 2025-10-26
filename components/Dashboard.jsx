@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'next/link';
+import Link from 'next/link';
 import * as FiIcons from 'react-icons/fi';
-import SafeIcon from '../common/SafeIcon';
-import { PageService } from '../lib/database/pages';
-import { AnalyticsService } from '../lib/database/analytics';
-import { useAuth } from '../lib/auth/AuthContext.jsx';
-import { logger } from '../lib/utils/logger';
-import MyAccountPage from './MyAccount';
+import SafeIcon from '@/common/SafeIcon';
+import { PageService } from '@/lib/database/pages';
+import { AnalyticsService } from '@/lib/database/analytics';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { logger } from '@/lib/utils/logger';
 import toast from 'react-hot-toast';
 const {
   FiPlus, FiEdit3, FiBarChart3, FiSettings, FiEye, FiDollarSign,
@@ -294,7 +293,6 @@ export default function Dashboard() {
                 </div>
                 <div className="text-left">
                    <h3 className="font-medium text-gray-900">Settings</h3>
-                  <MyAccountPage />
                   <p className="text-sm text-gray-600">Manage account</p>
                 </div>
               </Link>
