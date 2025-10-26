@@ -148,13 +148,13 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
   };
 
   const saveLesson = async (lesson: Lesson) => {
-    if (!courseId) {
+    if (!internalCourseId) {
       toast.error('Save course first before adding lessons');
       return;
     }
 
     try {
-      const response = await fetch(`/api/courses/${courseId}/lessons`, {
+      const response = await fetch(`/api/courses/${internalCourseId}/lessons`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
