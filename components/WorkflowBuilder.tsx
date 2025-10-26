@@ -15,7 +15,8 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import {
   FiZap, FiMail, FiTag, FiBook, FiClock, FiGitBranch,
-  FiSave, FiPlay, FiSettings, FiTrash2
+  FiSave, FiPlay, FiSettings, FiTrash2, FiGlobe, FiCode,
+  FiFile
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
