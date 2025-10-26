@@ -1,20 +1,8 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import * as FiIcons from 'react-icons/fi';
-import SafeIcon from '../common/SafeIcon';
-import { PageService } from '../lib/database/pages';
-import { logger } from '../lib/utils/logger';
-import { useUser } from "@stackframe/stack"
-import toast from 'react-hot-toast';
-
-const { 
-  FiUser, FiLogOut, FiSettings, FiEye, FiPlus, FiChevronDown, 
-  FiHome, FiBarChart3, FiEdit3, FiDollarSign, FiHelpCircle, 
-  FiGlobe, FiCopy, FiExternalLink, FiFolder, FiImage
-} = FiIcons;
+import React from 'react';
+import { useUser } from "@stackframe/stack";
+import Sidebar from './Sidebar';
+import UnauthenticatedHeader from './UnauthenticatedHeader';
 
 const Header = () => {
   const [user, setUser] = useState(null);
