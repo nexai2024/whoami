@@ -941,6 +941,7 @@ model LeadMagnet {
 
   // Magnet details
   name        String
+  slug        String?    @unique
   description String?    @db.Text
   type        MagnetType
 
