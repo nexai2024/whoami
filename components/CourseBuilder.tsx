@@ -89,7 +89,7 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
     try {
       setSaving(true);
 
-      if (!courseId) {
+      if (!internalCourseId) {
         // Create new course
         const response = await fetch('/api/courses', {
           method: 'POST',
@@ -102,6 +102,7 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
 
         if (response.ok) {
           const data = await response.json();
+          setInternalCourseId(data.course.id);
           toast.success('Course created!');
           if (onSave) onSave(data.course);
         } else {
@@ -110,7 +111,7 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
         }
       } else {
         // Update existing course
-        const response = await fetch(`/api/courses/${courseId}`, {
+        const response = await fetch(`/api/courses/${internalCourseId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
