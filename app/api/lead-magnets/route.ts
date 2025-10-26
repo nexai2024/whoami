@@ -10,6 +10,48 @@ const prisma = new PrismaClient();
 
 type CreationMethod = 'UPLOAD' | 'TEMPLATE' | 'AI_GENERATE';
 
+/**
+ * Generate a unique slug from the lead magnet name
+ */
+async function generateUniqueSlug(name: string, existingId?: string): Promise<string> {
+  // Convert to lowercase and replace spaces with hyphens
+  let slug = name
+    .toLowerCase()
+    .replace(/\s+/g, '-')                    // Replace spaces with hyphens
+    .replace(/[^a-z0-9-]/g, '')              // Remove all chars except a-z, 0-9, hyphens
+    .replace(/-+/g, '-')                     // Replace duplicate hyphens with single hyphen
+    .replace(/^-|-$/g, '')                   // Trim hyphens from start/end
+    .substring(0, 100);                      // Max length 100 chars
+
+  // Check for uniqueness
+  const existing = await prisma.leadMagnet.findUnique({
+    where: { slug },
+  });
+
+  // If slug exists and it's not the same lead magnet, append a number
+  if (existing && existing.id !== existingId) {
+    let counter = 2;
+    let newSlug = `${slug}-${counter}`;
+
+    while (true) {
+      const existingWithNumber = await prisma.leadMagnet.findUnique({
+        where: { slug: newSlug },
+      });
+
+      if (!existingWithNumber || existingWithNumber.id === existingId) {
+        break;
+      }
+
+      counter++;
+      newSlug = `${slug}-${counter}`;
+    }
+
+    slug = newSlug;
+  }
+
+  return slug;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // TODO: Replace with actual auth middleware
