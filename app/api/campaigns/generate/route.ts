@@ -32,6 +32,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+
+    // Debug logging: log received keys (not values)
+    console.debug('[Campaign Generate] Received keys:', Object.keys(body));
+
     const { productId, blockId, customContent, config } = body as {
       productId?: string;
       blockId?: string;
@@ -46,7 +50,9 @@ export async function POST(request: NextRequest) {
     // Validate input
     if (!productId && !blockId && !customContent) {
       return NextResponse.json(
-        { error: 'Must provide productId, blockId, or customContent' },
+        {
+          error: "Invalid request format. Expected one of: 'productId' (string), 'blockId' (string), or 'customContent' (object with title and description)."
+        },
         { status: 400 }
       );
     }
