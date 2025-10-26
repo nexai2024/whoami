@@ -131,7 +131,11 @@ export default function WorkflowBuilder({ workflowId, onSave }: WorkflowBuilderP
       'REMOVE_TAG': '🔖 Remove Tag',
       'ENROLL_IN_COURSE': '📚 Enroll in Course',
       'WAIT': '⏰ Wait/Delay',
-      'CONDITION': '🔀 Condition'
+      'CONDITION': '🔀 Condition',
+      'HTTP_REQUEST': '🌐 HTTP Request',
+      'DATA_TRANSFORM': '🔧 Data Transform',
+      'EXTERNAL_API': '⚡ External API',
+      'FILE_CREATE': '📄 Create File'
     };
     return labels[type] || type;
   };
