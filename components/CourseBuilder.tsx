@@ -48,6 +48,7 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeTab, setActiveTab] = useState<'details' | 'lessons'>('details');
   const [saving, setSaving] = useState(false);
+  const [internalCourseId, setInternalCourseId] = useState<string | undefined>(courseId);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
