@@ -14,6 +14,8 @@ import { TourProvider } from '@/lib/tours/TourProvider';
 import { TourTooltip } from '@/components/tours/TourTooltip';
 import { HelpButton } from '@/components/tours/HelpButton';
 import Header from '@/components/Header';
+import ContentWrapper from '@/components/ContentWrapper';
+import { useUser } from "@stackframe/stack";
 
 keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
