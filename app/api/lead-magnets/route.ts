@@ -190,6 +190,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Generate unique slug
+    const slug = await generateUniqueSlug(name);
+    leadMagnetData.slug = slug;
+
     // Create lead magnet
     const leadMagnet = await prisma.leadMagnet.create({
       data: leadMagnetData,
@@ -197,8 +201,8 @@ export async function POST(request: NextRequest) {
 
     // Generate opt-in URL and embed code
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const optInUrl = `${baseUrl}/magnet/${leadMagnet.id}`;
-    const embedCode = `<script src="${baseUrl}/embed/magnet/${leadMagnet.id}.js"></script>`;
+    const optInUrl = `${baseUrl}/magnet/${leadMagnet.slug}`;
+    const embedCode = `<script src="${baseUrl}/embed/magnet/${leadMagnet.slug}.js"></script>`;
 
     return NextResponse.json({
       leadMagnetId: leadMagnet.id,
