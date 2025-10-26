@@ -124,3 +124,68 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
 
   // TODO: Send failure notification email (future enhancement)
 }
+
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  logger.info('Checkout session completed:', session.id);
+
+  const userId = session.metadata?.userId;
+  const courseId = session.metadata?.courseId;
+
+  if (!userId || !courseId) {
+    logger.error('Missing metadata in checkout session:', session.id);
+    return;
+  }
+
+  try {
+    // Get course
+    const course = await prisma.course.findUnique({
+      where: { id: courseId }
+    });
+
+    if (!course) {
+      logger.error('Course not found:', courseId);
+      return;
+    }
+
+    // Check if enrollment already exists
+    const existingEnrollment = await prisma.courseEnrollment.findFirst({
+      where: {
+        email: session.customer_email || '',
+        courseId
+      }
+    });
+
+    if (existingEnrollment) {
+      logger.info('Enrollment already exists:', existingEnrollment.id);
+      return;
+    }
+
+    // Create enrollment
+    const enrollment = await prisma.courseEnrollment.create({
+      data: {
+        courseId,
+        email: session.customer_email || '',
+        name: session.customer_details?.name || undefined,
+        enrollmentSource: 'stripe-checkout',
+        paymentStatus: 'completed',
+        paymentAmount: course.price,
+        stripePaymentId: session.payment_intent as string
+      }
+    });
+
+    // Update enrollment count
+    await prisma.course.update({
+      where: { id: courseId },
+      data: {
+        enrollmentCount: {
+          increment: 1
+        }
+      }
+    });
+
+    logger.info('Successfully created enrollment from Stripe payment:', enrollment.id);
+  } catch (error) {
+    logger.error('Error handling checkout session completed:', error);
+    throw error;
+  }
+}
