@@ -19,6 +19,22 @@ import { useUser } from "@stackframe/stack";
 
 keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const user = useUser();
+
+  return (
+    <>
+      <Header />
+      <ContentWrapper hasSidebar={!!user}>
+        {children}
+      </ContentWrapper>
+      <ErrorConsole />
+      <TourTooltip />
+      <HelpButton />
+    </>
+  );
+}
+
 export default function AppLayout({
   children,
 }: Readonly<{
@@ -32,11 +48,9 @@ export default function AppLayout({
           <ErrorProvider>
             <TourProvider>
               <ErrorBoundary>
-                <Header />
-                {children}
-                <ErrorConsole />
-                <TourTooltip />
-                <HelpButton />
+                <LayoutContent>
+                  {children}
+                </LayoutContent>
               </ErrorBoundary>
             </TourProvider>
           </ErrorProvider>
