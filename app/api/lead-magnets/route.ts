@@ -260,6 +260,7 @@ export async function GET(request: NextRequest) {
       leadMagnets: leadMagnets.map((magnet) => ({
         id: magnet.id,
         name: magnet.name,
+        slug: magnet.slug,
         type: magnet.type,
         headline: magnet.headline,
         status: magnet.status,
