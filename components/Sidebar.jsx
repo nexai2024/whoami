@@ -222,20 +222,25 @@ export default function Sidebar() {
         {!collapsed ? (
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
-              {currUser?.profile?.displayName?.[0]?.toUpperCase() ||
-               currUser?.profile?.username?.[0]?.toUpperCase() ||
+              {user?.displayName?.[0]?.toUpperCase() ||
+               user?.primaryEmail?.[0]?.toUpperCase() ||
                'U'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">
-                {currUser?.profile?.displayName || currUser?.profile?.username || 'User'}
+                {user?.displayName || 'User'}
               </p>
               <p className="text-xs text-gray-400 truncate">
-                {currUser?.email || ''}
+                {user?.primaryEmail || ''}
               </p>
             </div>
             <button
-              onClick={logout}
+              onClick={() => {
+                if (user && typeof user.signOut === 'function') {
+                  user.signOut();
+                }
+                router.push('/');
+              }}
               className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
               aria-label="Logout"
             >
@@ -244,7 +249,12 @@ export default function Sidebar() {
           </div>
         ) : (
           <button
-            onClick={logout}
+            onClick={() => {
+              if (user && typeof user.signOut === 'function') {
+                user.signOut();
+              }
+              router.push('/');
+            }}
             className="w-full p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
             aria-label="Logout"
           >
