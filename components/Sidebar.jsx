@@ -9,7 +9,8 @@ import {
   FiSettings, FiCreditCard, FiShield, FiFolder, FiRefreshCw,
   FiChevronDown, FiChevronRight, FiMenu, FiX, FiLogOut, FiLink
 } from 'react-icons/fi';
-import { useAuth } from '@/lib/auth/AuthContext';
+import { useUser } from "@stackframe/stack";
+import { useRouter } from 'next/navigation';
 
 export default function Sidebar() {
   const pathname = usePathname();
