@@ -14,7 +14,8 @@ import { useRouter } from 'next/navigation';
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const { currUser, logout } = useAuth();
+  const router = useRouter();
+  const user = useUser();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState({
     introduce: true,
