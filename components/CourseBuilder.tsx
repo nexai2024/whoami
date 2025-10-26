@@ -59,14 +59,18 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
   );
 
   useEffect(() => {
-    if (courseId) {
+    if (internalCourseId) {
       loadCourse();
     }
+  }, [internalCourseId]);
+
+  useEffect(() => {
+    setInternalCourseId(courseId);
   }, [courseId]);
 
   const loadCourse = async () => {
     try {
-      const response = await fetch(`/api/courses/${courseId}`, {
+      const response = await fetch(`/api/courses/${internalCourseId}`, {
         headers: { 'x-user-id': 'demo-user' }
       });
 
