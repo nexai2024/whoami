@@ -328,6 +328,50 @@ export default function WorkflowBuilder({ workflowId, onSave }: WorkflowBuilderP
                 <div className="text-xs text-gray-600">Conditional logic</div>
               </div>
             </button>
+
+            <button
+              onClick={() => addStep('HTTP_REQUEST')}
+              className="w-full text-left p-3 bg-cyan-50 hover:bg-cyan-100 rounded-lg transition-colors flex items-center gap-3"
+            >
+              <FiGlobe className="text-cyan-600" />
+              <div>
+                <div className="font-medium text-sm">HTTP Request</div>
+                <div className="text-xs text-gray-600">Call external APIs</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => addStep('DATA_TRANSFORM')}
+              className="w-full text-left p-3 bg-teal-50 hover:bg-teal-100 rounded-lg transition-colors flex items-center gap-3"
+            >
+              <FiCode className="text-teal-600" />
+              <div>
+                <div className="font-medium text-sm">Data Transform</div>
+                <div className="text-xs text-gray-600">Transform data</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => addStep('EXTERNAL_API')}
+              className="w-full text-left p-3 bg-violet-50 hover:bg-violet-100 rounded-lg transition-colors flex items-center gap-3"
+            >
+              <FiZap className="text-violet-600" />
+              <div>
+                <div className="font-medium text-sm">External API</div>
+                <div className="text-xs text-gray-600">Slack, Discord, etc</div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => addStep('FILE_CREATE')}
+              className="w-full text-left p-3 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors flex items-center gap-3"
+            >
+              <FiFile className="text-amber-600" />
+              <div>
+                <div className="font-medium text-sm">Create File</div>
+                <div className="text-xs text-gray-600">Generate files</div>
+              </div>
+            </button>
           </div>
         </div>
 
