@@ -75,11 +75,11 @@ export async function POST(req: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Error creating email subscriber:', error);
 
     // Handle Prisma unique constraint errors
-    if (error.code === 'P2002') {
+    if (error?.code === 'P2002') {
       return NextResponse.json(
         {
           success: true,

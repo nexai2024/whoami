@@ -100,7 +100,7 @@ const CustomDomainSetup = ({ pageId, currentDomain, onDomainUpdate }) => {
       <div className="bg-white rounded-xl shadow-sm border p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-indigo-100 rounded-lg">
-            <SafeIcon icon={FiGlobe} className="text-indigo-600 text-xl" />
+            <SafeIcon name={undefined}  icon={FiGlobe} className="text-indigo-600 text-xl" />
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Custom Domain</h2>
@@ -184,7 +184,7 @@ const CustomDomainSetup = ({ pageId, currentDomain, onDomainUpdate }) => {
             {verificationStatus === 'verified' && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center gap-2 text-green-700">
-                  <SafeIcon icon={FiCheck} />
+                  <SafeIcon name={undefined}  icon={FiCheck} />
                   <p className="font-medium">Domain verified successfully!</p>
                 </div>
                 <p className="text-green-600 text-sm mt-1">
@@ -228,7 +228,7 @@ const CustomDomainSetup = ({ pageId, currentDomain, onDomainUpdate }) => {
                         onClick={() => copyToClipboard(record.name)}
                         className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        <SafeIcon icon={FiCopy} />
+                        <SafeIcon name={undefined}  icon={FiCopy} />
                       </button>
                     </div>
                   </div>
@@ -240,7 +240,7 @@ const CustomDomainSetup = ({ pageId, currentDomain, onDomainUpdate }) => {
                         onClick={() => copyToClipboard(record.value)}
                         className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        <SafeIcon icon={FiCopy} />
+                        <SafeIcon name={undefined}  icon={FiCopy} />
                       </button>
                     </div>
                   </div>

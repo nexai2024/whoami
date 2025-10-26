@@ -10,7 +10,7 @@ import { checkUserFeature } from '@/lib/features/checkFeature';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication

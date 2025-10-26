@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = request.headers.get('x-user-id');
@@ -23,8 +23,9 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
     const template = await prisma.productTemplate.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!template) {
@@ -67,7 +68,7 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = request.headers.get('x-user-id');
@@ -79,8 +80,9 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
     const template = await prisma.productTemplate.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!template) {
@@ -99,7 +101,7 @@ export async function DELETE(
     }
 
     await prisma.productTemplate.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({

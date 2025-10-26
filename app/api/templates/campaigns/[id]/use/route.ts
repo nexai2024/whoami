@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userId = request.headers.get('x-user-id');
@@ -21,8 +21,9 @@ export async function POST(
       );
     }
 
+    const { id } = await params;
     const template = await prisma.campaignTemplate.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!template) {

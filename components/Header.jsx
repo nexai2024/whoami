@@ -143,7 +143,7 @@ const Header = () => {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
-                  <SafeIcon icon={item.icon} className="text-sm" />
+                  <SafeIcon name={undefined}  icon={item.icon} className="text-sm" />
                   {item.label}
                 </Link>
               ))}
@@ -159,11 +159,11 @@ const Header = () => {
                   onClick={() => setPagesDropdownOpen(!pagesDropdownOpen)}
                   className="flex items-center gap-2 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-sm"
                 >
-                  <SafeIcon icon={FiGlobe} />
+                  <SafeIcon name={undefined}  icon={FiGlobe} />
                   <span className="hidden sm:inline">
                     {currentPage?.title || 'Select Page'}
                   </span>
-                  <SafeIcon icon={FiChevronDown} className="text-xs" />
+                  <SafeIcon name={undefined}  icon={FiChevronDown} className="text-xs" />
                 </button>
 
                 <AnimatePresence>
@@ -207,7 +207,7 @@ const Header = () => {
                           }}
                           className="w-full text-left px-3 py-2 hover:bg-gray-100 transition-colors text-indigo-600 flex items-center gap-2"
                         >
-                          <SafeIcon icon={FiPlus} />
+                          <SafeIcon name={undefined}  icon={FiPlus} />
                           Create New Page
                         </button>
                       </div>
@@ -225,7 +225,7 @@ const Header = () => {
                   className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors text-sm"
                   title="Copy page URL"
                 >
-                  <SafeIcon icon={FiCopy} />
+                  <SafeIcon name={undefined}  icon={FiCopy} />
                   <span className="hidden sm:inline">Copy</span>
                 </button>
 
@@ -233,7 +233,7 @@ const Header = () => {
                   onClick={handlePreview}
                   className="flex items-center gap-2 bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium"
                 >
-                  <SafeIcon icon={FiEye} />
+                  <SafeIcon name={undefined}  icon={FiEye} />
                   <span className="hidden sm:inline">Preview</span>
                 </button>
               </div>
@@ -266,7 +266,7 @@ const Header = () => {
                     {user?.plan?.toLowerCase() || 'Free'} Plan
                   </div>
                 </div>
-                <SafeIcon icon={FiChevronDown} className="text-gray-400" />
+                <SafeIcon name={undefined}  icon={FiChevronDown} className="text-gray-400" />
               </button>
 
               <AnimatePresence>
@@ -291,7 +291,7 @@ const Header = () => {
                       className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => setDropdownOpen(false)}
                     >
-                      <SafeIcon icon={FiSettings} />
+                      <SafeIcon name={undefined}  icon={FiSettings} />
                       Settings
                     </Link>
 
@@ -300,7 +300,7 @@ const Header = () => {
                       className="flex items-center gap-3 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
                       onClick={() => setDropdownOpen(false)}
                     >
-                      <SafeIcon icon={FiHelpCircle} />
+                      <SafeIcon name={undefined}  icon={FiHelpCircle} />
                       Help & Support
                     </Link>
 
@@ -316,7 +316,7 @@ const Header = () => {
                         }}
                         className="flex items-center gap-3 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors w-full text-left"
                       >
-                        <SafeIcon icon={FiLogOut} />
+                        <SafeIcon name={undefined}  icon={FiLogOut} />
                         Sign Out
                       </button>
                     </div>
@@ -340,7 +340,7 @@ const Header = () => {
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
-                <SafeIcon icon={item.icon} className="text-sm" />
+                <SafeIcon name={undefined}  icon={item.icon} className="text-sm" />
                 {item.label}
               </Link>
             ))}

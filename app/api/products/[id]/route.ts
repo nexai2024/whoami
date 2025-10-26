@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // TODO: Replace with actual auth middleware
@@ -25,8 +25,9 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         sales: {
           take: 10,
@@ -52,7 +53,7 @@ export async function GET(
 
     // Calculate totals
     const allSales = await prisma.sale.findMany({
-      where: { productId: params.id }
+      where: { productId: id }
     });
 
     const totalSales = allSales.length;
@@ -94,7 +95,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // TODO: Replace with actual auth middleware
@@ -119,9 +120,10 @@ export async function PATCH(
       updateStripe = true
     } = body;
 
+    const { id } = await params;
     // Find existing product
     const existingProduct = await prisma.product.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!existingProduct) {
@@ -227,12 +229,12 @@ export async function PATCH(
 
     // Update product in database
     await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData
     });
 
     return NextResponse.json({
-      productId: params.id,
+      productId: id,
       stripePriceId: newStripePriceId,
       message: 'Product updated successfully'
     });
@@ -247,7 +249,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // TODO: Replace with actual auth middleware
@@ -263,9 +265,10 @@ export async function DELETE(
     const { searchParams } = new URL(request.url);
     const hard = searchParams.get('hard') === 'true';
 
+    const { id } = await params;
     // Find product
     const product = await prisma.product.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         _count: {
           select: { sales: true }
@@ -298,12 +301,12 @@ export async function DELETE(
       }
 
       await prisma.product.delete({
-        where: { id: params.id }
+        where: { id }
       });
     } else {
       // Soft delete (set inactive)
       await prisma.product.update({
-        where: { id: params.id },
+        where: { id },
         data: { isActive: false }
       });
     }

@@ -214,7 +214,7 @@ const PublicPage = () => {
                 onClick={() => setShareMenuOpen(!shareMenuOpen)}
                 className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
-                <SafeIcon icon={FiShare2} />
+                <SafeIcon name={undefined}  icon={FiShare2} />
                 Share
               </button>
               
@@ -246,7 +246,7 @@ const PublicPage = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 flex-1">
-                      <SafeIcon icon={getBlockIcon(block.type)} className="text-xl" />
+                      <SafeIcon name={undefined}  icon={getBlockIcon(block.type)} className="text-xl" />
                       <div className="flex-1 text-left">
                         <h3 className="font-semibold">{block.title}</h3>
                         {block.description && (
@@ -257,7 +257,7 @@ const PublicPage = () => {
                         )}
                       </div>
                     </div>
-                    <SafeIcon icon={FiExternalLink} className="text-lg opacity-70" />
+                    <SafeIcon name={undefined}  icon={FiExternalLink} className="text-lg opacity-70" />
                   </div>
                 </div>
               </motion.div>

@@ -4,14 +4,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, RepurposedAsset as RepurposedAssetModel } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function GET(
@@ -64,7 +64,7 @@ export async function GET(
         status: repurposedContent.status,
         error: repurposedContent.error,
         createdAt: repurposedContent.createdAt.toISOString(),
-        assets: repurposedContent.assets.map((asset) => ({
+        assets: repurposedContent.assets.map((asset: RepurposedAssetModel) => ({
           id: asset.id,
           type: asset.type,
           platform: asset.platform,

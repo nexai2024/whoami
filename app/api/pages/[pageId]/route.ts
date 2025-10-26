@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 import { Prisma } from '@prisma/client';
 // GET: Fetch all blocks for a page
-export async function GET(req: NextRequest, { params }: { params: { pageId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
     const { pageId } = await params;
     try {
         const page =  await prisma.page.findUnique({
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest, { params }: { params: { pageId: stri
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { pageId: string } }
+  { params }: { params: Promise<{ pageId: string }> }
 ) {
   const { pageId } = await params;
   const headerData = await req.json();

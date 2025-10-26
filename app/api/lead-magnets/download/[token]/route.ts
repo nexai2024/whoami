@@ -10,9 +10,9 @@ import { generateDownloadUrl } from '@/lib/services/storageService';
 const prisma = new PrismaClient();
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
 export async function GET(

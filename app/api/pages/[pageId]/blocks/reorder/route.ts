@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 
 // POST: Reorder blocks for a page
-export async function POST(req: NextRequest, { params }: { params: { pageId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
   const { pageId } = await params;
 
   try {

@@ -114,7 +114,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <SafeIcon icon={FiFile} className="text-4xl text-gray-400" />
+            <SafeIcon name={undefined}  icon={FiFile} className="text-4xl text-gray-400" />
           </div>
         )}
       </div>
@@ -136,7 +136,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
             className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
             title="Copy URL"
           >
-            <SafeIcon icon={FiCopy} className="text-xs" />
+            <SafeIcon name={undefined}  icon={FiCopy} className="text-xs" />
           </button>
           <button
             onClick={(e) => {
@@ -146,7 +146,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
             className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
             title="Download"
           >
-            <SafeIcon icon={FiDownload} className="text-xs" />
+            <SafeIcon name={undefined}  icon={FiDownload} className="text-xs" />
           </button>
           <button
             onClick={(e) => {
@@ -156,7 +156,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
             className="p-1 text-gray-400 hover:text-red-500 transition-colors"
             title="Delete"
           >
-            <SafeIcon icon={FiTrash2} className="text-xs" />
+            <SafeIcon name={undefined}  icon={FiTrash2} className="text-xs" />
           </button>
         </div>
       </div>
@@ -181,7 +181,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
             className="w-full h-full object-cover rounded-lg"
           />
         ) : (
-          <SafeIcon icon={FiFile} className="text-gray-400" />
+          <SafeIcon name={undefined}  icon={FiFile} className="text-gray-400" />
         )}
       </div>
       
@@ -203,7 +203,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
           className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
           title="Copy URL"
         >
-          <SafeIcon icon={FiCopy} />
+          <SafeIcon name={undefined}  icon={FiCopy} />
         </button>
         <button
           onClick={(e) => {
@@ -213,7 +213,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
           className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
           title="Download"
         >
-          <SafeIcon icon={FiDownload} />
+          <SafeIcon name={undefined}  icon={FiDownload} />
         </button>
         <button
           onClick={(e) => {
@@ -223,7 +223,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
           className="p-2 text-gray-400 hover:text-red-500 transition-colors"
           title="Delete"
         >
-          <SafeIcon icon={FiTrash2} />
+          <SafeIcon name={undefined}  icon={FiTrash2} />
         </button>
       </div>
     </motion.div>
@@ -243,7 +243,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
       <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="relative">
-            <SafeIcon icon={FiSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <SafeIcon name={undefined}  icon={FiSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search files..."
@@ -273,7 +273,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            <SafeIcon icon={FiGrid} />
+            <SafeIcon name={undefined}  icon={FiGrid} />
           </button>
           <button
             onClick={() => setViewMode('list')}
@@ -283,7 +283,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
                 : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
-            <SafeIcon icon={FiList} />
+            <SafeIcon name={undefined}  icon={FiList} />
           </button>
         </div>
       </div>
@@ -295,7 +295,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
         </div>
       ) : filteredFiles.length === 0 ? (
         <div className="text-center py-12">
-          <SafeIcon icon={FiImage} className="text-4xl text-gray-400 mx-auto mb-4" />
+          <SafeIcon name={undefined}  icon={FiImage} className="text-4xl text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600">
             {searchTerm || filterType !== 'all' ? 'No files match your criteria' : 'No files uploaded yet'}
           </p>

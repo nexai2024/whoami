@@ -4,8 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, CampaignStatus, AssetType, Platform, AssetStatus } from '@prisma/client';
-import aiService from '@/lib/services/aiService';
+import { PrismaClient, Platform, AssetType, AssetStatus, CampaignStatus } from '@prisma/client';
+import { generateJSON } from '@/lib/services/aiService';
 
 const prisma = new PrismaClient();
 
@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
         userId,
         productId: productId || null,
         blockId: blockId || null,
-        customContent: customContent || null,
+        customContent: customContent || undefined,
         name: `${sourceContent.title} Campaign`,
         goal: config.goal,
         targetAudience: config.targetAudience || null,
@@ -267,7 +267,7 @@ Return JSON array format:
 ]`;
 
   try {
-    const result = await aiService.generateJSON<Array<{ content: string }>>(
+    const result = await generateJSON<Array<{ content: string }>>(
       {
         systemPrompt,
         userPrompt,
@@ -325,7 +325,7 @@ Return JSON array format:
 ]`;
 
   try {
-    const result = await aiService.generateJSON<
+    const result = await generateJSON<
       Array<{ subject: string; preview: string; body: string }>
     >({
       systemPrompt,
@@ -385,7 +385,7 @@ Return JSON array format:
 ]`;
 
   try {
-    const result = await aiService.generateJSON<
+    const result = await generateJSON<
       Array<{
         approach: string;
         headline: string;

@@ -36,7 +36,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
               )}
             </div>
           </div>
-          <SafeIcon icon={FiExternalLink} className="text-gray-400" />
+          <SafeIcon name={undefined}  icon={FiExternalLink} className="text-gray-400" />
         </div>
       </div>
     );
@@ -66,7 +66,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
               )}
               {block.data?.averageRating && (
                 <div className="flex items-center gap-1 ml-auto">
-                  <SafeIcon icon={FiStar} className="text-yellow-500 text-sm" />
+                  <SafeIcon name={undefined}  icon={FiStar} className="text-yellow-500 text-sm" />
                   <span className="text-sm font-medium">{block.data.averageRating}</span>
                   {block.data?.reviewCount && (
                     <span className="text-sm text-gray-500">({block.data.reviewCount})</span>
@@ -90,7 +90,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     return (
       <div className={`${baseStyles} bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200`} onClick={() => onBlockClick(block)}>
         <div className="text-center">
-          <SafeIcon icon={FiMail} className="text-3xl text-purple-600 mx-auto mb-3" />
+          <SafeIcon name={undefined}  icon={FiMail} className="text-3xl text-purple-600 mx-auto mb-3" />
           <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
           {block.data?.description && (
             <p className="text-sm text-gray-600 mb-4">{block.data.description}</p>
@@ -140,7 +140,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
               <p className="text-xs text-gray-500 mt-1">{block.data.duration}</p>
             )}
           </div>
-          <SafeIcon icon={FiMusic} className="text-orange-500 text-2xl" />
+          <SafeIcon name={undefined}  icon={FiMusic} className="text-orange-500 text-2xl" />
         </div>
       </div>
     );
@@ -154,7 +154,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
         <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
           {block.data?.videoUrl && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-              <SafeIcon icon={FiVideo} className="text-white text-4xl" />
+              <SafeIcon name={undefined}  icon={FiVideo} className="text-white text-4xl" />
             </div>
           )}
         </div>
@@ -167,7 +167,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     return (
       <div className={`${baseStyles} bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200`} onClick={() => onBlockClick(block)}>
         <div className="text-center">
-          <SafeIcon icon={FiCalendar} className="text-3xl text-indigo-600 mx-auto mb-3" />
+          <SafeIcon name={undefined}  icon={FiCalendar} className="text-3xl text-indigo-600 mx-auto mb-3" />
           <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
           {block.data?.serviceType && (
             <p className="text-sm text-gray-600 mb-1">{block.data.serviceType}</p>
@@ -191,7 +191,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     return (
       <div className={`${baseStyles} bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200`} onClick={() => onBlockClick(block)}>
         <div className="text-center">
-          <SafeIcon icon={FiHeart} className="text-3xl text-yellow-600 mx-auto mb-3" />
+          <SafeIcon name={undefined}  icon={FiHeart} className="text-3xl text-yellow-600 mx-auto mb-3" />
           <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
           {block.data?.message && (
             <p className="text-sm text-gray-600 mb-4">{block.data.message}</p>
@@ -240,7 +240,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
           <h3 className="font-bold text-gray-900 mb-3">{block.title}</h3>
           <div className="flex gap-3 justify-center">
             <button className="p-3 bg-white rounded-lg hover:bg-gray-50 transition-colors">
-              <SafeIcon icon={FiShare2} className="text-cyan-600" />
+              <SafeIcon name={undefined}  icon={FiShare2} className="text-cyan-600" />
             </button>
           </div>
         </div>
@@ -359,7 +359,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
             <p className="text-sm text-gray-600 mt-1">{block.description}</p>
           )}
         </div>
-        <SafeIcon icon={FiExternalLink} className="text-gray-400" />
+        <SafeIcon name={undefined}  icon={FiExternalLink} className="text-gray-400" />
       </div>
     </div>
   );

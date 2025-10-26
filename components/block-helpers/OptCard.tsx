@@ -1,6 +1,6 @@
-const OptCard = () => {
+import React from 'react';
 
-const ProductCard = () => { 
+export const ProductCard = () => { 
   return (
     <div className="items-center cursor-pointer flex-col justify-center py-2 px-16 relative flex min-h-[4.00rem] gap-[0.13rem] bg-color(srgb 0.93 0.93)">
   <div className="items-center bottom-[0.50rem] justify-center left-[0.50rem] absolute top-[0.50rem] flex w-12 h-12 rounded overflow-hidden">
@@ -10,7 +10,7 @@ const ProductCard = () => {
 </div>
   );
 };
-const BioHeader = () => {
+export const BioHeader = () => {
     return (
         <div className="items-center flex-col relative flex">
   <img className="object-contain w-24 h-auto max-w-full rounded-full" src="https://ugc.production.linktr.ee/c74f3276-e60f-4486-955b-a092789190c7_donna-hay-portrait-2022.jpeg?io=true&size=avatar-v3_0" />
@@ -26,7 +26,7 @@ const BioHeader = () => {
 </div>
 );
 };
-const BioTopBar = () => {
+export const BioTopBar = () => {
     return (
         <div className="gap-x-2 justify-between py-3.5 text-right flex max-w-[36.25rem] min-[576px]:pl-[calc(14px_*_2)]  min-[576px]:pr-[calc(14px_*_2)]">
   <button className="bg-white/[0.7] items-center backdrop-blur-sm cursor-pointer justify-center flex w-10 h-10 border-2 border-white/[0.4] border-solid rounded-full">
@@ -54,7 +54,7 @@ const BioTopBar = () => {
 </div>  
 );
 };
-const BigPicCard = () => {
+export const BigPicCard = () => {
     return (
         <div
   className='text-blue-700 items-center bg-[url("https://linkstorage.linkfire.com/medialinks/images/f22bc6bd-97a1-4512-83db-7460eb49533c/artwork-640x640")] bg-cover cursor-pointer text-[0.63rem] justify-center pt-[31.25rem] relative text-center flex rounded-lg font-medium'
@@ -65,4 +65,3 @@ const BigPicCard = () => {
 </div>
 );
 };
-export { ProductCard, BioHeader, BioTopBar, BigPicCard };

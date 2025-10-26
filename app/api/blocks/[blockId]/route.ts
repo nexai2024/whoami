@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 
 // GET: Fetch a single block by ID
-export async function GET(req: NextRequest, { params }: { params: { blockId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ blockId: string }> }) {
   const { blockId } = await params;
 
   try {

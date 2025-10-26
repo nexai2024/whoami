@@ -2,10 +2,10 @@ import React from 'react'
 import EnhancedPublicPage from '@/components/EnhancedPublicPage';
 
 type Props = {
-    params: {
+    params: Promise<{
         subdomain: string;
-    };
-}
+    }> };
+
 
 const BioPage = async ({ params }: Props) => {
     const { subdomain } = await params;

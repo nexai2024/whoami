@@ -5,8 +5,9 @@
  */
 
 import { PrismaClient, ScheduleStatus, Platform } from '@prisma/client';
-import platformPublisher, { PlatformCredentials } from '../services/platformPublisher';
-import emailService from '../services/emailService';
+import { publish } from '@/lib/services/platformPublisher';
+import { PlatformCredentials } from '@/lib/services/platformPublisher';
+import { sendPostFailureNotification } from '@/lib/services/emailService';
 
 const prisma = new PrismaClient();
 
@@ -75,7 +76,7 @@ export async function processScheduledPosts(): Promise<ProcessResult> {
         }
 
         // Publish the post
-        const publishResult = await platformPublisher.publish(
+        const publishResult = await publish(
           post.platform,
           {
             content: post.content,
@@ -129,7 +130,7 @@ export async function processScheduledPosts(): Promise<ProcessResult> {
           });
 
           if (user) {
-            await emailService.sendPostFailureNotification(user.email, {
+            await sendPostFailureNotification(user.email, {
               platform: post.platform,
               content: post.content,
               errorMessage,

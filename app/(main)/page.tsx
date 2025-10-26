@@ -104,7 +104,7 @@ const LandingPage = () => {
                 className="bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-50 transition-all duration-300 flex items-center justify-center gap-2"
               >
                 Get Started Free
-                <SafeIcon icon={FiArrowRight} name={undefined} />
+                <SafeIcon name={undefined}  icon={FiArrowRight}  />
               </Link>
               <Link
                 href="/pricing"
@@ -143,7 +143,7 @@ const LandingPage = () => {
                 viewport={{ once: true }}
               >
                 <div className="bg-gradient-to-r from-indigo-500 to-purple-600 w-12 h-12 rounded-xl flex items-center justify-center mb-6">
-                  <SafeIcon icon={feature.icon} className="text-white text-xl" name={undefined} />
+                  <SafeIcon name={undefined}  icon={feature.icon} className="text-white text-xl"  />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">{feature.title}</h3>
                 <p className="text-gray-600">{feature.description}</p>
@@ -174,21 +174,21 @@ const LandingPage = () => {
               <h3 className="text-2xl font-bold text-gray-900 mb-6">Target Audiences</h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <SafeIcon icon={FiStar} className="text-yellow-500 mt-1" name={undefined} />
+                  <SafeIcon name={undefined}  icon={FiStar} className="text-yellow-500 mt-1"  />
                   <div>
                     <h4 className="font-semibold text-gray-900">Primary: Content Creators</h4>
                     <p className="text-sm text-gray-600">Full-time influencers, YouTubers needing monetization and audience insights</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <SafeIcon icon={FiTrendingUp} className="text-green-500 mt-1" name={undefined} />
+                  <SafeIcon name={undefined}  icon={FiTrendingUp} className="text-green-500 mt-1"  />
                   <div>
                     <h4 className="font-semibold text-gray-900">Secondary: Small Businesses</h4>
                     <p className="text-sm text-gray-600">E-commerce brands, artists, musicians, coaches seeking direct sales</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <SafeIcon icon={FiUsers} className="text-blue-500 mt-1" name={undefined} />
+                  <SafeIcon name={undefined}  icon={FiUsers} className="text-blue-500 mt-1"  />
                   <div>
                     <h4 className="font-semibold text-gray-900">Tertiary: Personal Users</h4>
                     <p className="text-sm text-gray-600">Individuals wanting consolidated online presence</p>
@@ -247,7 +247,7 @@ const LandingPage = () => {
             className="bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-50 transition-all duration-300 inline-flex items-center gap-2"
           >
             Start Your Free Trial
-            <SafeIcon icon={FiArrowRight} name={undefined} />
+            <SafeIcon name={undefined}  icon={FiArrowRight}  />
           </Link>
         </div>
       </section>

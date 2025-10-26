@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // TODO: Replace with actual auth middleware
@@ -24,8 +24,9 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
     const leadMagnet = await prisma.leadMagnet.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assets: true
       }
@@ -104,7 +105,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // TODO: Replace with actual auth middleware
@@ -134,9 +135,10 @@ export async function PATCH(
       status
     } = body;
 
+    const { id } = await params;
     // Find existing lead magnet
     const existingMagnet = await prisma.leadMagnet.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!existingMagnet) {
@@ -226,12 +228,12 @@ export async function PATCH(
 
     // Update lead magnet
     await prisma.leadMagnet.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData
     });
 
     return NextResponse.json({
-      leadMagnetId: params.id,
+      leadMagnetId: id,
       message: 'Lead magnet updated successfully'
     });
   } catch (error) {
@@ -245,7 +247,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // TODO: Replace with actual auth middleware
@@ -258,9 +260,10 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
     // Find lead magnet
     const leadMagnet = await prisma.leadMagnet.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!leadMagnet) {
@@ -280,7 +283,7 @@ export async function DELETE(
 
     // Soft delete by setting status to ARCHIVED
     await prisma.leadMagnet.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: MagnetStatus.ARCHIVED }
     });
 

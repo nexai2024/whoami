@@ -105,7 +105,7 @@ const OnboardingPage = () => {
               transition={{ delay: 0.3, duration: 0.6 }}
             >
               <div className="w-20 h-20 mx-auto mb-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <SafeIcon icon={FiZap} className="text-3xl" />
+                <SafeIcon name={undefined}  icon={FiZap} className="text-3xl" />
               </div>
               
               <h1 className="text-3xl font-bold mb-4">
@@ -143,7 +143,7 @@ const OnboardingPage = () => {
                       : 'bg-white bg-opacity-30 text-white'
                   }`}>
                     {currentStep > step.number ? (
-                      <SafeIcon icon={FiCheckCircle} />
+                      <SafeIcon name={undefined}  icon={FiCheckCircle} />
                     ) : (
                       step.number
                     )}
@@ -172,7 +172,7 @@ const OnboardingPage = () => {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 1.2 + index * 0.1, duration: 0.4 }}
                 >
-                  <SafeIcon icon={benefit.icon} className="text-lg mt-1 flex-shrink-0" />
+                  <SafeIcon name={undefined}  icon={benefit.icon} className="text-lg mt-1 flex-shrink-0" />
                   <div>
                     <h4 className="font-medium text-sm">{benefit.title}</h4>
                     <p className="text-xs opacity-80">{benefit.description}</p>
@@ -207,7 +207,7 @@ const OnboardingPage = () => {
               transition={{ delay: 0.3, duration: 0.6 }}
             >
               <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-green-500 to-blue-500 rounded-full flex items-center justify-center">
-                <SafeIcon icon={FiUser} className="text-white text-2xl" />
+                <SafeIcon name={undefined}  icon={FiUser} className="text-white text-2xl" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Complete Your Setup

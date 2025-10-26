@@ -145,7 +145,7 @@ const FileUpload = ({
         {uploading ? (
           <div className="space-y-4">
             <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
-              <SafeIcon icon={FiUpload} className="text-2xl text-green-600" />
+              <SafeIcon name={undefined}  icon={FiUpload} className="text-2xl text-green-600" />
             </div>
             <div>
               <p className="text-green-700 font-medium">Uploading...</p>
@@ -161,7 +161,7 @@ const FileUpload = ({
         ) : error ? (
           <div className="space-y-4">
             <div className="w-16 h-16 mx-auto bg-red-100 rounded-full flex items-center justify-center">
-              <SafeIcon icon={FiAlertCircle} className="text-2xl text-red-600" />
+              <SafeIcon name={undefined}  icon={FiAlertCircle} className="text-2xl text-red-600" />
             </div>
             <div>
               <p className="text-red-700 font-medium">Upload Error</p>
@@ -177,7 +177,7 @@ const FileUpload = ({
         ) : (
           <div className="space-y-4">
             <div className="w-16 h-16 mx-auto bg-indigo-100 rounded-full flex items-center justify-center">
-              <SafeIcon icon={FiUpload} className="text-2xl text-indigo-600" />
+              <SafeIcon name={undefined}  icon={FiUpload} className="text-2xl text-indigo-600" />
             </div>
             <div>
               <p className="text-gray-700 font-medium">

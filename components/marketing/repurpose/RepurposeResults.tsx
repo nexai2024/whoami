@@ -30,7 +30,7 @@ interface RepurposedContent {
   assets: RepurposedAsset[];
 }
 
-export default function RepurposeResults() {
+export default async function RepurposeResults() {
   const params = useParams();
   const router = useRouter();
   const contentId = await params?.id as string;

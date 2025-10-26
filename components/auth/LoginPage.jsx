@@ -80,7 +80,7 @@ const LoginPage = () => {
                   transition={{ delay: 0.8 + index * 0.1, duration: 0.4 }}
                 >
                   <div className="p-3 bg-white bg-opacity-20 rounded-lg backdrop-blur-sm">
-                    <SafeIcon icon={feature.icon} className="text-xl" />
+                    <SafeIcon name={undefined}  icon={feature.icon} className="text-xl" />
                   </div>
                   <div>
                     <h3 className="font-semibold">{feature.title}</h3>
@@ -116,7 +116,7 @@ const LoginPage = () => {
               transition={{ delay: 0.3, duration: 0.6 }}
             >
               <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                <SafeIcon icon={FiUser} className="text-white text-2xl" />
+                <SafeIcon name={undefined}  icon={FiUser} className="text-white text-2xl" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
                 Sign In to Your Account
@@ -148,7 +148,7 @@ const LoginPage = () => {
               transition={{ delay: 0.8, duration: 0.6 }}
             >
               <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
-                <SafeIcon icon={FiShield} />
+                <SafeIcon name={undefined}  icon={FiShield} />
                 <span>Your data is secure and encrypted</span>
               </div>
               

@@ -164,7 +164,7 @@ const Pricing = () => {
               
               <div className="p-8">
                 <div className={`bg-gradient-to-r ${plan.color} w-12 h-12 rounded-xl flex items-center justify-center mb-6`}>
-                  <SafeIcon icon={plan.icon} className="text-white text-xl" />
+                  <SafeIcon name={undefined}  icon={plan.icon} className="text-white text-xl" />
                 </div>
                 
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
@@ -188,7 +188,7 @@ const Pricing = () => {
                   <ul className="space-y-3">
                     {plan.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start gap-3">
-                        <SafeIcon icon={FiCheck} className="text-green-500 mt-0.5 flex-shrink-0" />
+                        <SafeIcon name={undefined}  icon={FiCheck} className="text-green-500 mt-0.5 flex-shrink-0" />
                         <span className="text-gray-700 text-sm">{feature}</span>
                       </li>
                     ))}
@@ -246,28 +246,28 @@ const Pricing = () => {
                           <td className="py-3 text-gray-700">{feature.name}</td>
                           <td className="text-center py-3">
                             {feature.free ? (
-                              <SafeIcon icon={FiCheck} className="text-green-500 mx-auto" />
+                              <SafeIcon name={undefined}  icon={FiCheck} className="text-green-500 mx-auto" />
                             ) : (
                               <span className="text-gray-300">—</span>
                             )}
                           </td>
                           <td className="text-center py-3">
                             {feature.creator ? (
-                              <SafeIcon icon={FiCheck} className="text-green-500 mx-auto" />
+                              <SafeIcon name={undefined}  icon={FiCheck} className="text-green-500 mx-auto" />
                             ) : (
                               <span className="text-gray-300">—</span>
                             )}
                           </td>
                           <td className="text-center py-3">
                             {feature.pro ? (
-                              <SafeIcon icon={FiCheck} className="text-green-500 mx-auto" />
+                              <SafeIcon name={undefined}  icon={FiCheck} className="text-green-500 mx-auto" />
                             ) : (
                               <span className="text-gray-300">—</span>
                             )}
                           </td>
                           <td className="text-center py-3">
                             {feature.business ? (
-                              <SafeIcon icon={FiCheck} className="text-green-500 mx-auto" />
+                              <SafeIcon name={undefined}  icon={FiCheck} className="text-green-500 mx-auto" />
                             ) : (
                               <span className="text-gray-300">—</span>
                             )}

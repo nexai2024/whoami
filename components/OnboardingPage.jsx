@@ -71,7 +71,7 @@ const OnboardingPage = () => {
             transition={{ delay: 0.3, duration: 0.6 }}
           >
             <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <SafeIcon icon={FiTarget} className="text-3xl" />
+              <SafeIcon name={undefined}  icon={FiTarget} className="text-3xl" />
             </div>
             
             <h1 className="text-4xl font-bold mb-4">Let's Get Started!</h1>
@@ -87,7 +87,7 @@ const OnboardingPage = () => {
                 transition={{ delay: 0.5, duration: 0.5 }}
               >
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiUsers} />
+                  <SafeIcon name={undefined}  icon={FiUsers} />
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold">Understand Your Audience</h3>
@@ -102,7 +102,7 @@ const OnboardingPage = () => {
                 transition={{ delay: 0.7, duration: 0.5 }}
               >
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiTrendingUp} />
+                  <SafeIcon name={undefined}  icon={FiTrendingUp} />
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold">Optimize Your Setup</h3>
@@ -117,7 +117,7 @@ const OnboardingPage = () => {
                 transition={{ delay: 0.9, duration: 0.5 }}
               >
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiCheck} />
+                  <SafeIcon name={undefined}  icon={FiCheck} />
                 </div>
                 <div className="text-left">
                   <h3 className="font-semibold">Start Building</h3>
@@ -140,7 +140,7 @@ const OnboardingPage = () => {
           {/* Mobile Header */}
           <div className="lg:hidden text-center mb-8">
             <div className="w-16 h-16 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <SafeIcon icon={FiTarget} className="text-2xl text-white" />
+              <SafeIcon name={undefined}  icon={FiTarget} className="text-2xl text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Let's Get Started!</h1>
             <p className="text-gray-600">Setting up your personalized experience</p>

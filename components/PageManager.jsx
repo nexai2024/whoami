@@ -219,7 +219,7 @@ const PageManager = () => {
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <SafeIcon icon={FiMoreHorizontal} />
+                  <SafeIcon name={undefined}  icon={FiMoreHorizontal} />
                 </button>
                 
                 <AnimatePresence>
@@ -237,7 +237,7 @@ const PageManager = () => {
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        <SafeIcon icon={FiCopy} className="inline mr-2" />
+                        <SafeIcon name={undefined}  icon={FiCopy} className="inline mr-2" />
                         Duplicate
                       </button>
                       <button
@@ -247,7 +247,7 @@ const PageManager = () => {
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       >
-                        <SafeIcon icon={page.status === 'published' ? FiArchive : FiEye} className="inline mr-2" />
+                        <SafeIcon name={undefined}  icon={page.status === 'published' ? FiArchive : FiEye} className="inline mr-2" />
                         {page.status === 'published' ? 'Unpublish' : 'Publish'}
                       </button>
                       <button
@@ -260,7 +260,7 @@ const PageManager = () => {
                         }}
                         className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       >
-                        <SafeIcon icon={FiTrash2} className="inline mr-2" />
+                        <SafeIcon name={undefined}  icon={FiTrash2} className="inline mr-2" />
                         Delete
                       </button>
                     </motion.div>
@@ -290,7 +290,7 @@ const PageManager = () => {
           {page.customDomain && (
             <div className="mb-4 p-2 bg-blue-50 rounded-lg">
               <div className="flex items-center gap-2 text-sm text-blue-700">
-                <SafeIcon icon={FiGlobe} />
+                <SafeIcon name={undefined}  icon={FiGlobe} />
                 <span>{page.customDomain}</span>
               </div>
             </div>
@@ -307,7 +307,7 @@ const PageManager = () => {
                     : 'text-gray-600 hover:text-gray-700'
                 }`}
               >
-                <SafeIcon icon={page.status === 'published' ? FiToggleRight : FiToggleLeft} />
+                <SafeIcon name={undefined}  icon={page.status === 'published' ? FiToggleRight : FiToggleLeft} />
                 {page.status === 'published' ? 'Published' : 'Draft'}
               </button>
             </div>
@@ -318,7 +318,7 @@ const PageManager = () => {
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                 title="Copy URL"
               >
-                <SafeIcon icon={FiShare2} />
+                <SafeIcon name={undefined}  icon={FiShare2} />
               </button>
               
               <Link
@@ -326,7 +326,7 @@ const PageManager = () => {
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                 title="Analytics"
               >
-                <SafeIcon icon={FiBarChart3} />
+                <SafeIcon name={undefined}  icon={FiBarChart3} />
               </Link>
               
               <Link
@@ -334,7 +334,7 @@ const PageManager = () => {
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                 title="Edit"
               >
-                <SafeIcon icon={FiEdit3} />
+                <SafeIcon name={undefined}  icon={FiEdit3} />
               </Link>
               
               <a
@@ -344,7 +344,7 @@ const PageManager = () => {
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                 title="View Live"
               >
-                <SafeIcon icon={FiExternalLink} />
+                <SafeIcon name={undefined}  icon={FiExternalLink} />
               </a>
             </div>
           </div>
@@ -381,7 +381,7 @@ const PageManager = () => {
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
               data-tour-id="create-page-button"
             >
-              <SafeIcon icon={FiPlus} />
+              <SafeIcon name={undefined}  icon={FiPlus} />
               Create New Page
             </Link>
           </div>
@@ -452,7 +452,7 @@ const PageManager = () => {
         {/* Pages Grid */}
         {filteredPages.length === 0 ? (
           <div className="text-center py-12">
-            <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
+            <SafeIcon name={undefined}  icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No pages found</h3>
             <p className="text-gray-600 mb-4">
               {filterStatus === 'all' 
@@ -464,7 +464,7 @@ const PageManager = () => {
               to="/builder?new=true"
               className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <SafeIcon icon={FiPlus} />
+              <SafeIcon name={undefined}  icon={FiPlus} />
               Create Your First Page
             </Link>
           </div>

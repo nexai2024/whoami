@@ -256,7 +256,7 @@ const Settings = () => {
             </p>
           </div>
           <button className="flex items-center gap-2 bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors">
-            <SafeIcon icon={FiUpgrade} />
+            <SafeIcon name={undefined}  icon={FiUpgrade} />
             Upgrade Plan
           </button>
         </div>
@@ -299,7 +299,7 @@ const Settings = () => {
         </div>
 
         <button className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-          <SafeIcon icon={FiKey} />
+          <SafeIcon name={undefined}  icon={FiKey} />
           Update Password
         </button>
       </div>
@@ -310,7 +310,7 @@ const Settings = () => {
           Download all your data including pages, analytics, and user information.
         </p>
         <button className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
-          <SafeIcon icon={FiDownload} />
+          <SafeIcon name={undefined}  icon={FiDownload} />
           Export All Data
         </button>
       </div>
@@ -322,7 +322,7 @@ const Settings = () => {
             Once you delete your account, there is no going back. Please be certain.
           </p>
           <button className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
-            <SafeIcon icon={FiTrash2} />
+            <SafeIcon name={undefined}  icon={FiTrash2} />
             Delete Account
           </button>
         </div>
@@ -401,7 +401,7 @@ const Settings = () => {
               disabled={saving}
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
             >
-              <SafeIcon icon={FiSave} />
+              <SafeIcon name={undefined}  icon={FiSave} />
               {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
@@ -423,7 +423,7 @@ const Settings = () => {
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                   }`}
                 >
-                  <SafeIcon icon={tab.icon} />
+                  <SafeIcon name={undefined}  icon={tab.icon} />
                   {tab.label}
                 </button>
               ))}
@@ -437,7 +437,7 @@ const Settings = () => {
               {activeTab === 'account' && renderAccountTab()}
               {activeTab === 'billing' && (
                 <div className="text-center py-12">
-                  <SafeIcon icon={FiCreditCard} className="text-gray-400 text-4xl mx-auto mb-4" />
+                  <SafeIcon name={undefined}  icon={FiCreditCard} className="text-gray-400 text-4xl mx-auto mb-4" />
                   <p className="text-gray-600">Billing settings coming soon</p>
                 </div>
               )}
@@ -450,7 +450,7 @@ const Settings = () => {
               )}
               {activeTab === 'privacy' && (
                 <div className="text-center py-12">
-                  <SafeIcon icon={FiShield} className="text-gray-400 text-4xl mx-auto mb-4" />
+                  <SafeIcon name={undefined}  icon={FiShield} className="text-gray-400 text-4xl mx-auto mb-4" />
                   <p className="text-gray-600">Privacy settings coming soon</p>
                 </div>
               )}

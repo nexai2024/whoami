@@ -6,15 +6,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, DeliveryMethod } from '@prisma/client';
 import crypto from 'crypto';
-import emailService from '@/lib/services/emailService';
-import storageService from '@/lib/services/storageService';
+import { sendLeadMagnetDelivery } from '@/lib/services/emailService';
 
 const prisma = new PrismaClient();
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export async function POST(
@@ -189,7 +188,7 @@ async function sendDeliveryEmail(
         )} days`
       : undefined;
 
-    await emailService.sendLeadMagnetDelivery(delivery.email, {
+    await sendLeadMagnetDelivery(delivery.email, {
       recipientName: delivery.name || undefined,
       magnetName: leadMagnet.name,
       downloadUrl,

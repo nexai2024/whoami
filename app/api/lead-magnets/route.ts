@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, MagnetType, DeliveryMethod, MagnetStatus } from '@prisma/client';
-import aiService from '@/lib/services/aiService';
 
 const prisma = new PrismaClient();
 

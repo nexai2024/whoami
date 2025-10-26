@@ -4,7 +4,7 @@ import { logger } from '@/lib/utils/logger';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { pageId: string } }
+  { params }: { params: Promise<{ pageId: string }> }
 ) {
   const { pageId } = await params;
   const headerData = await req.json();

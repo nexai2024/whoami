@@ -173,7 +173,7 @@ const WorkflowsPage = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-3 bg-purple-100 rounded-xl">
-                  <SafeIcon icon={FiGitBranch} className="text-purple-600 text-2xl" />
+                  <SafeIcon name={undefined}  icon={FiGitBranch} className="text-purple-600 text-2xl" />
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900">Automations</h1>
               </div>
@@ -185,7 +185,7 @@ const WorkflowsPage = () => {
               href="/workflows/new"
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <SafeIcon icon={FiPlus} />
+              <SafeIcon name={undefined}  icon={FiPlus} />
               Create New Workflow
             </Link>
           </div>
@@ -232,7 +232,7 @@ const WorkflowsPage = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
           >
-            <SafeIcon icon={FiGitBranch} className="text-gray-400 text-6xl mx-auto mb-4" />
+            <SafeIcon name={undefined}  icon={FiGitBranch} className="text-gray-400 text-6xl mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No workflows yet</h3>
             <p className="text-gray-600 mb-6">
               Create your first automation workflow to engage your audience automatically
@@ -241,7 +241,7 @@ const WorkflowsPage = () => {
               href="/workflows/new"
               className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <SafeIcon icon={FiPlus} />
+              <SafeIcon name={undefined}  icon={FiPlus} />
               Create Your First Workflow
             </Link>
           </motion.div>
@@ -275,16 +275,16 @@ const WorkflowsPage = () => {
                     <div className="flex items-center gap-6 text-sm text-gray-500">
                       {workflow.trigger && (
                         <div className="flex items-center gap-2">
-                          <SafeIcon icon={FiZap} className="text-yellow-500" />
+                          <SafeIcon name={undefined}  icon={FiZap} className="text-yellow-500" />
                           <span>Trigger: {getTriggerLabel(workflow.trigger.type)}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <SafeIcon icon={FiActivity} />
+                        <SafeIcon name={undefined}  icon={FiActivity} />
                         <span>{workflow.steps?.length || 0} steps</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <SafeIcon icon={FiCheck} />
+                        <SafeIcon name={undefined}  icon={FiCheck} />
                         <span>{workflow._count?.executions || 0} executions</span>
                       </div>
                     </div>
@@ -300,21 +300,21 @@ const WorkflowsPage = () => {
                       }`}
                       title={workflow.enabled ? 'Pause Workflow' : 'Activate Workflow'}
                     >
-                      <SafeIcon icon={workflow.enabled ? FiPause : FiPlay} />
+                      <SafeIcon name={undefined}  icon={workflow.enabled ? FiPause : FiPlay} />
                     </button>
                     <Link
                       href={`/workflows/${workflow.id}/edit`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors hover:bg-gray-50 rounded-lg"
                       title="Edit Workflow"
                     >
-                      <SafeIcon icon={FiEdit3} />
+                      <SafeIcon name={undefined}  icon={FiEdit3} />
                     </Link>
                     <Link
                       href={`/workflows/${workflow.id}/analytics`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors hover:bg-gray-50 rounded-lg"
                       title="View Analytics"
                     >
-                      <SafeIcon icon={FiActivity} />
+                      <SafeIcon name={undefined}  icon={FiActivity} />
                     </Link>
                   </div>
                 </div>
@@ -324,20 +324,20 @@ const WorkflowsPage = () => {
                   <div className="mt-4 pt-4 border-t border-gray-100">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Recent Activity</h4>
                     <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <SafeIcon icon={FiClock} />
+                      <SafeIcon name={undefined}  icon={FiClock} />
                       <span>
                         Last executed{' '}
                         {new Date(workflow.executions[0].createdAt).toLocaleDateString()}
                       </span>
                       {workflow.executions[0].status === 'COMPLETED' && (
                         <span className="flex items-center gap-1 text-green-600">
-                          <SafeIcon icon={FiCheck} />
+                          <SafeIcon name={undefined}  icon={FiCheck} />
                           Success
                         </span>
                       )}
                       {workflow.executions[0].status === 'FAILED' && (
                         <span className="flex items-center gap-1 text-red-600">
-                          <SafeIcon icon={FiAlertCircle} />
+                          <SafeIcon name={undefined}  icon={FiAlertCircle} />
                           Failed
                         </span>
                       )}

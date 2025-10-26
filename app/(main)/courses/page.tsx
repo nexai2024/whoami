@@ -142,7 +142,7 @@ const CoursesPage = () => {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-3 bg-blue-100 rounded-xl">
-                  <SafeIcon icon={FiBook} className="text-blue-600 text-2xl" />
+                  <SafeIcon name={undefined}  icon={FiBook} className="text-blue-600 text-2xl" />
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900">Micro-Courses</h1>
               </div>
@@ -154,7 +154,7 @@ const CoursesPage = () => {
               href="/courses/new"
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <SafeIcon icon={FiPlus} />
+              <SafeIcon name={undefined}  icon={FiPlus}  />
               Create New Course
             </Link>
           </div>
@@ -201,7 +201,7 @@ const CoursesPage = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
           >
-            <SafeIcon icon={FiBook} className="text-gray-400 text-6xl mx-auto mb-4" />
+            <SafeIcon name={undefined}  icon={FiBook} className="text-gray-400 text-6xl mx-auto mb-4"  />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No courses yet</h3>
             <p className="text-gray-600 mb-6">
               Create your first micro-course to use as a lead magnet or educational content
@@ -210,7 +210,7 @@ const CoursesPage = () => {
               href="/courses/new"
               className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <SafeIcon icon={FiPlus} />
+              <SafeIcon name={undefined}  icon={FiPlus}  />
               Create Your First Course
             </Link>
           </motion.div>
@@ -233,7 +233,7 @@ const CoursesPage = () => {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <SafeIcon icon={FiBook} className="text-white text-6xl opacity-50" />
+                      <SafeIcon name={undefined}  icon={FiBook} className="text-white text-6xl opacity-50"  />
                     </div>
                   )}
                   {course.isLeadMagnet && (
@@ -261,11 +261,11 @@ const CoursesPage = () => {
 
                   <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
                     <div className="flex items-center gap-1">
-                      <SafeIcon icon={FiBook} className="text-xs" />
+                      <SafeIcon name={undefined}  icon={FiBook} className="text-xs"  />
                       <span>{course.lessons?.length || 0} lessons</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <SafeIcon icon={FiUsers} className="text-xs" />
+                      <SafeIcon name={undefined}  icon={FiUsers} className="text-xs"  />
                       <span>{course._count?.enrollments || 0} enrolled</span>
                     </div>
                   </div>
@@ -275,7 +275,7 @@ const CoursesPage = () => {
                       href={`/courses/${course.id}/edit`}
                       className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
                     >
-                      <SafeIcon icon={FiEdit3} />
+                      <SafeIcon name={undefined}  icon={FiEdit3}  />
                       Edit
                     </Link>
                     <Link
@@ -283,7 +283,7 @@ const CoursesPage = () => {
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors border rounded-lg"
                       title="View Analytics"
                     >
-                      <SafeIcon icon={FiBarChart2} />
+                      <SafeIcon name={undefined}  icon={FiBarChart2}  />
                     </Link>
                     <Link
                       href={`/${course.slug}`}
@@ -291,7 +291,7 @@ const CoursesPage = () => {
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors border rounded-lg"
                       title="View Course"
                     >
-                      <SafeIcon icon={FiEye} />
+                      <SafeIcon name={undefined}  icon={FiEye}  />
                     </Link>
                   </div>
                 </div>

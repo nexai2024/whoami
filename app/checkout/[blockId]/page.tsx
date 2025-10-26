@@ -10,7 +10,7 @@ import { logger } from '@/lib/utils/logger';
 // Initialize Stripe with publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
 
-export default function CheckoutPage() {
+export default async function CheckoutPage() {
   const params = useParams();
   const router = useRouter();
   const blockId = await params.blockId as string;
@@ -45,7 +45,7 @@ export default function CheckoutPage() {
       };
 
       setProduct(productInfo);
-    } catch (err) {
+    } catch (err: any) {
       logger.error('Error loading product:', err);
       setError(err.message || 'Failed to load product');
     } finally {

@@ -266,7 +266,7 @@ console.log('Header Data State:', headerData);
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            <SafeIcon icon={FiMail} className="inline mr-2" />
+            <SafeIcon name={undefined}  icon={FiMail} className="inline mr-2" />
             Email Address
           </label>
           <input
@@ -280,7 +280,7 @@ console.log('Header Data State:', headerData);
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            <SafeIcon icon={FiPhone} className="inline mr-2" />
+            <SafeIcon name={undefined}  icon={FiPhone} className="inline mr-2" />
             Phone Number
           </label>
           <input
@@ -294,7 +294,7 @@ console.log('Header Data State:', headerData);
 
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            <SafeIcon icon={FiGlobe} className="inline mr-2" />
+            <SafeIcon name={undefined}  icon={FiGlobe} className="inline mr-2" />
             Website URL
           </label>
           <input
@@ -336,7 +336,7 @@ console.log('Header Data State:', headerData);
         {socialPlatforms.map((platform) => (
           <div key={platform.id}>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              <SafeIcon icon={platform.icon} className="inline mr-2" />
+              <SafeIcon name={undefined}  icon={platform.icon} className="inline mr-2" />
               {platform.name}
             </label>
             <input
@@ -486,7 +486,7 @@ console.log('Header Data State:', headerData);
           disabled={saving || !headerData.displayName}
           className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <SafeIcon icon={FiSave} />
+          <SafeIcon name={undefined}  icon={FiSave} />
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
@@ -504,7 +504,7 @@ console.log('Header Data State:', headerData);
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <SafeIcon icon={tab.icon} />
+              <SafeIcon name={undefined}  icon={tab.icon} />
               {tab.label}
             </button>
           ))}
@@ -599,7 +599,7 @@ const HeaderPreview = ({ headerData }) => {
             {/* Company */}
             {headerData.company && (
               <div className="flex items-center gap-2 justify-center mb-2">
-                <SafeIcon icon={FiBuilding} className="text-sm" />
+                <SafeIcon name={undefined}  icon={FiBuilding} className="text-sm" />
                 <span className="text-sm">{headerData.company}</span>
               </div>
             )}
@@ -607,7 +607,7 @@ const HeaderPreview = ({ headerData }) => {
             {/* Location */}
             {headerData.location && headerData.showLocation && (
               <div className="flex items-center gap-2 justify-center mb-3">
-                <SafeIcon icon={FiMapPin} className="text-sm" />
+                <SafeIcon name={undefined}  icon={FiMapPin} className="text-sm" />
                 <span className="text-sm">{headerData.location}</span>
               </div>
             )}
@@ -629,19 +629,19 @@ const HeaderPreview = ({ headerData }) => {
               <div className="flex flex-wrap items-center justify-center gap-4 mb-4 text-sm">
                 {headerData.email && (
                   <a href={`mailto:${headerData.email}`} className="flex items-center gap-1 hover:underline">
-                    <SafeIcon icon={FiMail} />
+                    <SafeIcon name={undefined}  icon={FiMail} />
                     {headerData.email}
                   </a>
                 )}
                 {headerData.phone && (
                   <a href={`tel:${headerData.phone}`} className="flex items-center gap-1 hover:underline">
-                    <SafeIcon icon={FiPhone} />
+                    <SafeIcon name={undefined}  icon={FiPhone} />
                     {headerData.phone}
                   </a>
                 )}
                 {headerData.website && (
                   <a href={headerData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline">
-                    <SafeIcon icon={FiGlobe} />
+                    <SafeIcon name={undefined}  icon={FiGlobe} />
                     Website
                   </a>
                 )}
@@ -659,7 +659,7 @@ const HeaderPreview = ({ headerData }) => {
                     rel="noopener noreferrer"
                     className="p-2 rounded-full bg-black bg-opacity-10 hover:bg-opacity-20 transition-colors"
                   >
-                    <SafeIcon icon={getSocialIcon(platform)} className="text-lg" />
+                    <SafeIcon name={undefined}  icon={getSocialIcon(platform)} className="text-lg" />
                   </a>
                 ))}
               </div>

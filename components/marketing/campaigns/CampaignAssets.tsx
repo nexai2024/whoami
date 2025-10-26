@@ -35,7 +35,7 @@ interface Campaign {
   assets: CampaignAsset[];
 }
 
-export default function CampaignAssets() {
+export default async function CampaignAssets() {
   const params = useParams();
   const router = useRouter();
   const campaignId = await params?.id as string;

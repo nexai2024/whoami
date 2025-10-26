@@ -39,7 +39,7 @@ const Enhanced404 = ({ type = 'page' }) => {
           <div className="mb-8">
             <div className="text-6xl font-bold text-indigo-200 mb-4">404</div>
             <div className="w-32 h-32 mx-auto bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-              <SafeIcon icon={FiSearch} className="text-white text-4xl" />
+              <SafeIcon name={undefined}  icon={FiSearch} className="text-white text-4xl" />
             </div>
           </div>
 
@@ -71,7 +71,7 @@ const Enhanced404 = ({ type = 'page' }) => {
               to="/"
               className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <SafeIcon icon={FiHome} />
+              <SafeIcon name={undefined}  icon={FiHome} />
               Go to Homepage
             </Link>
             
@@ -79,7 +79,7 @@ const Enhanced404 = ({ type = 'page' }) => {
               onClick={() => window.history.back()}
               className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors"
             >
-              <SafeIcon icon={FiArrowLeft} />
+              <SafeIcon name={undefined}  icon={FiArrowLeft} />
               Go Back
             </button>
           </motion.div>

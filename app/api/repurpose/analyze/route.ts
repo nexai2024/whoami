@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, SourceType, RepurposeStatus, RepurposeAssetType } from '@prisma/client';
-import aiService from '@/lib/services/aiService';
+import { generateContent, extractKeyPoints, summarizeForPlatform } from '@/lib/services/aiService';
 
 const prisma = new PrismaClient();
 
@@ -179,7 +179,7 @@ async function processContentRepurposing(
     });
 
     // Step 2: Extract key points using AI
-    const keyPoints = await aiService.extractKeyPoints(
+    const keyPoints = await extractKeyPoints(
       extractedContent.transcript || extractedContent.content,
       5
     );
@@ -264,7 +264,7 @@ async function generateAsset(
         break;
 
       case RepurposeAssetType.LINKEDIN_POST:
-        content = await aiService.summarizeForPlatform(
+        content = await summarizeForPlatform(
           sourceContent,
           'linkedin',
           'professional'
@@ -272,7 +272,7 @@ async function generateAsset(
         break;
 
       case RepurposeAssetType.INSTAGRAM_CAPTION:
-        content = await aiService.summarizeForPlatform(
+        content = await summarizeForPlatform(
           sourceContent,
           'instagram',
           'casual'
@@ -330,7 +330,7 @@ ${keyPoints.join('\n')}
 
 Return as plain text with tweets separated by ---`;
 
-  return aiService.generateContent({
+  return generateContent({
     systemPrompt,
     userPrompt,
     maxTokens: 2048,
@@ -355,7 +355,7 @@ ${content}
 Key Points:
 ${keyPoints.join('\n')}`;
 
-  return aiService.generateContent({
+  return generateContent({
     systemPrompt,
     userPrompt,
     maxTokens: 2048,
@@ -379,7 +379,7 @@ ${content}
 Key Points:
 ${keyPoints.join('\n')}`;
 
-  return aiService.generateContent({
+  return generateContent({
     systemPrompt,
     userPrompt,
     maxTokens: 1536,

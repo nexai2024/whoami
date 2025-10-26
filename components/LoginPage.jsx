@@ -44,19 +44,19 @@ const LoginPage = () => {
             <div className="space-y-4 text-left">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiUser} className="text-sm" />
+                  <SafeIcon name={undefined}  icon={FiUser} className="text-sm" />
                 </div>
                 <span>Advanced Analytics & AI Insights</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiLock} className="text-sm" />
+                  <SafeIcon name={undefined}  icon={FiLock} className="text-sm" />
                 </div>
                 <span>Secure & Professional Platform</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiArrowRight} className="text-sm" />
+                  <SafeIcon name={undefined}  icon={FiArrowRight} className="text-sm" />
                 </div>
                 <span>Multiple Revenue Streams</span>
               </div>

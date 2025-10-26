@@ -15,7 +15,7 @@ const {
   FiZap, FiRefreshCw, FiGift, FiCalendar, FiGrid, FiBook, FiGitBranch
 } = FiIcons;
 
-const Dashboard = () => {
+export default function Dashboard() {
   const { currUser } = useAuth();
   const [userPages, setUserPages] = useState([]);
   const [analytics, setAnalytics] = useState(null);
@@ -133,7 +133,7 @@ const Dashboard = () => {
               href="/builder?new=true"
               className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              <SafeIcon icon={FiPlus} />
+              <SafeIcon name={undefined}  icon={FiPlus} />
               Create New Page
             </Link>
           </div>
@@ -151,7 +151,7 @@ const Dashboard = () => {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-xl bg-${stat.color}-100`}>
-                  <SafeIcon icon={stat.icon} className={`text-${stat.color}-600 text-xl`} />
+                  <SafeIcon name={undefined}  icon={stat.icon} className={`text-${stat.color}-600 text-xl`} />
                 </div>
                 <span className="text-green-600 text-sm font-medium">{stat.change}</span>
               </div>
@@ -175,7 +175,7 @@ const Dashboard = () => {
                 href="/builder?new=true"
                 className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm"
               >
-                <SafeIcon icon={FiPlus} />
+                <SafeIcon name={undefined}  icon={FiPlus} />
                 New Page
               </Link>
             </div>
@@ -204,21 +204,21 @@ const Dashboard = () => {
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                       title="Copy URL"
                     >
-                      <SafeIcon icon={FiCopy} />
+                      <SafeIcon name={undefined}  icon={FiCopy} />
                     </button>
                     <Link
                       href={`/analytics?page=${page.id}`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                       title="View Analytics"
                     >
-                      <SafeIcon icon={FiBarChart3} />
+                      <SafeIcon name={undefined}  icon={FiBarChart3} />
                     </Link>
                     <Link
                       href={`/builder?page=${page.id}`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                       title="Edit Page"
                     >
-                      <SafeIcon icon={FiEdit3} />
+                      <SafeIcon name={undefined}  icon={FiEdit3} />
                     </Link>
                     <a
                       href={page.customDomain ? `https://${page.customDomain}` : `/${page.slug}`}
@@ -227,7 +227,7 @@ const Dashboard = () => {
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                       title="View Live"
                     >
-                      <SafeIcon icon={FiExternalLink} />
+                      <SafeIcon name={undefined}  icon={FiExternalLink} />
                     </a>
                   </div>
                 </div>
@@ -235,13 +235,13 @@ const Dashboard = () => {
 
               {userPages.length === 0 && (
                 <div className="text-center py-12">
-                  <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
+                  <SafeIcon name={undefined}  icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">No pages created yet</p>
                   <Link
                     href="/builder?new=true"
                     className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
                   >
-                    <SafeIcon icon={FiPlus} />
+                    <SafeIcon name={undefined}  icon={FiPlus} />
                     Create Your First Page
                   </Link>
                 </div>
@@ -264,7 +264,7 @@ const Dashboard = () => {
                 className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-colors group"
               >
                 <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-700 transition-colors">
-                  <SafeIcon icon={FiBook} className="text-white" />
+                  <SafeIcon name={undefined}  icon={FiBook} className="text-white" />
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Micro-Courses</h3>
@@ -277,7 +277,7 @@ const Dashboard = () => {
                 className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group"
               >
                 <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
-                  <SafeIcon icon={FiGitBranch} className="text-white" />
+                  <SafeIcon name={undefined}  icon={FiGitBranch} className="text-white" />
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Automations</h3>
@@ -290,7 +290,7 @@ const Dashboard = () => {
                 className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl hover:from-gray-100 hover:to-slate-100 transition-colors group"
               >
                 <div className="p-2 bg-gray-600 rounded-lg group-hover:bg-gray-700 transition-colors">
-                  <SafeIcon icon={FiSettings} className="text-white" />
+                  <SafeIcon name={undefined}  icon={FiSettings} className="text-white" />
                 </div>
                 <div className="text-left">
                    <h3 className="font-medium text-gray-900">Settings</h3>
@@ -310,7 +310,7 @@ const Dashboard = () => {
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl hover:from-blue-100 hover:to-indigo-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-blue-600 rounded-lg group-hover:bg-blue-700 transition-colors">
-                    <SafeIcon icon={FiZap} className="text-white" />
+                    <SafeIcon name={undefined}  icon={FiZap} className="text-white" />
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Generate Campaign</h3>
@@ -323,7 +323,7 @@ const Dashboard = () => {
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl hover:from-purple-100 hover:to-pink-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-purple-600 rounded-lg group-hover:bg-purple-700 transition-colors">
-                    <SafeIcon icon={FiRefreshCw} className="text-white" />
+                    <SafeIcon name={undefined}  icon={FiRefreshCw} className="text-white" />
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Repurpose Content</h3>
@@ -336,7 +336,7 @@ const Dashboard = () => {
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-xl hover:from-green-100 hover:to-teal-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-green-600 rounded-lg group-hover:bg-green-700 transition-colors">
-                    <SafeIcon icon={FiGift} className="text-white" />
+                    <SafeIcon name={undefined}  icon={FiGift} className="text-white" />
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Lead Magnets</h3>
@@ -349,7 +349,7 @@ const Dashboard = () => {
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl hover:from-orange-100 hover:to-red-100 transition-colors group mb-3"
                 >
                   <div className="p-2 bg-orange-600 rounded-lg group-hover:bg-orange-700 transition-colors">
-                    <SafeIcon icon={FiCalendar} className="text-white" />
+                    <SafeIcon name={undefined}  icon={FiCalendar} className="text-white" />
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Schedule Posts</h3>
@@ -362,7 +362,7 @@ const Dashboard = () => {
                   className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl hover:from-gray-100 hover:to-blue-100 transition-colors group"
                 >
                   <div className="p-2 bg-gray-600 rounded-lg group-hover:bg-gray-700 transition-colors">
-                    <SafeIcon icon={FiGrid} className="text-white" />
+                    <SafeIcon name={undefined}  icon={FiGrid} className="text-white" />
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">Marketing Hub</h3>
@@ -378,4 +378,3 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;

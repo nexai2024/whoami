@@ -508,7 +508,7 @@ Return complete block JSON, no markdown formatting.`;
     }, { maxRetries: 2 });
 
     // Ensure position is maintained
-    result.position = input.blockIndex;
+    result.position = input.blockIndex.toString();
 
     return result;
   }

@@ -13,7 +13,7 @@ const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'smtp'; // smtp, sendgrid, 
 // Create transporter based on provider
 function createTransporter(): Transporter {
   if (EMAIL_PROVIDER === 'smtp') {
-    return nodemailer.createTransporter({
+    return nodemailer.createTransport({
       host: process.env.SMTP_HOST || '',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_SECURE === 'true',

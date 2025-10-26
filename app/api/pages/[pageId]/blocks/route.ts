@@ -5,7 +5,7 @@ import { Block, BlockType } from '@prisma/client';
 import { mapBlockType } from '@/lib/blockTypeMapping';
  
 // GET: Fetch all blocks for a page
-export async function GET(req: NextRequest, { params }: { params: { pageId: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
   const { pageId } = await params;
   try {
     const blocks = await prisma.block.findMany({
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { pageId: stri
 }
 
 // POST: Bulk create/update blocks for a page
-export async function POST(req: NextRequest, { params }: { params: { pageId: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
   const { pageId } = await params;
   try {
     const blocks = await req.json();
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest, { params }: { params: { pageId: str
     await prisma.block.deleteMany({ where: { pageId } });
     // Create new blocks
     const createdBlocks = await prisma.$transaction(
-      blocks.map((block: BlockSelectCreateManyAndReturn, idx: number) => {
+      blocks.map((block: any, idx: number) => {
         try {
           const blockType = mapBlockType(block.type);
           return prisma.block.create({
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest, { params }: { params: { pageId: str
 }
 
 // DELETE: Remove a block by ID
-export async function DELETE(req: NextRequest, { params }: { params: { pageId: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
   const { searchParams } = new URL(req.url);
   const blockId = searchParams.get('blockId');
   if (!blockId) {

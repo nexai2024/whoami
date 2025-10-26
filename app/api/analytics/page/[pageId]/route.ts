@@ -4,7 +4,7 @@ import { logger } from '@/lib/utils/logger';
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { pageId: string } }
+  { params }: { params: Promise<{ pageId: string }> }
 ) {
   const { pageId } = await params;
   const { searchParams } = new URL(req.url);

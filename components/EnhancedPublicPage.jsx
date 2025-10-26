@@ -42,7 +42,6 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
     try {
       console.log('Loading page with slug:', pageSlug);
       setLoading(true);
-      console.log('Loading page with slug:', pageSlug);
       const pageData = await PageService.getPageBySlug(pageSlug);
       setPage(pageData);
       console.log('Page data loaded:', pageData);
@@ -272,7 +271,7 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                   onClick={() => setShareMenuOpen(!shareMenuOpen)}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
-                  <SafeIcon icon={FiShare2} />
+                  <SafeIcon name={undefined}  icon={FiShare2} />
                   Share
                 </button>
                 {shareMenuOpen && (

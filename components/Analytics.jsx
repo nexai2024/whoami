@@ -204,7 +204,7 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
               
               {/* Time Range Selector */}
               <div className="flex items-center gap-2">
-                <SafeIcon icon={FiCalendar} className="text-gray-500" />
+                <SafeIcon name={undefined}  icon={FiCalendar} className="text-gray-500" />
                 <select 
                   value={timeRange}
                   onChange={(e) => setTimeRange(e.target.value)}
@@ -221,7 +221,7 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
                 className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
-                <SafeIcon icon={FiDownload} />
+                <SafeIcon name={undefined}  icon={FiDownload} />
                 Export
               </button>
             </div>
@@ -254,7 +254,7 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className={`p-3 rounded-xl bg-${stat.color}-100`}>
-                    <SafeIcon icon={stat.icon} className={`text-${stat.color}-600 text-xl`} />
+                    <SafeIcon name={undefined}  icon={stat.icon} className={`text-${stat.color}-600 text-xl`} />
                   </div>
                   <span className="text-green-600 text-sm font-medium">{stat.change}</span>
                 </div>
@@ -297,7 +297,7 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Top Performing Links</h2>
                 <button className="flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors">
-                  <SafeIcon icon={FiFilter} />
+                  <SafeIcon name={undefined}  icon={FiFilter} />
                   Filter
                 </button>
               </div>
@@ -340,7 +340,7 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
                 <div className="bg-white p-4 rounded-xl">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-green-100 rounded-lg">
-                      <SafeIcon icon={FiTrendingUp} className="text-green-600" />
+                      <SafeIcon name={undefined}  icon={FiTrendingUp} className="text-green-600" />
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900 mb-1">Peak Engagement Time</h3>
@@ -352,7 +352,7 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
                 <div className="bg-white p-4 rounded-xl">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-blue-100 rounded-lg">
-                      <SafeIcon icon={FiUsers} className="text-blue-600" />
+                      <SafeIcon name={undefined}  icon={FiUsers} className="text-blue-600" />
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900 mb-1">Audience Growth</h3>
@@ -364,7 +364,7 @@ const Analytics = ({ data, pages = [], selectedPageId = 'all', onPageChange, loa
                 <div className="bg-white p-4 rounded-xl">
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-purple-100 rounded-lg">
-                      <SafeIcon icon={FiDollarSign} className="text-purple-600" />
+                      <SafeIcon name={undefined}  icon={FiDollarSign} className="text-purple-600" />
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900 mb-1">Revenue Opportunity</h3>

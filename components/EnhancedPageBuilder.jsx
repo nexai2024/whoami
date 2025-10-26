@@ -54,7 +54,7 @@ const SortableBlock = ({ block, selectedBlock, setSelectedBlock, deleteBlock, ge
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-indigo-100 rounded-lg">
-            <SafeIcon icon={getBlockIcon(block.type)} className="text-indigo-600" />
+            <SafeIcon name={undefined}  icon={getBlockIcon(block.type)} className="text-indigo-600" />
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{block.title}</h3>
@@ -66,7 +66,7 @@ const SortableBlock = ({ block, selectedBlock, setSelectedBlock, deleteBlock, ge
               {...attributes}
               className="p-2 text-gray-400 hover:text-gray-600 transition-colors cursor-grab active:cursor-grabbing"
             >
-              <SafeIcon icon={FiIcons.FiMove} />
+              <SafeIcon name={undefined}  icon={FiIcons.FiMove} />
             </div>
             <button
               onClick={(e) => {
@@ -75,7 +75,7 @@ const SortableBlock = ({ block, selectedBlock, setSelectedBlock, deleteBlock, ge
               }}
               className="p-2 text-gray-400 hover:text-red-500 transition-colors"
             >
-              <SafeIcon icon={FiIcons.FiTrash2} />
+              <SafeIcon name={undefined}  icon={FiIcons.FiTrash2} />
             </button>
           </div>
         </div>
@@ -661,7 +661,7 @@ const EnhancedPageBuilder = () => {
       >
         <div className="flex items-center gap-3">
           <div className="p-2 bg-indigo-100 rounded-lg">
-            <SafeIcon icon={getBlockIcon(block.type)} className="text-indigo-600" />
+            <SafeIcon name={undefined}  icon={getBlockIcon(block.type)} className="text-indigo-600" />
           </div>
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{block.title}</h3>
@@ -669,7 +669,7 @@ const EnhancedPageBuilder = () => {
           </div>
           <div className="flex items-center gap-2">
             <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
-              <SafeIcon icon={FiMove} />
+              <SafeIcon name={undefined}  icon={FiMove} />
             </button>
             <button
               onClick={(e) => {
@@ -678,7 +678,7 @@ const EnhancedPageBuilder = () => {
               }}
               className="p-2 text-gray-400 hover:text-red-500 transition-colors"
             >
-              <SafeIcon icon={FiTrash2} />
+              <SafeIcon name={undefined}  icon={FiTrash2} />
             </button>
           </div>
         </div>
@@ -744,9 +744,9 @@ const EnhancedPageBuilder = () => {
                 className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 border-dashed border-gray-200 hover:border-${blockType.color}-300 hover:bg-${blockType.color}-50 transition-colors group`}
                 data-tour-id={index === 0 ? "add-link-block" : undefined}
               >
-                <SafeIcon icon={blockType.icon} className={`text-${blockType.color}-600`} />
+                <SafeIcon name={undefined}  icon={blockType.icon} className={`text-${blockType.color}-600`} />
                 <span className="text-gray-700 group-hover:text-gray-900">{blockType.label}</span>
-                <SafeIcon icon={FiPlus} className="ml-auto text-gray-400 group-hover:text-gray-600" />
+                <SafeIcon name={undefined}  icon={FiPlus} className="ml-auto text-gray-400 group-hover:text-gray-600" />
               </button>
             ))}
           </div>
@@ -785,7 +785,7 @@ const EnhancedPageBuilder = () => {
                 ))}
                 {blocks.length === 0 && (
                   <div className="text-center py-12">
-                    <SafeIcon icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
+                    <SafeIcon name={undefined}  icon={FiPlus} className="text-gray-400 text-4xl mx-auto mb-4" />
                     <p className="text-gray-600">Add your first block to get started</p>
                   </div>
                 )}
@@ -828,7 +828,7 @@ const EnhancedPageBuilder = () => {
             </div>
           ) : (
             <div className="text-center py-8">
-              <SafeIcon icon={FiEdit3} className="text-gray-400 text-4xl mx-auto mb-4" />
+              <SafeIcon name={undefined}  icon={FiEdit3} className="text-gray-400 text-4xl mx-auto mb-4" />
               <p className="text-gray-600">Select a block to edit its properties</p>
             </div>
           )}
@@ -909,7 +909,7 @@ const EnhancedPageBuilder = () => {
                   }`}
                   data-tour-id={`${tab.id}-tab`}
                 >
-                  <SafeIcon icon={tab.icon} />
+                  <SafeIcon name={undefined}  icon={tab.icon} />
                   {tab.label}
                 </button>
               ))}
@@ -922,7 +922,7 @@ const EnhancedPageBuilder = () => {
                 className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
                 data-tour-id="preview-button"
               >
-                <SafeIcon icon={FiEye} />
+                <SafeIcon name={undefined}  icon={FiEye} />
                 Preview
               </button>
               <button
@@ -930,7 +930,7 @@ const EnhancedPageBuilder = () => {
                 className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
                 data-tour-id="save-button"
               >
-                <SafeIcon icon={FiSave} />
+                <SafeIcon name={undefined}  icon={FiSave} />
                 Save Changes
               </button>
             </div>
