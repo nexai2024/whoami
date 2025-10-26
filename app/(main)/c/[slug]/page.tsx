@@ -72,7 +72,7 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
 
       if (response.ok) {
         toast.success('Successfully enrolled!');
-        router.push(`/courses/${slug}/learn`);
+        router.push(`/c/${slug}/learn`);
       } else {
         const data = await response.json();
         toast.error(data.error || 'Failed to enroll');
