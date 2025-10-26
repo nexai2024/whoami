@@ -91,10 +91,35 @@ export default function CampaignWizard() {
     setError(null);
 
     try {
+      // Transform formData to match API expectations
+      const payload: any = {
+        name: formData.name,
+        config: {
+          platforms: formData.platforms,
+          tone: formData.tone,
+          goal: formData.goal,
+          socialPostCount: 3,
+          emailCount: 3,
+          pageVariants: 2,
+        },
+      };
+
+      // Map sourceType to appropriate field
+      if (formData.sourceType === 'PRODUCT' && formData.sourceId) {
+        payload.productId = formData.sourceId;
+      } else if (formData.sourceType === 'BLOCK' && formData.sourceId) {
+        payload.blockId = formData.sourceId;
+      } else if (formData.sourceType === 'CUSTOM' && formData.sourceText) {
+        payload.customContent = {
+          title: formData.name,
+          description: formData.sourceText,
+        };
+      }
+
       const response = await fetch('/api/campaigns/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();

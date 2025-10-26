@@ -40,6 +40,11 @@ export default function Sidebar() {
     const newCollapsed = !collapsed;
     setCollapsed(newCollapsed);
     localStorage.setItem('sidebarCollapsed', JSON.stringify(newCollapsed));
+
+    // Dispatch custom event for same-tab listeners
+    window.dispatchEvent(new CustomEvent('sidebarToggle', {
+      detail: { collapsed: newCollapsed }
+    }));
   };
 
   const toggleCategory = (category) => {

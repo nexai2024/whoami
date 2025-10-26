@@ -14,8 +14,26 @@ import { TourProvider } from '@/lib/tours/TourProvider';
 import { TourTooltip } from '@/components/tours/TourTooltip';
 import { HelpButton } from '@/components/tours/HelpButton';
 import Header from '@/components/Header';
+import ContentWrapper from '@/components/ContentWrapper';
+import { useUser } from "@stackframe/stack";
 
 keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
+
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const user = useUser();
+
+  return (
+    <>
+      <Header />
+      <ContentWrapper hasSidebar={!!user}>
+        {children}
+      </ContentWrapper>
+      <ErrorConsole />
+      <TourTooltip />
+      <HelpButton />
+    </>
+  );
+}
 
 export default function AppLayout({
   children,
@@ -30,11 +48,9 @@ export default function AppLayout({
           <ErrorProvider>
             <TourProvider>
               <ErrorBoundary>
-                <Header />
-                {children}
-                <ErrorConsole />
-                <TourTooltip />
-                <HelpButton />
+                <LayoutContent>
+                  {children}
+                </LayoutContent>
               </ErrorBoundary>
             </TourProvider>
           </ErrorProvider>
