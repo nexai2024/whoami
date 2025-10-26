@@ -172,6 +172,10 @@ export async function POST(request: NextRequest) {
         status: MagnetStatus.DRAFT,
       };
 
+      // Generate unique slug
+      const slug = await generateUniqueSlug(name);
+      leadMagnetData.slug = slug;
+
       // Create lead magnet record
       const leadMagnet = await prisma.leadMagnet.create({
         data: leadMagnetData,
