@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { PageService } from '../lib/database/pages';
-import { AnalyticsService } from '../lib/database/analytics';
+import { AnalyticsService } from '../lib/services/analyticsService';
 import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
 import EmailCaptureModal from './EmailCaptureModal';
