@@ -4,7 +4,7 @@ import Link from 'next/link';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '@/common/SafeIcon';
 import { PageService } from '@/lib/database/pages';
-import { AnalyticsService } from '@/lib/database/analytics';
+import { AnalyticsService } from '@/lib/services/analyticsService';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { logger } from '@/lib/utils/logger';
 import toast from 'react-hot-toast';
