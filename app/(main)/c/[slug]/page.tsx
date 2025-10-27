@@ -50,7 +50,7 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
   const handleEnroll = async () => {
     if (!user) {
       toast.error('Please log in to enroll');
-      router.push('/login');
+      router.push('/handler/sign-in');
       return;
     }
 

@@ -1,27 +1,38 @@
 // app/api/features/check/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { RateLimitService } from '@/lib/rate-limit'
+import { stackServerApp } from '@/stack/server'
 
 // POST /api/features/check
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, featureName, incrementUsage = false } = body
+    const { featureName, incrementUsage = false } = body
 
-    if (!userId || !featureName) {
+    // Get user from Stack auth (middleware ensures user is authenticated)
+    const user = await stackServerApp.getUser()
+    
+    if (!user?.id) {
       return NextResponse.json(
-        { error: 'userId and featureName are required' },
+        { error: 'User not authenticated' },
+        { status: 401 }
+      )
+    }
+
+    if (!featureName) {
+      return NextResponse.json(
+        { error: 'featureName is required' },
         { status: 400 }
       )
     }
 
     const result = await RateLimitService.checkFeatureAccess(
-      userId,
+      user.id,
       featureName
     )
 
     if (result.allowed && incrementUsage) {
-      await RateLimitService.incrementUsage(userId, featureName)
+      await RateLimitService.incrementUsage(user.id, featureName)
     }
 
     return NextResponse.json(result)

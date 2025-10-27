@@ -21,7 +21,7 @@ const OnboardingPage = () => {
     const isAuthenticated = localStorage.getItem('isAuthenticated');
 
     if (!storedUserId || !storedToken || !isAuthenticated) {
-      redirect('/login');
+      redirect('/handler/sign-in');
       return;
     }
 

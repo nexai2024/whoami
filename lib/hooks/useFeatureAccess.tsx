@@ -25,11 +25,9 @@ interface UseFeatureAccessReturn {
   error: string | null;
 }
 
-export function useFeatureAccess(userId?: string): UseFeatureAccessReturn {
+export function useFeatureAccess(): UseFeatureAccessReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const effectiveUserId = userId || 'demo-user'; // TODO: Get from auth context
 
   const canAccessFeature = useCallback(async (featureName: string): Promise<boolean> => {
     setLoading(true);
@@ -39,12 +37,11 @@ export function useFeatureAccess(userId?: string): UseFeatureAccessReturn {
       const response = await fetch('/api/features/check', {
         method: 'POST',
         headers: {
-          'x-user-id': effectiveUserId,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           featureName,
-          action: 'check'
+          incrementUsage: false
         })
       });
 
@@ -61,7 +58,7 @@ export function useFeatureAccess(userId?: string): UseFeatureAccessReturn {
     } finally {
       setLoading(false);
     }
-  }, [effectiveUserId]);
+  }, []);
 
   const checkLimit = useCallback(async (featureName: string): Promise<{
     canUse: boolean;
@@ -75,12 +72,11 @@ export function useFeatureAccess(userId?: string): UseFeatureAccessReturn {
       const response = await fetch('/api/features/check', {
         method: 'POST',
         headers: {
-          'x-user-id': effectiveUserId,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           featureName,
-          action: 'check'
+          incrementUsage: false
         })
       });
 
@@ -109,7 +105,7 @@ export function useFeatureAccess(userId?: string): UseFeatureAccessReturn {
     } finally {
       setLoading(false);
     }
-  }, [effectiveUserId]);
+  }, []);
 
   return {
     canAccessFeature,

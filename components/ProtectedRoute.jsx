@@ -18,7 +18,7 @@ const ProtectedRoute = ({ children, requireOnboarding = false }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/handler/sign-in" state={{ from: location }} replace />;
   }
 
   if (requireOnboarding && user && !user.onboardingComplete) {

@@ -20,7 +20,7 @@ const OnboardingPage = () => {
   useEffect(() => {
     // Redirect if not authenticated or not a new user
     if (!QuestAuthService.isAuthenticated()) {
-      redirect('/login');
+      redirect('/handler/sign-in');
       return;
     }
 

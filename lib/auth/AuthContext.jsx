@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     function checkAuthStatus() {
       try {
         console.log("Auth check - user:", user, "isSignedIn:", isSignedIn);
-        
+
         if (user && isSignedIn) {
           setIsAuthenticated(true);
           setCurrUser(user);
@@ -48,61 +48,68 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     async function initUser() {
-      if (user && isSignedIn) {
-        setCurrUser(user);
-        setIsAuthenticated(true);
-        console.log("Initializing user metadata if absent");
-        try {
-          if (!user.clientReadOnlyMetadata) {
-            await initOnboardingUser();
-            console.log("User metadata initialized");
-          }
-        } catch (error) {
-          logger.error('Error initializing user metadata:', error);
+      if (user && isSignedIn) 
+      setCurrUser(user);
+      setIsAuthenticated(true);
+      console.log("Initializing user metadata if absent");
+      try {
+        if (!user.clientReadOnlyMetadata) {
+          await initOnboardingUser();
+          console.log("User metadata initialized");
         }
+      } catch (error) {
+        logger.error('Error initializing user metadata:', error);
       }
     }
     initUser();
-  }, [user, isSignedIn]);
+}, [user, isSignedIn]);
 
-  // Log currUser whenever it changes
-  useEffect(() => {
-    console.log("Current User - Init User", currUser);
-  }, [currUser]);
+// Log currUser whenever it changes
+useEffect(() => {
+  console.log("Current User - Init User", currUser);
+}, [currUser]);
 
+const checkUserExists = async () => {
+  const user = await fetch('/api/testing/user?userId=' + user.id);
+  if (user.ok) {
+    return true;
+  } else {
+    return false;
+  }
+};
 
-  const logout = () => {
+const logout = () => {
 
-    if (user && typeof user.signOut === 'function') {
-      user.signOut();
-    }
-    setIsAuthenticated(false);
-    setCurrUser(null);
+  if (user && typeof user.signOut === 'function') {
+    user.signOut();
+  }
+  setIsAuthenticated(false);
+  setCurrUser(null);
 
-    logger.info('User logged out successfully');
-  };
+  logger.info('User logged out successfully');
+};
 
-  const completeOnboarding = () => {
-    localStorage.setItem('onboardingComplete', 'true');
-    setCurrUser(prev => ({
-      ...prev,
-      onboardingComplete: true
-    }));
+const completeOnboarding = () => {
+  localStorage.setItem('onboardingComplete', 'true');
+  setCurrUser(prev => ({
+    ...prev,
+    onboardingComplete: true
+  }));
 
-    logger.info('Onboarding completed');
-  };
+  logger.info('Onboarding completed');
+};
 
-  const value = {
-    isAuthenticated,
-    currUser,
-    loading,
-    logout,
-    completeOnboarding
-  };
+const value = {
+  isAuthenticated,
+  currUser,
+  loading,
+  logout,
+  completeOnboarding
+};
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+return (
+  <AuthContext.Provider value={value}>
+    {children}
+  </AuthContext.Provider>
+);
 };

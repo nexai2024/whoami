@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
@@ -22,7 +22,10 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
   // Get parameters from props or useParams
   const params = useParams();
   // In subdomain routing, the subdomain IS the slug
-  const pageSlug = slug || subdomain || params.slug || params.subdomain;
+  const pageSlug = useMemo(() => 
+    slug || subdomain || params.slug || params.subdomain, 
+    [slug, subdomain, params.slug, params.subdomain]
+  );
   
   const [page, setPage] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,31 +34,49 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState(null);
 
-  useEffect(() => {
-    console.log('EnhancedPublicPage - pageSlug:', pageSlug, 'subdomain:', subdomain, 'slug:', slug);
-    if (pageSlug) {
-      loadPage();
-    }
-  }, [pageSlug]);
-
-  const loadPage = async () => {
+  const getVisitorIP = useCallback(async () => {
     try {
-      console.log('Loading page with slug:', pageSlug);
-      setLoading(true);
-      const pageData = await PageService.getPageBySlug(pageSlug);
-      setPage(pageData);
-      console.log('Page data loaded:', pageData);
-      await recordPageView(pageData.id);
-    } catch (err) {
-      logger.error('Error loading public page:', err);
-      console.error('Error loading public page:', err); 
-      setError(err.message);
-    } finally {
-      setLoading(false);
+      const response = await fetch('https://api.ipify.org?format=json', {
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      });
+      const data = await response.json();
+      return data.ip;
+    } catch {
+      return 'unknown';
     }
-  };
+  }, []);
 
-  const recordPageView = async (pageId) => {
+  const getDeviceType = useCallback(() => {
+    const userAgent = navigator.userAgent;
+    if (/tablet|ipad|playbook|silk/i.test(userAgent)) {
+      return 'tablet';
+    }
+    if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(userAgent)) {
+      return 'mobile';
+    }
+    return 'desktop';
+  }, []);
+
+  const getBrowserName = useCallback(() => {
+    const userAgent = navigator.userAgent;
+    if (userAgent.includes('Chrome')) return 'Chrome';
+    if (userAgent.includes('Firefox')) return 'Firefox';
+    if (userAgent.includes('Safari')) return 'Safari';
+    if (userAgent.includes('Edge')) return 'Edge';
+    return 'Other';
+  }, []);
+
+  const getOSName = useCallback(() => {
+    const userAgent = navigator.userAgent;
+    if (userAgent.includes('Windows')) return 'Windows';
+    if (userAgent.includes('Mac')) return 'macOS';
+    if (userAgent.includes('Linux')) return 'Linux';
+    if (userAgent.includes('Android')) return 'Android';
+    if (userAgent.includes('iOS')) return 'iOS';
+    return 'Other';
+  }, []);
+
+  const recordPageView = useCallback(async (pageId) => {
     try {
       const visitorData = {
         pageId,
@@ -66,54 +87,60 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
         browser: getBrowserName(),
         os: getOSName()
       };
-      console.log('Recording page view:', visitorData);
       await AnalyticsService.recordClick(visitorData);
     } catch (err) {
       logger.error('Error recording page view:', err);
     }
-  };  
+  }, [getVisitorIP, getDeviceType, getBrowserName, getOSName]);
 
-  const getVisitorIP = async () => {
+  const loadPage = useCallback(async () => {
     try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      return data.ip;
-    } catch {
-      return 'unknown';
+      setLoading(true);
+      setError(null);
+      
+      if (!pageSlug) {
+        throw new Error('No page slug provided');
+      }
+      
+      const pageData = await PageService.getPageBySlug(pageSlug);
+      
+      if (!pageData) {
+        throw new Error('Page not found');
+      }
+      
+      setPage(pageData);
+      
+      // Record page view asynchronously without blocking UI
+      recordPageView(pageData.id).catch(err => {
+        logger.error('Error recording page view:', err);
+      });
+      
+    } catch (err) {
+      logger.error('Error loading public page:', err);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to load page';
+      if (err.message?.includes('not found') || err.status === 404) {
+        errorMessage = 'Page not found';
+      } else if (err.message?.includes('network') || err.name === 'NetworkError') {
+        errorMessage = 'Network error. Please check your connection.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [pageSlug, recordPageView]);
 
-  const getDeviceType = () => {
-    const userAgent = navigator.userAgent;
-    if (/tablet|ipad|playbook|silk/i.test(userAgent)) {
-      return 'tablet';
+  useEffect(() => {
+    if (pageSlug) {
+      loadPage();
     }
-    if (/mobile|iphone|ipod|android|blackberry|opera|mini|windows\sce|palm|smartphone|iemobile/i.test(userAgent)) {
-      return 'mobile';
-    }
-    return 'desktop';
-  };
+  }, [pageSlug, loadPage]);
 
-  const getBrowserName = () => {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes('Chrome')) return 'Chrome';
-    if (userAgent.includes('Firefox')) return 'Firefox';
-    if (userAgent.includes('Safari')) return 'Safari';
-    if (userAgent.includes('Edge')) return 'Edge';
-    return 'Other';
-  };
-
-  const getOSName = () => {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes('Windows')) return 'Windows';
-    if (userAgent.includes('Mac')) return 'macOS';
-    if (userAgent.includes('Linux')) return 'Linux';
-    if (userAgent.includes('Android')) return 'Android';
-    if (userAgent.includes('iOS')) return 'iOS';
-    return 'Other';
-  };
-
-  const handleBlockClick = async (block) => {
+  const handleBlockClick = useCallback(async (block) => {
     try {
       const clickData = {
         pageId: page.id,
@@ -137,77 +164,58 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
     } catch (err) {
       logger.error('Error handling block click:', err);
     }
-  };
+  }, [page?.id, getVisitorIP, getDeviceType, getBrowserName, getOSName]);
 
-  const handleProductPurchase = (block) => {
-    window.open(`/checkout/${block.id}`, '_blank');
-  };
+  const handleProductPurchase = useCallback((block) => {
+    window.open(`/checkout/${block.id}`, '_blank', 'noopener,noreferrer');
+  }, []);
 
-  const handleEmailCapture = (block) => {
+  const handleEmailCapture = useCallback((block) => {
     setSelectedBlock(block);
     setShowEmailModal(true);
-  };
+  }, []);
 
-  const shareUrl = () => {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url);
-    setShareMenuOpen(false);
-    toast.success('Link copied to clipboard!');
-  };
+  const shareUrl = useCallback(async () => {
+    try {
+      const url = window.location.href;
+      await navigator.clipboard.writeText(url);
+      setShareMenuOpen(false);
+      toast.success('Link copied to clipboard!');
+    } catch (err) {
+      logger.error('Error copying to clipboard:', err);
+      toast.error('Failed to copy link');
+    }
+  }, []);
 
-  const getSocialIcon = (platform) => {
-    const iconMap = {
-      instagram: FiInstagram,
-      twitter: FiTwitter,
-      linkedin: FiLinkedin,
-      facebook: FiFacebook,
-      youtube: FiYoutube
-    };
-    return iconMap[platform] || FiGlobe;
-  };
 
-  const getBlockIcon = (type) => {
-    const iconMap = {
-      LINK: FiLink,
-      PRODUCT: FiShoppingBag,
-      EMAIL_CAPTURE: FiMail,
-      IMAGE_GALLERY: FiImage,
-      MUSIC_PLAYER: FiMusic,
-      VIDEO_EMBED: FiVideo,
-      BOOKING_CALENDAR: FiCalendar,
-      TIP_JAR: FiDollarSign
-    };
-    return iconMap[type] || FiLink;
-  };
-
-  const getBlockStyles = (block) => {
-    const baseStyles = "w-full p-4 rounded-xl transition-all duration-200 hover:scale-105 cursor-pointer";
-    const colorStyles = {
-      LINK: "bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700",
-      PRODUCT: "bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700",
-      EMAIL_CAPTURE: "bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700",
-      TIP_JAR: "bg-gradient-to-r from-yellow-500 to-orange-500 text-white hover:from-yellow-600 hover:to-orange-600"
-    };
-    return `${baseStyles} ${colorStyles[block.type] || colorStyles.LINK}`;
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading page...</p>
-        </div>
+  // Memoized components for better performance
+  const LoadingSpinner = memo(() => (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading page...</p>
       </div>
-    );
-  }
+    </div>
+  ));
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Page Not Found</h1>
-          <p className="text-gray-600 mb-6">The page you're looking for doesn't exist.</p>
+  const ErrorState = memo(({ error }) => (
+    <div className="min-h-screen bg-gradient-to-br from-red-50 to-pink-50 flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-red-600 mb-4">
+          {error === 'Page not found' ? 'Page Not Found' : 'Error Loading Page'}
+        </h1>
+        <p className="text-gray-600 mb-6">
+          {error === 'Page not found' 
+            ? 'The page you\'re looking for doesn\'t exist.' 
+            : error || 'Something went wrong. Please try again.'}
+        </p>
+        <div className="flex gap-4 justify-center">
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Try Again
+          </button>
           <a
             href="/"
             className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
@@ -216,127 +224,167 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
           </a>
         </div>
       </div>
-    );
+    </div>
+  ));
+
+  // Memoized profile header component
+  const ProfileHeader = memo(({ user, shareMenuOpen, setShareMenuOpen, shareUrl }) => (
+    <motion.div
+      className="text-center mb-8 p-6 bg-white rounded-2xl shadow-sm"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6 }}
+    >
+      <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
+        {user?.profile?.avatar ? (
+          <img
+            src={user.profile.avatar}
+            alt={user.profile.displayName}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <span className="text-white text-2xl font-bold">
+            {user?.profile?.displayName?.charAt(0) || user.profile?.username?.charAt(0) || 'U'}
+          </span>
+        )}
+      </div>
+      
+      <h1 className="text-2xl font-bold mb-2">
+        {user?.profile?.displayName || user.profile?.username}
+      </h1>
+      
+      {user.profile?.bio && (
+        <p className="text-gray-600 mb-4">{user.profile.bio}</p>
+      )}
+
+      <div className="flex items-center justify-center gap-4">
+        <div className="relative">
+          <button
+            onClick={() => setShareMenuOpen(!shareMenuOpen)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            aria-label="Share this page"
+          >
+            <SafeIcon name={undefined} icon={FiShare2} />
+            Share
+          </button>
+          {shareMenuOpen && (
+            <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border p-2 z-10">
+              <button
+                onClick={shareUrl}
+                className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded text-gray-700"
+                aria-label="Copy link to clipboard"
+              >
+                Copy Link
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  ));
+
+  // Memoized footer component
+  const Footer = memo(() => (
+    <motion.div
+      className="text-center mt-12 pt-8 border-t border-gray-200"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.8, duration: 0.6 }}
+    >
+      <p className="text-sm text-gray-500 mb-4">
+        Made with ❤️ using WhoAmI
+      </p>
+      <a
+        href="https://whoami.bio"
+        className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Create your own page on WhoAmI"
+      >
+        Create your own page →
+      </a>
+    </motion.div>
+  ));
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return <ErrorState error={error} />;
   }
 
   return (
     <>
-      <SEOHead
-        title={page.metaTitle || page.title}
-        description={page.metaDescription || page.description}
-        ogImage={page.ogImage}
-        url={window.location.href}
-      />
-      <div
-        className="min-h-screen py-8 px-4"
-        style={{
-          backgroundColor: page.backgroundColor || '#f8fafc',
-          color: page.textColor || '#1f2937',
-          fontFamily: page.fontFamily || 'Inter, sans-serif'
-        }}
-      >
-        <div className="max-w-md mx-auto">
-          {/* Profile Header */}
-          <motion.div
-            className="text-center mb-8 p-6 bg-white rounded-2xl shadow-sm"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6 }}
+      {page && (
+        <>
+          <SEOHead
+            title={page.metaTitle || page.title || `${page.user?.profile?.displayName || page.user?.profile?.username}'s Page`}
+            description={page.metaDescription || page.description || `Visit ${page.user?.profile?.displayName || page.user?.profile?.username}'s page`}
+            ogImage={page.ogImage || page.user?.profile?.avatar}
+            url={typeof window !== 'undefined' ? window.location.href : ''}
+            keywords={page.metaKeywords}
+            author={page.user?.profile?.displayName || page.user?.profile?.username}
+          />
+          <div
+            className="min-h-screen py-8 px-4 flex flex-col items-center justify-center"
+            style={{
+              backgroundColor: page.backgroundColor || '#f8fafc',
+              color: page.textColor || '#1f2937',
+              fontFamily: page.fontFamily || 'Inter, sans-serif'
+            }}
           >
-            <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-              {page.user.profile?.avatar ? (
-                <img
-                  src={page.user.profile.avatar}
-                  alt={page.user.profile.displayName}
-                  className="w-full h-full object-cover"
+            <div className="w-full max-w-md">
+              {page.user && (
+                <ProfileHeader 
+                  user={page.user} 
+                  shareMenuOpen={shareMenuOpen} 
+                  setShareMenuOpen={setShareMenuOpen} 
+                  shareUrl={shareUrl} 
                 />
-              ) : (
-                <span className="text-white text-2xl font-bold">
-                  {page.user.profile?.displayName?.charAt(0) || page.user.profile?.username?.charAt(0) || 'U'}
-                </span>
               )}
-            </div>
-            
-            <h1 className="text-2xl font-bold mb-2">
-              {page.user.profile?.displayName || page.user.profile?.username}
-            </h1>
-            
-            {page.user.profile?.bio && (
-              <p className="text-gray-600 mb-4">{page.user.profile.bio}</p>
-            )}
-
-            <div className="flex justify-center gap-4">
-              <div className="relative">
-                <button
-                  onClick={() => setShareMenuOpen(!shareMenuOpen)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  <SafeIcon name={undefined}  icon={FiShare2} />
-                  Share
-                </button>
-                {shareMenuOpen && (
-                  <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border p-2 z-10">
-                    <button
-                      onClick={shareUrl}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded text-gray-700"
+              {/* Blocks */}
+              <div className="space-y-4" role="main" aria-label="Page content">
+                {page.blocks && page.blocks.length > 0 ? (
+                  page.blocks.map((block, index) => (
+                    <motion.div
+                      key={block.id}
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ delay: index * 0.1, duration: 0.6 }}
+                      role="article"
+                      aria-label={`Block: ${block.title || block.type}`}
                     >
-                      Copy Link
-                    </button>
+                      <BlockRenderer block={block} onBlockClick={handleBlockClick} />
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No content blocks available</p>
                   </div>
                 )}
               </div>
-            </div>
-          </motion.div>
 
-          {/* Blocks */}
-          <div className="space-y-4">
-            {page.blocks.map((block, index) => (
-              <motion.div
-                key={block.id}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: index * 0.1, duration: 0.6 }}
-              >
-                <BlockRenderer block={block} onBlockClick={handleBlockClick} />
-              </motion.div>
-            ))}
+              <Footer />
+            </div>
           </div>
 
-          {/* Footer */}
-          <motion.div
-            className="text-center mt-12 pt-8 border-t border-gray-200"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
-          >
-            <p className="text-sm text-gray-500 mb-4">
-              Made with ❤️ using WhoAmI
-            </p>
-            <a
-              href="https://whoami.bio"
-              className="text-indigo-600 hover:text-indigo-700 text-sm font-medium"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Create your own page →
-            </a>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Email Capture Modal */}
-      {showEmailModal && selectedBlock && (
-        <EmailCaptureModal
-          block={selectedBlock}
-          pageId={page.id}
-          onClose={() => {
-            setShowEmailModal(false);
-            setSelectedBlock(null);
-          }}
-        />
+          {/* Email Capture Modal */}
+          {showEmailModal && selectedBlock && (
+            <EmailCaptureModal
+              block={selectedBlock}
+              pageId={page.id}
+              onClose={() => {
+                setShowEmailModal(false);
+                setSelectedBlock(null);
+              }}
+            />
+          )}
+        </>
       )}
     </>
   );
 };
 
-export default EnhancedPublicPage;
+export default memo(EnhancedPublicPage);

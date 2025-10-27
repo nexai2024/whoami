@@ -96,7 +96,7 @@ const LandingPage = () => {
               transition={{ delay: 0.6, duration: 0.8 }}
             >
               <Link
-                to="/login"
+                to="/handler/sign-in"
                 className="bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-50 transition-all duration-300 flex items-center justify-center gap-2"
               >
                 Get Started Free
@@ -233,7 +233,7 @@ const LandingPage = () => {
             Join thousands of creators who've already elevated their link-in-bio game with WhoAmI
           </p>
           <Link
-            to="/login"
+            to="/handler/sign-in"
             className="bg-white text-purple-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-purple-50 transition-all duration-300 inline-flex items-center gap-2"
           >
             Start Your Free Trial

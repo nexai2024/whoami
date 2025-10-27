@@ -1,0 +1,17 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": true
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "connectString": "postgres://06615b745fb230110f1cf90c5d26f2ba625880c5fc330a8d93a28aaab59421e6:sk_se7X0Gsjb__PcG3nfravx@db.prisma.io:5432/postgres?sslmode=require",
+            "name": "whoami"
+        }
+    ]
+}

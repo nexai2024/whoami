@@ -44,13 +44,13 @@ export default function UnauthenticatedHeader() {
           {/* Sign In Button */}
           <div className="flex items-center gap-4">
             <Link
-              href="/login"
+              href="/handler/sign-in"
               className="hidden md:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-indigo-600 transition-colors"
             >
               Sign In
             </Link>
             <Link
-              href="/login"
+              href="/handler/sign-in"
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               Get Started
