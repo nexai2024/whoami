@@ -33,6 +33,12 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             status: true,
+            platform: true,
+          },
+        },
+        scheduledPosts: {
+          select: {
+            id: true,
           },
         },
         product: {
@@ -48,18 +54,28 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      campaigns: campaigns.map((campaign) => ({
-        id: campaign.id,
-        name: campaign.name,
-        status: campaign.status,
-        goal: campaign.goal,
-        createdAt: campaign.createdAt.toISOString(),
-        product: campaign.product,
-        assetCount: campaign.assets.length,
-        publishedCount: campaign.assets.filter(
-          (a) => a.status === 'PUBLISHED'
-        ).length,
-      })),
+      campaigns: campaigns.map((campaign) => {
+        // Get unique platforms from assets
+        const platforms = [...new Set(campaign.assets.map(a => a.platform).filter(Boolean))];
+
+        return {
+          id: campaign.id,
+          name: campaign.name,
+          status: campaign.status,
+          goal: campaign.goal,
+          sourceType: campaign.productId ? 'PRODUCT' : campaign.blockId ? 'BLOCK' : 'CUSTOM',
+          platforms: platforms,
+          createdAt: campaign.createdAt.toISOString(),
+          product: campaign.product,
+          _count: {
+            assets: campaign.assets.length,
+            scheduledPosts: campaign.scheduledPosts?.length || 0,
+          },
+          stats: {
+            totalEngagement: 0, // TODO: Calculate from analytics
+          },
+        };
+      }),
     });
   } catch (error) {
     console.error('Error fetching campaigns:', error);
