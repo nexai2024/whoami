@@ -7,7 +7,7 @@ import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from 
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { PageService } from '../lib/database/pages';
-import { AnalyticsService } from '../lib/database/analytics';
+import { AnalyticsService } from '../lib/services/analyticsService';
 import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
 import SafeIcon from '../common/SafeIcon';
