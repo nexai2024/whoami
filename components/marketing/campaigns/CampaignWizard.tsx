@@ -129,7 +129,7 @@ export default function CampaignWizard() {
       }
 
       toast.success('Campaign generation started!');
-      router.push(`/marketing/campaigns/${data.campaign.id}`);
+      router.push(`/marketing/campaigns/${data.campaignId}`);
     } catch (err: any) {
       console.error('Error generating campaign:', err);
       setError(err.message || 'Failed to generate campaign. Please try again.');
