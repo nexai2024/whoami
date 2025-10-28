@@ -135,6 +135,7 @@ const EnhancedPageBuilder = () => {
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const tabs = [
     { id: 'header', label: 'Header', icon: FiUser },
