@@ -32,62 +32,79 @@ export async function POST(req: NextRequest) {
   // Replace with actual user ID from auth
        try {
           logger.info("Creating page with data: userId", user?.id);
-          const title = 'New Page'
-          const description = 'New page description'
+
+          // Read metadata from request body if provided, fallback to defaults
+          const body = await req.json().catch(() => ({}));
+          const title = body.title || 'New Page';
+          const description = body.description || 'New page description';
+
           const slug = await generateSlug(title);
           logger.info("Creating page with slug:", slug);
-          //const pageId = `page_${Date.now()}`;
-          const newPage = await prisma.Page.create({ 
-            data: {
-            userId: user?.id,
-            slug,
-            title,
-            description,
-            isActive: false, // Start as draft
-            createdAt: new Date(),
-            updatedAt: new Date()
-          } });
-          if (!newPage) {
-            throw new Error('Failed to create page');
-          }
-          logger.info("New page created:", newPage);
-    
-          logger.info("Now creating header for new page");
-          const newPageHeader = await prisma.pageHeader.create({
-            data: {
-              pageId: newPage.id,
+
+          // Wrap page + header creation in transaction for atomicity
+          const result = await prisma.$transaction(async (tx) => {
+            // Create page
+            const newPage = await tx.Page.create({
               data: {
-                logoUrl: null,
-                displayName: '',
-                bio: '',
-                location: '',
-                contactEmail: '',
-                phoneNumber: null,
-                socialLinks: {},
-                headerStyle: 'minimal',
-                showContactInfo: false,
-                showSocialLinks: false,
-                showLocation: false,
-                customIntroduction: ''
+                userId: user?.id,
+                slug,
+                title,
+                description,
+                isActive: false, // Start as draft
+                createdAt: new Date(),
+                updatedAt: new Date()
               }
+            });
+
+            if (!newPage) {
+              throw new Error('Failed to create page');
             }
+            logger.info("New page created:", newPage);
+
+            logger.info("Now creating header for new page");
+            // Create header
+            const newPageHeader = await tx.pageHeader.create({
+              data: {
+                pageId: newPage.id,
+                data: {
+                  logoUrl: null,
+                  displayName: '',
+                  bio: '',
+                  location: '',
+                  contactEmail: '',
+                  phoneNumber: null,
+                  socialLinks: {},
+                  headerStyle: 'minimal',
+                  showContactInfo: false,
+                  showSocialLinks: false,
+                  showLocation: false,
+                  customIntroduction: ''
+                }
+              }
+            });
+
+            // Return both from transaction
+            return { newPage, newPageHeader };
           });
-              //pages.push(newPage);
-    return NextResponse.json(newPage, { status: 201 });
-          if (!newPageHeader) {
+
+          // Validate header creation after transaction
+          if (!result.newPageHeader) {
             throw new Error('Failed to create page header');
-          } 
-          logger.info("New page header created:", newPageHeader);
-    
-          logger.info(`Page created successfully: ${newPage.id}`);
-          return {
-            ...newPage,
+          }
+          logger.info("New page header created:", result.newPageHeader);
+
+          logger.info(`Page created successfully: ${result.newPage.id}`);
+
+          // Return complete response structure
+          return NextResponse.json({
+            ...result.newPage,
             blocks: [],
             _count: { clicks: 0 }
-          };
+          }, { status: 201 });
+
         } catch (error) {
           logger.error('Error creating page:', error);
-          throw new Error('Failed to create page');
+          return NextResponse.json({ error: 'Failed to create page' }, { status: 500 });
         }
 
 }
