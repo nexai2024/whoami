@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
       where: { pageId: page.id, isActive: true },
       orderBy: { position: 'asc' }
     });
-
+console.log('blocks', blocks);
     const pageWithData = {
       ...page,
       pageHeader,

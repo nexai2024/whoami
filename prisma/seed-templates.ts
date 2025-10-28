@@ -37,8 +37,7 @@ const templates = [
         tiktok: "alexmorgan",
         linkedin: "",
         facebook: "",
-        github: "",
-        custom: []
+        github: ""
       },
       customIntroduction: "🎉 New YouTube video every Monday! Subscribe for behind-the-scenes content.",
       headerStyle: "gradient"
@@ -74,8 +73,7 @@ const templates = [
         tiktok: "",
         linkedin: "jenniferchen",
         facebook: "",
-        github: "jchen",
-        custom: []
+        github: "jchen"
       },
       customIntroduction: "Available for speaking engagements and advisory roles",
       headerStyle: "card"
@@ -112,7 +110,7 @@ const templates = [
         linkedin: "mayarodriguez",
         facebook: "",
         github: "",
-        custom: [{name: "Behance", url: "behance.net/mayarod"}]
+        //.custom: [{name: "Behance", url: "behance.net/mayarod"}]
       },
       customIntroduction: "Currently accepting projects for Q3 2025",
       headerStyle: "split"
@@ -217,7 +215,7 @@ const templates = [
         linkedin: "",
         facebook: "",
         github: "",
-        custom: []
+        // custom: []
       },
       customIntroduction: "📱 Follow for daily fitness tips!",
       headerStyle: "minimal"
@@ -332,7 +330,7 @@ const templates = [
         linkedin: "",
         facebook: "",
         github: "",
-        custom: []
+        //custom: []
       },
       customIntroduction: "🔥 Limited Time: 40% Off Launch Price",
       headerStyle: "gradient"
@@ -451,7 +449,7 @@ const templates = [
         linkedin: "sarahwilliams",
         facebook: "captureacademy",
         github: "",
-        custom: []
+        //custom: []
       },
       customIntroduction: "🎓 New cohort starting April 2025",
       headerStyle: "card"
@@ -588,7 +586,7 @@ const templates = [
         linkedin: "",
         facebook: "",
         github: "",
-        custom: [{name: "Medium", url: "medium.com/@davidpark"}]
+        //custom: [{name: "Medium", url: "medium.com/@davidpark"}]
       },
       customIntroduction: "",
       headerStyle: "minimal"
@@ -625,7 +623,7 @@ const templates = [
         linkedin: "design-systems-summit",
         facebook: "",
         github: "",
-        custom: []
+        //custom: []
       },
       customIntroduction: "📅 June 15-16, 2025 • Early Bird Pricing Ends Soon",
       headerStyle: "gradient"
@@ -739,7 +737,7 @@ const templates = [
         linkedin: "summit-digital",
         facebook: "",
         github: "",
-        custom: []
+        //custom: []
       },
       customIntroduction: "Working with 25+ B2B SaaS companies",
       headerStyle: "split"
@@ -856,7 +854,7 @@ const templates = [
         linkedin: "",
         facebook: "",
         github: "",
-        custom: []
+        // custom: []
       },
       customIntroduction: "📬 Every Tuesday at 9am PT • Free forever",
       headerStyle: "card"

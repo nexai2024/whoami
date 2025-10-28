@@ -13,28 +13,40 @@ const {
  * Renders blocks on the public page with proper styling and interactivity
  */
 const BlockRenderer = ({ block, onBlockClick }) => {
-  const baseStyles = "w-full p-6 rounded-xl transition-all duration-200 hover:scale-[1.02] cursor-pointer bg-white shadow-sm hover:shadow-md border border-gray-200";
-
+  const baseStyles = "w-full p-6 rounded-xl border border-gray-200 transition-all duration-200 hover:scale-[1.02] cursor-pointer bg-white shadow-md hover:shadow-lg";
+  
+  // Debug: Add inline styles to test if Tailwind is working
+  const debugStyles = {
+    width: '100%',
+    padding: '24px',
+    borderRadius: '12px',
+    border: '1px solid #e5e7eb',
+    backgroundColor: 'white',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    transition: 'all 0.2s ease-in-out',
+    cursor: 'pointer'
+  };
+  
+  // Debug log
+  console.log('BlockRenderer rendering block:', block.type, 'with styles:', baseStyles);
   // LINK Block
   if (block.type === 'LINK') {
     return (
-      <div className={baseStyles} onClick={() => onBlockClick(block)}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1">
-            {block.data?.thumbnail && (
-              <img src={block.data.thumbnail} alt={block.title} className="w-12 h-12 rounded-lg object-cover" />
-            )}
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-gray-900">{block.title}</h3>
-                {block.data?.badge && (
-                  <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">{block.data.badge}</span>
-                )}
-              </div>
-              {block.data?.description && (
-                <p className="text-sm text-gray-600 mt-1">{block.data.description}</p>
+      <div className={`${baseStyles} text-center`} style={debugStyles} onClick={() => onBlockClick(block)}>
+        <div className="flex flex-col items-center gap-3">
+          {block.data?.thumbnail && (
+            <img src={block.data.thumbnail} alt={block.title} className="w-12 h-12 rounded-lg object-cover" />
+          )}
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">{block.title}</h3>
+              {block.data?.badge && (
+                <span className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full font-medium">{block.data.badge}</span>
               )}
             </div>
+            {block.data?.description && (
+              <p className="text-sm text-gray-600">{block.data.description}</p>
+            )}
           </div>
           <SafeIcon name={undefined}  icon={FiExternalLink} className="text-gray-400" />
         </div>
@@ -45,27 +57,29 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // PRODUCT Block
   if (block.type === 'PRODUCT') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-green-50 to-emerald-50 border-green-200`} onClick={() => onBlockClick(block)}>
-        <div className="flex gap-4">
+      <div className={`${baseStyles} bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-center`} onClick={() => onBlockClick(block)}>
+        <div className="flex flex-col items-center gap-4">
           {block.data?.images?.[0] && (
             <img src={block.data.images[0]} alt={block.title} className="w-20 h-20 rounded-lg object-cover" />
           )}
-          <div className="flex-1">
+          <div className="flex flex-col items-center">
             <h3 className="font-bold text-gray-900 mb-1">{block.title}</h3>
             {block.data?.description && (
               <p className="text-sm text-gray-600 mb-2">{block.data.description}</p>
             )}
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-green-600">
-                {block.data?.currency || '$'}{block.data?.price || '0'}
-              </span>
-              {block.data?.originalPrice && block.data.originalPrice > block.data.price && (
-                <span className="text-sm text-gray-400 line-through">
-                  {block.data.currency || '$'}{block.data.originalPrice}
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-green-600">
+                  {block.data?.currency || '$'}{block.data?.price || '0'}
                 </span>
-              )}
+                {block.data?.originalPrice && block.data.originalPrice > block.data.price && (
+                  <span className="text-sm text-gray-400 line-through">
+                    {block.data.currency || '$'}{block.data.originalPrice}
+                  </span>
+                )}
+              </div>
               {block.data?.averageRating && (
-                <div className="flex items-center gap-1 ml-auto">
+                <div className="flex items-center gap-1">
                   <SafeIcon name={undefined}  icon={FiStar} className="text-yellow-500 text-sm" />
                   <span className="text-sm font-medium">{block.data.averageRating}</span>
                   {block.data?.reviewCount && (
@@ -107,7 +121,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   if (block.type === 'IMAGE_GALLERY') {
     const images = block.data?.images || [];
     return (
-      <div className={baseStyles}>
+      <div className={`${baseStyles} text-center`}>
         <h3 className="font-bold text-gray-900 mb-3">{block.title}</h3>
         <div className={`grid ${block.data?.layout === 'grid' ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
           {images.slice(0, block.data?.maxImages || 6).map((img, idx) => (
@@ -126,12 +140,12 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // MUSIC_PLAYER Block
   if (block.type === 'MUSIC_PLAYER') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200`}>
-        <div className="flex gap-4 items-center">
+      <div className={`${baseStyles} bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 text-center`}>
+        <div className="flex flex-col items-center gap-4">
           {block.data?.albumArtwork && (
             <img src={block.data.albumArtwork} alt={block.data?.trackTitle} className="w-16 h-16 rounded-lg" />
           )}
-          <div className="flex-1">
+          <div className="flex flex-col items-center">
             <h3 className="font-bold text-gray-900">{block.data?.trackTitle || block.title}</h3>
             {block.data?.artistName && (
               <p className="text-sm text-gray-600">{block.data.artistName}</p>
@@ -149,7 +163,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // VIDEO_EMBED Block
   if (block.type === 'VIDEO_EMBED') {
     return (
-      <div className={baseStyles}>
+      <div className={`${baseStyles} text-center`}>
         <h3 className="font-bold text-gray-900 mb-3">{block.title}</h3>
         <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
           {block.data?.videoUrl && (
@@ -255,7 +269,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
       center: 'text-center',
       right: 'text-right',
       justify: 'text-justify'
-    }[block.data?.textAlign || 'left'];
+    }[block.data?.textAlign || 'center'];
 
     const sizeClass = {
       small: 'text-sm',
@@ -305,7 +319,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // PORTFOLIO Block
   if (block.type === 'PORTFOLIO') {
     return (
-      <div className={baseStyles} onClick={() => onBlockClick(block)}>
+      <div className={`${baseStyles} text-center`} onClick={() => onBlockClick(block)}>
         {block.data?.images?.[0] && (
           <img src={block.data.images[0]} alt={block.data?.projectTitle} className="w-full h-48 object-cover rounded-lg mb-3" />
         )}
@@ -314,7 +328,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
           <p className="text-sm text-gray-600 mb-2">{block.data.projectDescription}</p>
         )}
         {block.data?.technologies && block.data.technologies.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
             {block.data.technologies.map((tech, idx) => (
               <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">{tech}</span>
             ))}
@@ -327,7 +341,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // CONTACT_FORM Block
   if (block.type === 'CONTACT_FORM') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-center`} onClick={() => onBlockClick(block)}>
         <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
         {block.description && (
           <p className="text-sm text-gray-600 mb-4">{block.description}</p>
@@ -351,12 +365,12 @@ const BlockRenderer = ({ block, onBlockClick }) => {
 
   // Default rendering for other block types
   return (
-    <div className={baseStyles} onClick={() => onBlockClick(block)}>
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
+    <div className={`${baseStyles} text-center`} onClick={() => onBlockClick(block)}>
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center">
           <h3 className="font-semibold text-gray-900">{block.title}</h3>
           {block.description && (
-            <p className="text-sm text-gray-600 mt-1">{block.description}</p>
+            <p className="text-sm text-gray-600">{block.description}</p>
           )}
         </div>
         <SafeIcon name={undefined}  icon={FiExternalLink} className="text-gray-400" />

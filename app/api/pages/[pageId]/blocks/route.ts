@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
-import { Block, BlockType } from '@prisma/client';
+import { Block, BlockType, Prisma } from '@prisma/client';
 import { mapBlockType } from '@/lib/blockTypeMapping';
  
 // GET: Fetch all blocks for a page
@@ -24,16 +24,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pag
   const { pageId } = await params;
   try {
     const blocks = await req.json();
-    logger.info("Saving blocks for page:", pageId, "Total blocks:", blocks.length);
+    logger.info('Saving blocks for page:', pageId, 'Total blocks:', blocks.length);
+
+    // Validate blocks array
+    if (!Array.isArray(blocks)) {
+      return NextResponse.json({ error: 'Blocks must be an array' }, { status: 400 });
+    }
 
     // Use UPSERT pattern: update existing, create new, delete removed
-    const results = await prisma.$transaction(async (tx) => {
+    const results = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Get existing block IDs for this page
       const existingBlocks = await tx.block.findMany({
         where: { pageId },
         select: { id: true }
       });
-      const existingIds = existingBlocks.map(b => b.id);
+      const existingIds = existingBlocks.map((b: { id: string }) => b.id);
 
       // Track which IDs were in the submitted blocks
       const submittedIds: string[] = [];
@@ -63,13 +68,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pag
           };
 
           if (block.id) {
-            // Update existing block
-            submittedIds.push(block.id);
-            const updated = await tx.block.update({
-              where: { id: block.id },
-              data: blockData
+            // Check if block exists before updating
+            const existingBlock = await tx.block.findUnique({
+              where: { id: block.id.toString() }
             });
-            processedBlocks.push(updated);
+            
+            if (existingBlock) {
+              // Update existing block
+              submittedIds.push(block.id);
+              const updated = await tx.block.update({
+                where: { id: block.id.toString() },
+                data: blockData
+              });
+              processedBlocks.push(updated);
+            } else {
+              // Block ID doesn't exist, create new one
+              logger.warn(`Block ID ${block.id} not found, creating new block`);
+              const created = await tx.block.create({
+                data: {
+                  ...blockData,
+                  pageId
+                }
+              });
+              processedBlocks.push(created);
+            }
           } else {
             // Create new block
             const created = await tx.block.create({
@@ -81,6 +103,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pag
             processedBlocks.push(created);
           }
         } catch (error) {
+          logger.error(`Error processing block ${idx} (ID: ${block.id || 'new'}):`, error);
           if (error instanceof Error && error.message.includes('Unknown block type')) {
             throw new Error(`Invalid block type: ${block.type}`);
           }
@@ -89,7 +112,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pag
       }
 
       // Delete blocks that weren't in submitted list
-      const idsToDelete = existingIds.filter(id => !submittedIds.includes(id));
+      const idsToDelete = existingIds.filter((id: string) => !submittedIds.includes(id));
       if (idsToDelete.length > 0) {
         await tx.block.deleteMany({
           where: { id: { in: idsToDelete } }

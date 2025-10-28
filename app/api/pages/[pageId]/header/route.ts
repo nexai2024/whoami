@@ -100,7 +100,7 @@ export async function POST(
     
     // Validate socialLinks structure
     if (headerData.socialLinks && typeof headerData.socialLinks === 'object') {
-      const validPlatforms = ['instagram', 'twitter', 'linkedin', 'facebook', 'youtube', 'custom'];
+      const validPlatforms = ['instagram', 'twitter', 'linkedin', 'facebook', 'tiktok', 'github', 'youtube', 'custom'];
       for (const [platform, url] of Object.entries(headerData.socialLinks)) {
         if (!validPlatforms.includes(platform)) {
           console.log('Invalid social platform:', platform);
@@ -115,10 +115,10 @@ export async function POST(
             new URL(url);
           } catch {
             console.log('Invalid URL for social platform:', platform, url);
-            return NextResponse.json(
-              { error: `Invalid URL for social platform: ${platform}` },
-              { status: 400 }
-            );
+            // return NextResponse.json(
+            //   { error: `Invalid URL for social platform: ${platform}` },
+            //   { status: 400 }
+            // );
           }
         }
       }

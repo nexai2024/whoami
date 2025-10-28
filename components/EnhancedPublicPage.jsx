@@ -107,7 +107,7 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
       if (!pageData) {
         throw new Error('Page not found');
       }
-      
+      console.log('pageData', pageData);
       setPage(pageData);
       
       // Record page view asynchronously without blocking UI
@@ -335,7 +335,7 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
               fontFamily: page.fontFamily || 'Inter, sans-serif'
             }}
           >
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md mx-auto text-center">
               {page.user && (
                 <ProfileHeader 
                   user={page.user} 
@@ -345,7 +345,7 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                 />
               )}
               {/* Blocks */}
-              <div className="space-y-4" role="main" aria-label="Page content">
+              <div className="space-y-4 text-center" role="main" aria-label="Page content">
                 {page.blocks && page.blocks.length > 0 ? (
                   page.blocks.map((block, index) => (
                     <motion.div

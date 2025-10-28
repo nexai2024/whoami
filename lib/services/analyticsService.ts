@@ -24,7 +24,9 @@ export class AnalyticsService {
     utmTerm?: string;
     utmContent?: string;
   }) {
+   
     try {
+      console.log('clickData', clickData);  
       const response = await fetch('/api/analytics/clicks', {
         method: 'POST',
         headers: {

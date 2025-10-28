@@ -1,6 +1,6 @@
 "use client";
 import type { Metadata } from "next";
-//import './globals.css';
+import '../(main)/globals.css';
 import { Suspense } from 'react';
 
 import { ErrorProvider } from '../../components/ErrorContext';
