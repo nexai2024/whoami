@@ -959,11 +959,16 @@ const EnhancedPageBuilder = () => {
               </button>
               <button
                 onClick={handleSaveBlocks}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                disabled={isSaving || loading}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  isSaving || loading
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                }`}
                 data-tour-id="save-button"
               >
                 <SafeIcon name={undefined}  icon={FiSave} />
-                Save Changes
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
