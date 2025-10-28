@@ -135,6 +135,7 @@ const EnhancedPageBuilder = () => {
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const tabs = [
     { id: 'header', label: 'Header', icon: FiUser },
@@ -182,35 +183,51 @@ const EnhancedPageBuilder = () => {
 
   // Initialize or load page data - fixed to prevent duplicate creation
   useEffect(() => {
+    const initializeNewPage = async () => {
+      if (!isNew || pageData?.id || !user?.id) return;
+
+      try {
+        setLoading(true);
+        console.log("Initializing new page");
+
+        const newPage = await PageService.createPage({ userID: user.id });
+
+        if (newPage.id) {
+          console.log("New page created:", newPage);
+          setPageData({
+            id: newPage.id,
+            title: newPage.title,
+            description: newPage.description,
+            headerData: {
+              displayName: '',
+              title: '',
+              company: '',
+              bio: '',
+              email: '',
+              phone: '',
+              website: '',
+              location: '',
+              customIntroduction: '',
+              headerStyle: 'minimal'
+            }
+          });
+
+          // Update URL to include the new pageId so refreshing works
+          router.replace(`/builder?page=${newPage.id}`);
+          toast.success('Page created successfully');
+        }
+      } catch (error) {
+        console.error('Error creating page:', error);
+        toast.error('Failed to create page');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (pageId) {
       loadPageData(pageId);
     } else if (isNew && !pageData?.id && user?.id) {
-      // Initialize new page only if we don't already have one
-      console.log("Initializing new page");
-      const newPage = PageService.createPage({ userID: user.id });
-      if (newPage.id) {
-        console.log("New page created:", newPage);
-        setPageData({
-          id: newPage.id,
-          title: newPage.title,
-          description: newPage.description,
-          headerData: {
-            displayName: '',
-            title: '',
-            company: '',
-            bio: '',
-            email: '',
-            phone: '',
-            website: '',
-            location: '',
-            customIntroduction: '',
-            headerStyle: 'minimal'
-          }
-        });
-        
-        // Update URL to include the new pageId so refreshing works
-        router.replace(`/builder?page=${newPage.id}`);
-      }
+      initializeNewPage();
     }
   }, [pageId, isNew, user?.id, pageData?.id, router]);
 
@@ -490,13 +507,26 @@ const EnhancedPageBuilder = () => {
 
   // Comprehensive save function for all page data
   const handleSaveAll = async () => {
+    // Prevent duplicate saves
+    if (isSaving) {
+      return;
+    }
+
     const currentPageId = searchParams.get('page') || pageData?.id;
+
+    // Better error messages based on state
     if (!currentPageId) {
-      toast.error('Cannot save: Page not created yet');
+      if (loading) {
+        toast.error('Please wait, page is loading...');
+      } else {
+        toast.error('Failed to initialize page. Please refresh.');
+      }
       return;
     }
 
     try {
+      setIsSaving(true);
+
       // Save page settings (title, description)
       await PageService.updatePage(currentPageId, {
         title: pageData?.title || 'Untitled Page',
@@ -518,6 +548,8 @@ const EnhancedPageBuilder = () => {
     } catch (err) {
       console.error('Error saving:', err);
       toast.error('Failed to save changes');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -927,11 +959,16 @@ const EnhancedPageBuilder = () => {
               </button>
               <button
                 onClick={handleSaveBlocks}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                disabled={isSaving || loading}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                  isSaving || loading
+                    ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                }`}
                 data-tour-id="save-button"
               >
                 <SafeIcon name={undefined}  icon={FiSave} />
-                Save Changes
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
