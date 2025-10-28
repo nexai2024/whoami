@@ -507,13 +507,26 @@ const EnhancedPageBuilder = () => {
 
   // Comprehensive save function for all page data
   const handleSaveAll = async () => {
+    // Prevent duplicate saves
+    if (isSaving) {
+      return;
+    }
+
     const currentPageId = searchParams.get('page') || pageData?.id;
+
+    // Better error messages based on state
     if (!currentPageId) {
-      toast.error('Cannot save: Page not created yet');
+      if (loading) {
+        toast.error('Please wait, page is loading...');
+      } else {
+        toast.error('Failed to initialize page. Please refresh.');
+      }
       return;
     }
 
     try {
+      setIsSaving(true);
+
       // Save page settings (title, description)
       await PageService.updatePage(currentPageId, {
         title: pageData?.title || 'Untitled Page',
@@ -535,6 +548,8 @@ const EnhancedPageBuilder = () => {
     } catch (err) {
       console.error('Error saving:', err);
       toast.error('Failed to save changes');
+    } finally {
+      setIsSaving(false);
     }
   };
 
