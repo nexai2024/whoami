@@ -182,35 +182,51 @@ const EnhancedPageBuilder = () => {
 
   // Initialize or load page data - fixed to prevent duplicate creation
   useEffect(() => {
+    const initializeNewPage = async () => {
+      if (!isNew || pageData?.id || !user?.id) return;
+
+      try {
+        setLoading(true);
+        console.log("Initializing new page");
+
+        const newPage = await PageService.createPage({ userID: user.id });
+
+        if (newPage.id) {
+          console.log("New page created:", newPage);
+          setPageData({
+            id: newPage.id,
+            title: newPage.title,
+            description: newPage.description,
+            headerData: {
+              displayName: '',
+              title: '',
+              company: '',
+              bio: '',
+              email: '',
+              phone: '',
+              website: '',
+              location: '',
+              customIntroduction: '',
+              headerStyle: 'minimal'
+            }
+          });
+
+          // Update URL to include the new pageId so refreshing works
+          router.replace(`/builder?page=${newPage.id}`);
+          toast.success('Page created successfully');
+        }
+      } catch (error) {
+        console.error('Error creating page:', error);
+        toast.error('Failed to create page');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (pageId) {
       loadPageData(pageId);
     } else if (isNew && !pageData?.id && user?.id) {
-      // Initialize new page only if we don't already have one
-      console.log("Initializing new page");
-      const newPage = PageService.createPage({ userID: user.id });
-      if (newPage.id) {
-        console.log("New page created:", newPage);
-        setPageData({
-          id: newPage.id,
-          title: newPage.title,
-          description: newPage.description,
-          headerData: {
-            displayName: '',
-            title: '',
-            company: '',
-            bio: '',
-            email: '',
-            phone: '',
-            website: '',
-            location: '',
-            customIntroduction: '',
-            headerStyle: 'minimal'
-          }
-        });
-        
-        // Update URL to include the new pageId so refreshing works
-        router.replace(`/builder?page=${newPage.id}`);
-      }
+      initializeNewPage();
     }
   }, [pageId, isNew, user?.id, pageData?.id, router]);
 
