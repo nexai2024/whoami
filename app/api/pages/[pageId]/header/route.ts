@@ -100,7 +100,7 @@ export async function POST(
     
     // Validate socialLinks structure
     if (headerData.socialLinks && typeof headerData.socialLinks === 'object') {
-      const validPlatforms = ['instagram', 'twitter', 'linkedin', 'facebook', 'youtube'];
+      const validPlatforms = ['instagram', 'twitter', 'linkedin', 'facebook', 'youtube', 'custom'];
       for (const [platform, url] of Object.entries(headerData.socialLinks)) {
         if (!validPlatforms.includes(platform)) {
           console.log('Invalid social platform:', platform);
