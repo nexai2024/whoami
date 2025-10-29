@@ -792,7 +792,7 @@ model ScheduledPost {
   updatedAt DateTime @updatedAt
   userId    String
 
-  // Content
+  // Content4e 
   content   String   @db.Text
   mediaUrls String[]
 

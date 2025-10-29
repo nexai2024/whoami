@@ -16,10 +16,11 @@ interface OptInRequest {
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const leadMagnetId = params.id;
+    const { id } = await params;
+    const leadMagnetId = id;
     const body: OptInRequest = await request.json();
     const { email, name } = body;
 
@@ -73,10 +74,7 @@ export async function POST(
         },
       });
 
-      console.log(\`Resending lead magnet to existing subscriber: \${email}\`);
-    } else {
-      // Generate unique delivery token
-      const deliveryToken = randomBytes(32).toString('hex');
+      console.log(`Resending lead magnet to existing subscriber: ${email}`);
 
       // Calculate token expiration (30 days from now)
       const tokenExpiresAt = new Date();
@@ -88,7 +86,7 @@ export async function POST(
           leadMagnetId,
           email: email.toLowerCase(),
           name,
-          deliveryToken,
+          deliveryToken: crypto.randomUUID(),
           tokenExpiresAt,
           emailSent: true,
         },
@@ -102,7 +100,7 @@ export async function POST(
         },
       });
 
-      console.log(\`Created new lead magnet delivery for: \${email}\`);
+      console.log(`Created new lead magnet delivery for: ${email}`);
     }
 
     // Send delivery email
@@ -132,24 +130,24 @@ export async function POST(
  */
 async function sendLeadMagnetDeliveryEmail(delivery: any, leadMagnet: any) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const downloadUrl = \`\${baseUrl}/api/lead-magnets/download/\${delivery.deliveryToken}\`;
+  const downloadUrl = `${baseUrl}/api/lead-magnets/download/${delivery.deliveryToken}`;
 
   // TODO: Implement actual email service (SendGrid, Resend, etc.)
   // For now, just log to console
   console.log('---');
   console.log('LEAD MAGNET DELIVERY EMAIL');
-  console.log(\`To: \${delivery.email}\`);
-  console.log(\`Subject: Your \${leadMagnet.name} is ready to download!\`);
+  console.log(`To: ${delivery.email}`);
+  console.log(`Subject: Your ${leadMagnet.name} is ready to download!`);
   console.log('---');
-  console.log(\`Hi \${delivery.name || 'there'}!\`);
+  console.log(`Hi ${delivery.name || 'there'}!`);
   console.log('');
-  console.log(\`Thanks for requesting "\${leadMagnet.name}".\`);
+  console.log(`Thanks for requesting "${leadMagnet.name}".`);
   console.log('');
   console.log('Click the link below to download:');
   console.log(downloadUrl);
   console.log('');
   console.log('Link expires in 30 days.');
   console.log('---');
-
-  // TODO: Replace with actual email service
 }
+  // Email sending functionality not implemented yet.
+  // In production, integrate with an email service like SendGrid, Resend, or SES here.

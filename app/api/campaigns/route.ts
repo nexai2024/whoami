@@ -36,11 +36,11 @@ export async function GET(request: NextRequest) {
             platform: true,
           },
         },
-        scheduledPosts: {
-          select: {
-            id: true,
-          },
-        },
+        // scheduledPosts: {
+        //   select: {
+        //     id: true,
+        //   },
+        // },
         product: {
           select: {
             id: true,
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
           product: campaign.product,
           _count: {
             assets: campaign.assets.length,
-            scheduledPosts: campaign.scheduledPosts?.length || 0,
+            //scheduledPosts: campaign.scheduledPosts?.length || 0,
           },
           stats: {
             totalEngagement: 0, // TODO: Calculate from analytics

@@ -18,16 +18,16 @@ import React, { useState } from 'react';
 
 const extraItems = [
     {
+        id: 'custom',
         title: 'Custom Section',
         icon: <SettingsIcon />,
         content: <div className="p-4">This is a custom section content.</div>,
-        subpath: '/custom',
     },
     {
+        id: 'another',
         title: 'Another Section',
         icon: <MarsIcon />,
         content: <Settings />,
-        subpath: '/another',
     }
 ];
 
@@ -55,9 +55,8 @@ const MyAccount: React.FC = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <AccountSettings
-                        showAllSections={true}
                         fullPage={true}
-                       // extraItems={extraItems}
+                        extraItems={extraItems}
                     />
                     <DialogFooter>
                         <DialogClose asChild>

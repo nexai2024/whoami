@@ -42,7 +42,16 @@ export async function POST(req: NextRequest) {
           logger.info("Creating page with slug:", slug);
 
           // Wrap page + header creation in transaction for atomicity
-          const result = await prisma.$transaction(async (tx) => {
+          const result = await prisma.$transaction(async (tx: {
+              Page: {
+                create: (arg0: {
+                  data: {
+                    userId: string; slug: any; title: any; description: any; isActive: boolean; // Start as draft
+                    createdAt: Date; updatedAt: Date;
+                  };
+                }) => any;
+              }; pageHeader: { create: (arg0: { data: { pageId: any; data: { logoUrl: null; displayName: string; bio: string; location: string; contactEmail: string; phoneNumber: null; socialLinks: {}; headerStyle: string; showContactInfo: boolean; showSocialLinks: boolean; showLocation: boolean; customIntroduction: string; }; }; }) => any; };
+            }) => {
             // Create page
             const newPage = await tx.Page.create({
               data: {

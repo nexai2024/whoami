@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/database/prisma';
+import prisma                                                                              from '@/lib/prisma';
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-10-28.acacia'
+  apiVersion: '2025-09-30.clover'
 });
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const { courseId } = params;
+    const { courseId } = await params;
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {

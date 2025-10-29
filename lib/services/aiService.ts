@@ -395,7 +395,7 @@ Return ONLY valid JSON, no markdown formatting.`;
     throw new Error('Generated template missing required fields');
   }
 
-  if (!result.headerData.headerStyle || !['minimal', 'card', 'gradient', 'split'].includes(result.headerData.headerStyle)) {
+  if (!result.headerData || typeof result.headerData !== 'object' || !('headerStyle' in result.headerData) || !['minimal', 'card', 'gradient', 'split'].includes((result.headerData as any).headerStyle)) {
     throw new Error('Invalid or missing headerStyle in generated template');
   }
 
@@ -405,13 +405,22 @@ Return ONLY valid JSON, no markdown formatting.`;
 
   // Ensure all block types are UPPERCASE (post-process to handle any AI variance)
   if (Array.isArray(result.blocksData)) {
-    result.blocksData = result.blocksData.map((block: any) => ({
+    (result as any).blocksData = result.blocksData.map((block: any) => ({
       ...block,
       type: block.type ? block.type.toUpperCase() : block.type
     }));
+  } else if (input.templateType === 'FULL_PAGE') {
+    (result as any).blocksData = [];
   }
 
-  return result as any;
+  return result as unknown as {
+    name: string;
+    description: string;
+    category: string;
+    headerData: Record<string, any>;
+    blocksData: Record<string, any>[];
+    suggestedTags: string[];
+  };
 }
 
 /**

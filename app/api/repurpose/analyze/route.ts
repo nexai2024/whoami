@@ -83,8 +83,8 @@ export async function POST(request: NextRequest) {
         sourceUrl,
         sourceType: detectedType,
         status: RepurposeStatus.ANALYZING,
-        brandColors: config.brandColors || null,
-        brandLogo: config.brandLogo || null,
+        brandColors: config.brandColors || undefined,
+        brandLogo: config.brandLogo || undefined,
       },
     });
 

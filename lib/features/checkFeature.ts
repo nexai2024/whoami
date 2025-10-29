@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+"use client"
 import { useState, useCallback } from 'react';
 
 /**
@@ -12,55 +12,25 @@ export async function checkUserFeature(
   featureName: string
 ): Promise<boolean> {
   try {
-    // Get user's profile to determine their plan
-    const profile = await prisma.profile.findUnique({
-      where: { userId },
-      select: { plan: true },
+    const result = await fetch('/api/features/check', {
+      method: 'POST',
+      body: JSON.stringify({ featureName }),
     });
 
-    if (!profile) {
+    if (!result.ok) {
       return false;
     }
 
-    // Get the feature from the database
-    const feature = await prisma.feature.findUnique({
-      where: { name: featureName },
-      select: { id: true },
-    });
-
-    if (!feature) {
-      // Feature doesn't exist in database
-      return false;
-    }
-
-    // Find the plan that matches the user's profile plan enum
-    const plan = await prisma.plan.findFirst({
-      where: { planEnum: profile.plan },
-      select: { id: true },
-    });
-
-    if (!plan) {
-      return false;
-    }
-
-    // Check if the plan has this feature enabled
-    const planFeature = await prisma.planFeature.findUnique({
-      where: {
-        planId_featureId: {
-          planId: plan.id,
-          featureId: feature.id,
-        },
-      },
-      select: { enabled: true },
-    });
-
-    return planFeature?.enabled ?? false;
+    const data = await result.json();
+    return data.allowed ?? false;
   } catch (error) {
     console.error('Error checking user feature:', error);
     return false;
   }
 }
 
+    // Get user's profile to determine their plan
+   
 /**
  * Client-side wrapper to check feature access via API
  * @param featureName - The name of the feature to check

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/database/prisma';
+import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { courseId: string } }
+  { params }: { params: Promise<{ courseId: string }> }
 ) {
   try {
-    const { courseId } = params;
+    const { courseId } = await params;
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
@@ -49,13 +49,13 @@ export async function GET(
     const enrollmentCount = course.enrollments.length;
 
     // Completion rate: students with 100% progress
-    const completedCount = course.enrollments.filter(enrollment =>
+    const completedCount = course.enrollments.filter((enrollment: { courseProgress: { overallProgress: number; }; }) =>
       enrollment.courseProgress && enrollment.courseProgress.overallProgress === 100
     ).length;
     const completionRate = enrollmentCount > 0 ? (completedCount / enrollmentCount) * 100 : 0;
 
     // Average progress across all students
-    const totalProgress = course.enrollments.reduce((sum, enrollment) =>
+    const totalProgress = course.enrollments.reduce((sum: number, enrollment: { courseProgress: { overallProgress: number; }; }) =>
       sum + (enrollment.courseProgress?.overallProgress || 0), 0
     );
     const averageProgress = enrollmentCount > 0 ? totalProgress / enrollmentCount : 0;
@@ -66,8 +66,8 @@ export async function GET(
       : 0;
 
     // Lesson completion breakdown
-    const lessonBreakdown = course.lessons.map(lesson => {
-      const completedInLesson = course.enrollments.filter(enrollment =>
+    const lessonBreakdown = course.lessons.map((lesson: { title: any; id: any; }) => {
+      const completedInLesson = course.enrollments.filter((enrollment: { courseProgress: { lessonsCompleted: any; }; }) =>
         enrollment.courseProgress?.lessonsCompleted?.includes(lesson.id)
       ).length;
 

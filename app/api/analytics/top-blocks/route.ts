@@ -13,22 +13,29 @@ export async function GET(req: NextRequest) {
     const pageId = searchParams.get('pageId');
     const userId = searchParams.get('userId');
     const limit = parseInt(searchParams.get('limit') || '10');
-
+    
     // Validate that at least one of pageId or userId is provided
-    if (!pageId && !userId) {
+    if (!pageId) {
       return NextResponse.json(
-        { error: 'Either pageId or userId is required' },
+        { error: 'Either pageId is required' },
         { status: 400 }
       );
     }
-
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'userId is required' },
+        { status: 400 }
+      );
+    } else {
     const topBlocks = await AnalyticsService.getTopPerformingBlocks(
-      pageId,
-      limit,
-      userId
-    );
+      pageId || undefined,
+        limit,
+        userId
+      );
+ 
 
     return NextResponse.json(topBlocks, { status: 200 });
+    }
   } catch (error) {
     logger.error('Error fetching top performing blocks:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);

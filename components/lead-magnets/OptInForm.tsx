@@ -126,7 +126,7 @@ export default function OptInForm({ leadMagnetId, primaryColor = '#4F46E5' }: Op
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-50 focus:outline-none transition-all"
-          style={{ focusRingColor: primaryColor }}
+          style={{ '--focus-ring-color': primaryColor } as React.CSSProperties}
           disabled={loading}
         />
       </div>
@@ -149,7 +149,7 @@ export default function OptInForm({ leadMagnetId, primaryColor = '#4F46E5' }: Op
           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-opacity-50 focus:outline-none transition-all ${
             emailError ? 'border-red-500' : 'border-gray-300'
           }`}
-          style={{ focusRingColor: primaryColor }}
+          style={{ '--focus-ring-color': primaryColor } as React.CSSProperties}
           required
           disabled={loading}
         />

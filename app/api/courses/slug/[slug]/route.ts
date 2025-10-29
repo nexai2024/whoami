@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/database/prisma';
-
+import prisma from '@/lib/prisma';
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const { slug } = params;
+    const slug  = await params;
     const userId = request.headers.get('x-user-id');
 
     // Fetch course with lessons (basic info only, no full content)

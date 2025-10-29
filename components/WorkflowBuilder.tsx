@@ -592,7 +592,7 @@ export default function WorkflowBuilder({ workflowId, onSave }: WorkflowBuilderP
                         );
                       }}
                     />
-                    <p className="text-xs text-gray-500 mt-1">Use {'{'}{'{'} variable {'}'}{'}' for interpolation</p>
+                    <p className="text-xs text-gray-500 mt-1">Use {'{{'} variable {'}}'} for interpolation</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">

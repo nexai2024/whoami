@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/database/prisma';
+import prisma from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { workflowId: string } }
+  { params }: { params: Promise<{ workflowId: string }> }
 ) {
   try {
-    const { workflowId } = params;
+    const { workflowId } = await params;
     const userId = request.headers.get('x-user-id');
 
     if (!userId) {
@@ -46,13 +46,13 @@ export async function GET(
     }
 
     const totalRuns = workflow.executions.length;
-    const successfulRuns = workflow.executions.filter(e => e.status === 'COMPLETED').length;
-    const failedRuns = workflow.executions.filter(e => e.status === 'FAILED').length;
+    const successfulRuns = workflow.executions.filter((e: { status: string; }) => e.status === 'COMPLETED').length;
+    const failedRuns = workflow.executions.filter((e: { status: string; }) => e.status === 'FAILED').length;
     const successRate = totalRuns > 0 ? (successfulRuns / totalRuns) * 100 : 0;
 
     // Get last run timestamp
     const lastRun = workflow.executions.length > 0
-      ? workflow.executions.sort((a, b) =>
+      ? workflow.executions.sort((a: { createdAt: string | number | Date; }, b: { createdAt: string | number | Date; }) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         )[0]
       : null;
