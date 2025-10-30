@@ -17,10 +17,10 @@ import BlockFormFields from './BlockFormFields';
 import toast from 'react-hot-toast';
 import TemplateBrowser from './TemplateBrowser';
 
-const { 
-  FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
+const {
+  FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage,
   FiLink, FiShoppingBag, FiMail, FiMusic, FiVideo, FiCalendar,
-  FiUser, FiSettings, FiTag, FiShare2, FiLayout
+  FiUser, FiSettings, FiTag, FiShare2, FiLayout, FiUpload
 } = FiIcons;
 
 // SortableBlock component for drag-and-drop functionality
