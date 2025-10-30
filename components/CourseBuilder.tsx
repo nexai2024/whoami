@@ -134,6 +134,35 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
     }
   };
 
+  const handlePublishCourse = async () => {
+    if (!internalCourseId) {
+      toast.error('Save course first before publishing');
+      return;
+    }
+
+    try {
+      const newStatus = course.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+      const response = await fetch(`/api/courses/${internalCourseId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': 'demo-user'
+        },
+        body: JSON.stringify({ ...course, status: newStatus })
+      });
+
+      if (response.ok) {
+        setCourse({ ...course, status: newStatus });
+        toast.success(newStatus === 'PUBLISHED' ? 'Course published!' : 'Course unpublished');
+      } else {
+        toast.error('Failed to update course status');
+      }
+    } catch (error) {
+      console.error('Error publishing course:', error);
+      toast.error('Failed to update course status');
+    }
+  };
+
   const addLesson = () => {
     const newLesson: Lesson = {
       title: `Lesson ${lessons.length + 1}`,
