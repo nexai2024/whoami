@@ -330,6 +330,13 @@ const WorkflowsPage = () => {
                     >
                       <SafeIcon name={undefined}  icon={workflow.enabled ? FiPause : FiPlay} />
                     </button>
+                    <button
+                      onClick={() => handleTestWorkflow(workflow.id)}
+                      className="p-2 text-purple-600 hover:bg-purple-50 transition-colors rounded-lg"
+                      title="Test Workflow"
+                    >
+                      <SafeIcon name={undefined}  icon={FiTool} />
+                    </button>
                     <Link
                       href={`/workflows/${workflow.id}/edit`}
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors hover:bg-gray-50 rounded-lg"
