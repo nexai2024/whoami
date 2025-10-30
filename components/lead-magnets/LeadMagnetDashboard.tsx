@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { MagnetType, MagnetStatus, DeliveryMethod } from '@prisma/client';
 import toast from 'react-hot-toast';
+import { FiUpload } from 'react-icons/fi';
 
 interface LeadMagnet {
   id: string;
