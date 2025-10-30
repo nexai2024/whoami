@@ -286,7 +286,7 @@ const CoursesPage = () => {
                       <SafeIcon name={undefined}  icon={FiBarChart2}  />
                     </Link>
                     <Link
-                      href={`/${course.slug}`}
+                      href={`/c/${course.slug}`}
                       target="_blank"
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors border rounded-lg"
                       title="View Course"
