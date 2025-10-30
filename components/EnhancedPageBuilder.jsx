@@ -904,18 +904,24 @@ const EnhancedPageBuilder = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Page URL</label>
-          <div className="flex">
-            <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-              localhost:3000/
-            </span>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Page Slug (URL)</label>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm text-gray-500">yoursite.com/</span>
             <input
               type="text"
-              placeholder="your-username"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              value={pageData?.slug || ''}
+              onChange={(e) => {
+                const slug = e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                setPageData(prev => ({ ...prev, slug }));
+              }}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="my-page-url"
               data-tour-id="page-slug-input"
             />
           </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Use lowercase letters, numbers, and hyphens only. This will be your page URL.
+          </p>
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">Page Description</label>
