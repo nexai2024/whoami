@@ -9,7 +9,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 const {
   FiPlus, FiSave, FiEye, FiSettings, FiTrash2, FiEdit3, FiMove,
-  FiVideo, FiFileText, FiHeadphones, FiBook, FiCheck, FiX
+  FiVideo, FiFileText, FiHeadphones, FiBook, FiCheck, FiX, FiUpload
 } = FiIcons;
 
 interface Lesson {
