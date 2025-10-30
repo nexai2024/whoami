@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { FiPlus, FiEdit3, FiPlay, FiPause, FiGitBranch, FiZap, FiActivity, FiClock, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiEdit3, FiPlay, FiPause, FiGitBranch, FiZap, FiActivity, FiClock, FiCheck, FiAlertCircle, FiTool } from 'react-icons/fi';
 import SafeIcon from '@/common/SafeIcon';
 import { useAuth } from '@/lib/auth/AuthContext.jsx';
 import toast from 'react-hot-toast';
