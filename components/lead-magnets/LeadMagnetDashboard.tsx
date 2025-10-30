@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { MagnetType, MagnetStatus, DeliveryMethod } from '@prisma/client';
 import toast from 'react-hot-toast';
+import { FiUpload } from 'react-icons/fi';
 
 interface LeadMagnet {
   id: string;
@@ -459,6 +460,31 @@ export default function LeadMagnetDashboard() {
     }
   };
 
+  const handlePublish = async (magnetId: string, currentStatus: MagnetStatus) => {
+    const newStatus = currentStatus === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
+
+    try {
+      const response = await fetch(`/api/lead-magnets/${magnetId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': 'demo-user',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        toast.success(`Lead magnet ${newStatus === 'ACTIVE' ? 'published' : 'unpublished'}!`);
+        await fetchLeadMagnets();
+      } else {
+        toast.error('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error publishing:', error);
+      toast.error('Failed to update status');
+    }
+  };
+
   const handleCloseDetailModal = () => {
     setShowDetailModal(false);
     setSelectedMagnet(null);
@@ -637,13 +663,24 @@ export default function LeadMagnetDashboard() {
 
                     {/* Actions */}
                     <div className="flex space-x-2">
-                      <button 
+                      <button
+                        onClick={() => handlePublish(magnet.id, magnet.status)}
+                        className={`p-2 rounded-lg transition-colors ${
+                          magnet.status === 'ACTIVE'
+                            ? 'text-yellow-600 hover:bg-yellow-50'
+                            : 'text-green-600 hover:bg-green-50'
+                        }`}
+                        title={magnet.status === 'ACTIVE' ? 'Unpublish' : 'Publish'}
+                      >
+                        <FiUpload />
+                      </button>
+                      <button
                         onClick={() => handleViewDetails(magnet.id)}
                         className="flex-1 bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-blue-700"
                       >
                         View Details
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleEdit(magnet.id)}
                         className="px-3 py-2 border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50"
                       >

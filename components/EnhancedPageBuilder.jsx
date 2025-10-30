@@ -17,10 +17,10 @@ import BlockFormFields from './BlockFormFields';
 import toast from 'react-hot-toast';
 import TemplateBrowser from './TemplateBrowser';
 
-const { 
-  FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage, 
+const {
+  FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage,
   FiLink, FiShoppingBag, FiMail, FiMusic, FiVideo, FiCalendar,
-  FiUser, FiSettings, FiTag, FiShare2, FiLayout
+  FiUser, FiSettings, FiTag, FiShare2, FiLayout, FiUpload
 } = FiIcons;
 
 // SortableBlock component for drag-and-drop functionality
@@ -527,10 +527,11 @@ const EnhancedPageBuilder = () => {
     try {
       setIsSaving(true);
 
-      // Save page settings (title, description)
+      // Save page settings (title, description, slug)
       await PageService.updatePage(currentPageId, {
         title: pageData?.title || 'Untitled Page',
         description: pageData?.description || '',
+        slug: pageData?.slug || '',
       });
 
       // Save blocks
@@ -556,6 +557,26 @@ const EnhancedPageBuilder = () => {
   // Save blocks to backend (legacy function, now use handleSaveAll)
   const handleSaveBlocks = async () => {
     await handleSaveAll();
+  };
+
+  const handlePublishPage = async () => {
+    if (!pageData?.id) {
+      toast.error('Save page first before publishing');
+      return;
+    }
+
+    try {
+      const newStatus = !pageData.isActive;
+      await PageService.updatePage(pageData.id, {
+        isActive: newStatus
+      });
+
+      setPageData({ ...pageData, isActive: newStatus });
+      toast.success(newStatus ? 'Page published!' : 'Page unpublished');
+    } catch (error) {
+      console.error('Error publishing page:', error);
+      toast.error('Failed to update page status');
+    }
   };
 
   const handlePreview = () => {
@@ -884,18 +905,24 @@ const EnhancedPageBuilder = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Page URL</label>
-          <div className="flex">
-            <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
-              localhost:3000/
-            </span>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Page Slug (URL)</label>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm text-gray-500">yoursite.com/</span>
             <input
               type="text"
-              placeholder="your-username"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              value={pageData?.slug || ''}
+              onChange={(e) => {
+                const slug = e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                setPageData(prev => ({ ...prev, slug }));
+              }}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="my-page-url"
               data-tour-id="page-slug-input"
             />
           </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Use lowercase letters, numbers, and hyphens only. This will be your page URL.
+          </p>
         </div>
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">Page Description</label>
@@ -949,6 +976,15 @@ const EnhancedPageBuilder = () => {
             
             {/* Action buttons in tabs area */}
             <div className="flex items-center gap-4">
+              {pageData?.isActive !== undefined && (
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  pageData.isActive
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {pageData.isActive ? 'PUBLISHED' : 'DRAFT'}
+                </span>
+              )}
               <button
                 onClick={handlePreview}
                 className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
@@ -970,6 +1006,19 @@ const EnhancedPageBuilder = () => {
                 <SafeIcon name={undefined}  icon={FiSave} />
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
+              {pageData?.id && (
+                <button
+                  onClick={handlePublishPage}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    pageData.isActive
+                      ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  <SafeIcon name={undefined}  icon={FiUpload} />
+                  {pageData.isActive ? 'Unpublish' : 'Publish'}
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -36,6 +36,7 @@ model User {
   pageTemplates       PageTemplate[]
   courses             Course[]
   workflows           Workflow[]
+  funnels             Funnel[]
 
   @@map("users")
 }
@@ -1780,4 +1781,267 @@ model UserOnboarding {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_onboarding")
+}
+
+// ============================================
+// CONVERSION FUNNEL SYSTEM
+// ============================================
+
+model Funnel {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Funnel details
+  name        String
+  description String? @db.Text
+  slug        String  @unique
+
+  // Goal tracking
+  goalType        FunnelGoalType
+  goalValue       String?         // e.g., product ID, course ID, etc.
+  conversionGoal  String          // "purchase", "signup", "download", etc.
+
+  // Styling and branding
+  theme           Json?
+  brandColors     Json?
+  customCss       String?         @db.Text
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  ogImage         String?
+
+  // Settings
+  trackingEnabled Boolean @default(true)
+  exitRedirect    String? // Where to redirect after completion
+
+  // Analytics
+  totalVisits     Int     @default(0)
+  totalConversions Int    @default(0)
+  conversionRate  Decimal? @db.Decimal(5, 2)
+
+  // Status
+  status          FunnelStatus @default(DRAFT)
+  publishedAt     DateTime?
+
+  // Relations
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps       FunnelStep[]
+  visits      FunnelVisit[]
+  conversions FunnelConversion[]
+
+  @@index([userId, status])
+  @@index([slug])
+  @@map("funnels")
+}
+
+enum FunnelGoalType {
+  LEAD_CAPTURE
+  PRODUCT_SALE
+  COURSE_ENROLLMENT
+  BOOKING
+  CUSTOM
+}
+
+enum FunnelStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model FunnelStep {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  funnelId  String
+
+  // Step details
+  name        String
+  slug        String          // URL path segment
+  type        FunnelStepType
+  order       Int
+
+  // Page content
+  headline    String?
+  subheadline String?
+  content     String?         @db.Text
+
+  // Page-specific data
+  pageData    Json?          // Flexible storage for different step types
+
+  // Media
+  backgroundImage String?
+  videoUrl        String?
+
+  // Form/CTA configuration
+  ctaText         String?
+  ctaUrl          String?
+  formConfig      Json?      // For lead capture forms
+
+  // Split testing
+  isVariant       Boolean    @default(false)
+  variantOf       String?    // ID of parent step
+  trafficSplit    Int        @default(50)
+
+  // Analytics
+  views           Int        @default(0)
+  completions     Int        @default(0)
+  dropoffRate     Decimal?   @db.Decimal(5, 2)
+
+  // Conditional logic
+  rules           Json?      // For conditional branching
+
+  // Relations
+  funnel         Funnel            @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  stepProgresses FunnelStepProgress[]
+
+  @@unique([funnelId, slug])
+  @@index([funnelId, order])
+  @@map("funnel_steps")
+}
+
+enum FunnelStepType {
+  LANDING_PAGE      // Initial landing page
+  LEAD_CAPTURE      // Email/info capture
+  SALES_PAGE        // Product/service presentation
+  ORDER_FORM        // Checkout/payment
+  UPSELL            // Additional offer
+  DOWNSELL          // Alternative offer
+  THANK_YOU         // Confirmation/success
+  VIDEO_SALES       // Video-based sales page
+  WEBINAR_REG       // Webinar registration
+  SURVEY            // Information gathering
+  CUSTOM            // Custom step type
+}
+
+model FunnelVisit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  funnelId  String
+
+  // Visitor tracking
+  visitorId       String          // Unique ID for this visitor session
+  email           String?         // Captured email if available
+  name            String?
+
+  // Entry point
+  entryStepId     String
+  entryUrl        String?
+  referrer        String?
+
+  // Current progress
+  currentStepId   String?
+  lastStepId      String?
+  completedSteps  String[]
+
+  // Session details
+  ipAddress       String?
+  userAgent       String?
+  device          String?
+  browser         String?
+  os              String?
+  country         String?
+  city            String?
+
+  // UTM tracking
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  utmTerm         String?
+  utmContent      String?
+
+  // Engagement
+  totalTimeSpent  Int             @default(0) // in seconds
+  lastActivityAt  DateTime        @default(now())
+
+  // Conversion
+  converted       Boolean         @default(false)
+  convertedAt     DateTime?
+  conversionValue Decimal?        @db.Decimal(10, 2)
+
+  // Relations
+  funnel          Funnel                @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  stepProgress    FunnelStepProgress[]
+
+  @@index([funnelId, visitorId])
+  @@index([funnelId, converted])
+  @@index([email])
+  @@map("funnel_visits")
+}
+
+model FunnelStepProgress {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  visitId   String
+  stepId    String
+
+  // Progress tracking
+  status          FunnelStepStatus @default(VIEWED)
+  enteredAt       DateTime         @default(now())
+  completedAt     DateTime?
+  timeSpent       Int              @default(0) // in seconds
+
+  // Form data (if applicable)
+  formData        Json?
+
+  // Interaction tracking
+  scrollDepth     Int?             // Percentage
+  ctaClicked      Boolean          @default(false)
+  videoWatched    Int?             // Percentage
+  interactions    Json?            // Other tracked interactions
+
+  // Relations
+  visit FunnelVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  step  FunnelStep  @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([visitId, stepId])
+  @@index([stepId, status])
+  @@map("funnel_step_progress")
+}
+
+enum FunnelStepStatus {
+  VIEWED          // User viewed the step
+  ENGAGED         // User interacted (scroll, video, etc.)
+  COMPLETED       // User completed step action
+  ABANDONED       // User left without completing
+  CONVERTED       // Led to goal completion
+}
+
+model FunnelConversion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  funnelId  String
+  visitId   String
+
+  // Conversion details
+  conversionType  String          // Type of conversion achieved
+  conversionValue Decimal?        @db.Decimal(10, 2)
+  currency        String          @default("USD")
+
+  // Attribution
+  entrySource     String?
+  entryMedium     String?
+  entryCampaign   String?
+
+  // Customer info
+  email           String
+  name            String?
+  metadata        Json?
+
+  // External references
+  orderId         String?
+  productId       String?
+  courseId        String?
+
+  // Relations
+  funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  @@index([funnelId, createdAt])
+  @@index([email])
+  @@map("funnel_conversions")
 }

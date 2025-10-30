@@ -18,7 +18,7 @@ interface PageProps {
 
 async function getLeadMagnet(slugOrId: string) {
   // Try to find by slug first
-  let leadMagnet = await prisma.leadMagnet.findUnique({
+  let leadMagnet = await prisma.leadMagnet.findFirst({
     where: { slug: slugOrId },
   });
 

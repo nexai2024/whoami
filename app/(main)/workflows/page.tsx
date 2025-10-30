@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { FiPlus, FiEdit3, FiPlay, FiPause, FiGitBranch, FiZap, FiActivity, FiClock, FiCheck, FiAlertCircle } from 'react-icons/fi';
+import { FiPlus, FiEdit3, FiPlay, FiPause, FiGitBranch, FiZap, FiActivity, FiClock, FiCheck, FiAlertCircle, FiTool } from 'react-icons/fi';
 import SafeIcon from '@/common/SafeIcon';
 import { useAuth } from '@/lib/auth/AuthContext.jsx';
 import toast from 'react-hot-toast';
@@ -89,6 +89,34 @@ const WorkflowsPage = () => {
     } catch (error) {
       console.error('Error toggling workflow:', error);
       toast.error('Failed to update workflow');
+    }
+  };
+
+  const handleTestWorkflow = async (workflowId: string) => {
+    try {
+      const response = await fetch(`/api/workflows/${workflowId}/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': currUser.id,
+        },
+        body: JSON.stringify({
+          testData: {
+            email: 'test@example.com',
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success('Workflow test completed! Check console for details.');
+        console.log('Workflow test result:', result);
+      } else {
+        toast.error('Workflow test failed');
+      }
+    } catch (error) {
+      console.error('Error testing workflow:', error);
+      toast.error('Failed to test workflow');
     }
   };
 
@@ -301,6 +329,13 @@ const WorkflowsPage = () => {
                       title={workflow.enabled ? 'Pause Workflow' : 'Activate Workflow'}
                     >
                       <SafeIcon name={undefined}  icon={workflow.enabled ? FiPause : FiPlay} />
+                    </button>
+                    <button
+                      onClick={() => handleTestWorkflow(workflow.id)}
+                      className="p-2 text-purple-600 hover:bg-purple-50 transition-colors rounded-lg"
+                      title="Test Workflow"
+                    >
+                      <SafeIcon name={undefined}  icon={FiTool} />
                     </button>
                     <Link
                       href={`/workflows/${workflow.id}/edit`}

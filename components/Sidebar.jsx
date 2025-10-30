@@ -77,7 +77,7 @@ export default function Sidebar() {
         { name: 'Pages', href: '/builder', icon: FiFileText },
         { name: 'Courses', href: '/courses', icon: FiBook },
         { name: 'Lead Magnets', href: '/marketing/lead-magnets', icon: FiGift },
-        { name: 'Funnels', href: '/funnels', icon: FiTrendingUp, comingSoon: true },
+        { name: 'Funnels', href: '/funnels', icon: FiTrendingUp },
         { name: 'Products', href: '/marketing/products', icon: FiShoppingBag }
       ]
     },
