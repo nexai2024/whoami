@@ -527,10 +527,11 @@ const EnhancedPageBuilder = () => {
     try {
       setIsSaving(true);
 
-      // Save page settings (title, description)
+      // Save page settings (title, description, slug)
       await PageService.updatePage(currentPageId, {
         title: pageData?.title || 'Untitled Page',
         description: pageData?.description || '',
+        slug: pageData?.slug || '',
       });
 
       // Save blocks
