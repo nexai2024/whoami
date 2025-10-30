@@ -969,6 +969,15 @@ const EnhancedPageBuilder = () => {
             
             {/* Action buttons in tabs area */}
             <div className="flex items-center gap-4">
+              {pageData?.isActive !== undefined && (
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  pageData.isActive
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {pageData.isActive ? 'PUBLISHED' : 'DRAFT'}
+                </span>
+              )}
               <button
                 onClick={handlePreview}
                 className="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
@@ -990,6 +999,19 @@ const EnhancedPageBuilder = () => {
                 <SafeIcon name={undefined}  icon={FiSave} />
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
+              {pageData?.id && (
+                <button
+                  onClick={handlePublishPage}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    pageData.isActive
+                      ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  <SafeIcon name={undefined}  icon={FiUpload} />
+                  {pageData.isActive ? 'Unpublish' : 'Publish'}
+                </button>
+              )}
             </div>
           </div>
         </div>
