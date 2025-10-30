@@ -5,7 +5,7 @@ export async function GET(
   { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const slug  = await params;
+    const { slug } = await params;
     const userId = request.headers.get('x-user-id');
 
     // Fetch course with lessons (basic info only, no full content)
