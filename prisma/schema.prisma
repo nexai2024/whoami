@@ -36,6 +36,7 @@ model User {
   pageTemplates       PageTemplate[]
   courses             Course[]
   workflows           Workflow[]
+  funnels             Funnel[]
 
   @@map("users")
 }
