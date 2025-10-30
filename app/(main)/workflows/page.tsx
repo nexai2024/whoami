@@ -92,6 +92,34 @@ const WorkflowsPage = () => {
     }
   };
 
+  const handleTestWorkflow = async (workflowId: string) => {
+    try {
+      const response = await fetch(`/api/workflows/${workflowId}/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': currUser.id,
+        },
+        body: JSON.stringify({
+          testData: {
+            email: 'test@example.com',
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success('Workflow test completed! Check console for details.');
+        console.log('Workflow test result:', result);
+      } else {
+        toast.error('Workflow test failed');
+      }
+    } catch (error) {
+      console.error('Error testing workflow:', error);
+      toast.error('Failed to test workflow');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
       ACTIVE: 'bg-green-100 text-green-800',
