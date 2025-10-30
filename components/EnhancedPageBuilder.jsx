@@ -558,6 +558,26 @@ const EnhancedPageBuilder = () => {
     await handleSaveAll();
   };
 
+  const handlePublishPage = async () => {
+    if (!pageData?.id) {
+      toast.error('Save page first before publishing');
+      return;
+    }
+
+    try {
+      const newStatus = !pageData.isActive;
+      await PageService.updatePage(pageData.id, {
+        isActive: newStatus
+      });
+
+      setPageData({ ...pageData, isActive: newStatus });
+      toast.success(newStatus ? 'Page published!' : 'Page unpublished');
+    } catch (error) {
+      console.error('Error publishing page:', error);
+      toast.error('Failed to update page status');
+    }
+  };
+
   const handlePreview = () => {
     if (pageData && pageData.slug) {
       // Open the public page in a new tab
