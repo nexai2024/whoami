@@ -38,7 +38,7 @@ export async function GET(
     // Check if user is enrolled (if authenticated)
     let isEnrolled = false;
     if (userId) {
-      const enrollment = await prisma.enrollment.findFirst({
+      const enrollment = await prisma.courseEnrollment.findFirst({
         where: {
           userId,
           courseId: course.id
