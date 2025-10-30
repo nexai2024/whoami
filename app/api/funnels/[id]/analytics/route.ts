@@ -55,7 +55,7 @@ export async function GET(
 
     // Calculate step analytics
     const stepAnalytics = await Promise.all(
-      funnel.steps.map(async (step, index) => {
+      funnel.steps.map(async (step: { id: any; name: any; order: any; views: any; completions: any; }, index: number) => {
         const stepProgress = await prisma.funnelStepProgress.findMany({
           where: {
             stepId: step.id,
@@ -64,7 +64,7 @@ export async function GET(
         });
 
         const views = stepProgress.length;
-        const completions = stepProgress.filter(p => p.status === 'COMPLETED').length;
+        const completions = stepProgress.filter((p: { status: string; }) => p.status === 'COMPLETED').length;
 
         // Calculate drop-off
         let dropoffCount = 0;
@@ -97,7 +97,7 @@ export async function GET(
     );
 
     // Get recent visits with progress
-    const recentVisits = visits.slice(0, 20).map(visit => ({
+    const recentVisits = visits.slice(0, 20).map((visit: { id: any; email: any; createdAt: { toISOString: () => any; }; completedSteps: string | any[]; converted: any; }) => ({
       id: visit.id,
       email: visit.email,
       createdAt: visit.createdAt.toISOString(),
@@ -107,7 +107,7 @@ export async function GET(
 
     // Calculate overall conversion rate
     const totalVisits = visits.length || funnel.totalVisits;
-    const totalConversions = visits.filter(v => v.converted).length || funnel.totalConversions;
+    const totalConversions = visits.filter((v: { converted: any; }) => v.converted).length || funnel.totalConversions;
     const conversionRate = totalVisits > 0 ? (totalConversions / totalVisits) * 100 : 0;
 
     return NextResponse.json({

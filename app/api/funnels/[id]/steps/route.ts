@@ -50,7 +50,7 @@ export async function POST(
     }
 
     // Check if slug is unique within funnel
-    const existing = funnel.steps.find((s) => s.slug === slug);
+    const existing = funnel.steps.find((s: { slug: string; }) => s.slug === slug);
     if (existing) {
       return NextResponse.json(
         { error: 'Step slug already exists in this funnel' },
@@ -61,7 +61,7 @@ export async function POST(
     // If order not specified, add to end
     const maxOrder =
       funnel.steps.length > 0
-        ? Math.max(...funnel.steps.map((s) => s.order))
+        ? Math.max(...funnel.steps.map((s: { order: number; }) => s.order))
         : -1;
     const stepOrder = order !== undefined ? order : maxOrder + 1;
 
@@ -128,7 +128,7 @@ export async function PATCH(
 
     // Update all step orders
     await Promise.all(
-      stepOrders.map((item) =>
+      stepOrders.map((item: { id: string; order: number; }) =>
         prisma.funnelStep.update({
           where: { id: item.id },
           data: { order: item.order },

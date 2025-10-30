@@ -30,7 +30,7 @@ export async function GET(
     }
 
     // Find the specific step
-    const step = funnel.steps.find(s => s.slug === stepSlug);
+    const step = funnel.steps.find((s: { slug: string; }) => s.slug === stepSlug);
 
     if (!step) {
       return NextResponse.json({ error: 'Step not found' }, { status: 404 });
@@ -53,7 +53,7 @@ export async function GET(
         name: funnel.name,
         slug: funnel.slug,
         brandColors: funnel.brandColors,
-        steps: funnel.steps.map(s => ({
+        steps: funnel.steps.map((s: { id: any; slug: any; order: any; type: any; }) => ({
           id: s.id,
           slug: s.slug,
           order: s.order,
