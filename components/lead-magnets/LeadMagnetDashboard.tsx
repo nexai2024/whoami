@@ -460,6 +460,31 @@ export default function LeadMagnetDashboard() {
     }
   };
 
+  const handlePublish = async (magnetId: string, currentStatus: MagnetStatus) => {
+    const newStatus = currentStatus === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
+
+    try {
+      const response = await fetch(`/api/lead-magnets/${magnetId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': 'demo-user',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        toast.success(`Lead magnet ${newStatus === 'ACTIVE' ? 'published' : 'unpublished'}!`);
+        await fetchLeadMagnets();
+      } else {
+        toast.error('Failed to update status');
+      }
+    } catch (error) {
+      console.error('Error publishing:', error);
+      toast.error('Failed to update status');
+    }
+  };
+
   const handleCloseDetailModal = () => {
     setShowDetailModal(false);
     setSelectedMagnet(null);
