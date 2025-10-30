@@ -241,7 +241,18 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">Course Builder</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-900">Course Builder</h1>
+              {course.status && (
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  course.status === 'PUBLISHED'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}>
+                  {course.status}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => toast.custom('Preview coming soon')}
@@ -258,6 +269,19 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
                 <FiSave />
                 {saving ? 'Saving...' : 'Save Course'}
               </button>
+              {internalCourseId && (
+                <button
+                  onClick={handlePublishCourse}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    course.status === 'PUBLISHED'
+                      ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  <FiUpload />
+                  {course.status === 'PUBLISHED' ? 'Unpublish' : 'Publish'}
+                </button>
+              )}
             </div>
           </div>
 
