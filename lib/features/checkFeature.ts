@@ -42,6 +42,7 @@ export async function checkFeatureClient(
   incrementUsage: boolean = false
 ): Promise<boolean> {
   try {
+   // console.log('Checking feature client', featureName, incrementUsage);
     const response = await fetch('/api/features/check', {
       method: 'POST',
       headers: {
@@ -52,7 +53,7 @@ export async function checkFeatureClient(
         incrementUsage
       })
     });
-
+    //console.log('Feature check API response', response);
     if (!response.ok) {
       if (response.status === 401) {
         console.warn('User not authenticated for feature check');
@@ -63,6 +64,7 @@ export async function checkFeatureClient(
     }
 
     const data = await response.json();
+    //console.log('Feature check API data', data);
     return data.allowed ?? false;
   } catch (error) {
     console.error('Error checking feature on client:', error);

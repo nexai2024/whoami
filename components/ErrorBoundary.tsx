@@ -1,37 +1,31 @@
 "use client"
 import React from 'react';
 import Link from 'next/link';
-import { useErrorContext } from './ErrorContext';
+import { ErrorContext, AppError } from './ErrorContext';
 
-export class ErrorBoundary extends React.Component<{
+class ErrorBoundaryInner extends React.Component<{
   children: React.ReactNode;
+  addError: (err: Partial<AppError> | Error, context?: string) => void;
 }, { hasError: boolean; error?: Error; info?: React.ErrorInfo }> {
-  constructor(props: { children: React.ReactNode }) {
+  constructor(props: { children: React.ReactNode; addError: (err: Partial<AppError> | Error, context?: string) => void }) {
     super(props);
     this.state = { hasError: false };
   }
 
-  static contextType = React.createContext(undefined);
-  declare context: React.ContextType<typeof ErrorBoundary.contextType>;
-
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     try {
-      // @ts-expect-error: context type is not properly inferred here
-      if (this.context && this.context.addError) {
-        // Attach componentStack to error object for state capture
-        const errorWithStack = {
-          ...error,
-          message: error.message,
-          stack: error.stack,
-          componentStack: errorInfo.componentStack,
-        };
-        
-        // @ts-expect-error: context may have addError, but type is unknown
-        this.context.addError(
-          errorWithStack,
-          'boundary: Caught by ErrorBoundary'
-        );
-      }
+      // Attach componentStack to error object for state capture
+      const errorWithStack = {
+        ...error,
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+      };
+      
+      this.props.addError(
+        errorWithStack,
+        'boundary: Caught by ErrorBoundary'
+      );
     } catch {}
     this.setState({ hasError: true, error, info: errorInfo });
   }
@@ -75,5 +69,18 @@ export class ErrorBoundary extends React.Component<{
     return this.props.children;
   }
 }
+
+// Wrapper component that consumes the ErrorContext and passes addError to ErrorBoundaryInner
+export const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <ErrorContext.Consumer>
+      {(value) => (
+        <ErrorBoundaryInner addError={value?.addError || (() => {})}>
+          {children}
+        </ErrorBoundaryInner>
+      )}
+    </ErrorContext.Consumer>
+  );
+};
 
 // Usage: <ErrorBoundary><App /></ErrorBoundary>

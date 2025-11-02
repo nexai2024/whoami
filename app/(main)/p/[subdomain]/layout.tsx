@@ -1,11 +1,10 @@
 "use client";
 import type { Metadata } from "next";
-import '../(main)/globals.css';
+import '@/app/(main)/globals.css';
 import { Suspense } from 'react';
 
-import { ErrorProvider } from '../../components/ErrorContext';
-import { ErrorBoundary } from '../../components/ErrorBoundary';
-import ErrorConsole from '../../components/ErrorConsole';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import ErrorConsole from '@/components/ErrorConsole';
 
 import { HelmetProvider } from "react-helmet-async";
 

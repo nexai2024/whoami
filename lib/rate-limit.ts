@@ -37,7 +37,7 @@ export class RateLimitService {
         },
       },
     })
-
+    console.log('Subscription', subscription, featureName);
     if (!subscription || subscription.status !== 'active') {
       return {
         allowed: false,

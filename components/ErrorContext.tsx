@@ -31,7 +31,7 @@ type ErrorContextType = {
   clearErrors: () => void;
 };
 
-const ErrorContext = createContext<ErrorContextType | undefined>(undefined);
+export const ErrorContext = createContext<ErrorContextType | undefined>(undefined);
 
 export const useErrorContext = () => {
   const ctx = useContext(ErrorContext);

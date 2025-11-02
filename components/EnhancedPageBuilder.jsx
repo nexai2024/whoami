@@ -582,7 +582,7 @@ const EnhancedPageBuilder = () => {
   const handlePreview = () => {
     if (pageData && pageData.slug) {
       // Open the public page in a new tab
-      window.open(`/#/${pageData.slug}`, '_blank', 'noopener,noreferrer');
+      window.open(`/p/${pageData.slug}`, '_blank', 'noopener,noreferrer');
     } else {
       toast.error('Page preview is only available after saving the page with a valid slug.');
     }

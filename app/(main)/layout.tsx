@@ -7,7 +7,6 @@ import './globals.css';
 import { AuthProvider } from "@/lib/auth/AuthContext"
 import { Suspense } from 'react';
 import { ensureOnboarded } from "./onboarding-functions";
-import { ErrorProvider } from '../../components/ErrorContext';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import ErrorConsole from '../../components/ErrorConsole';
 import { TourProvider } from '@/lib/tours/TourProvider';
@@ -24,13 +23,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+ 
       <Header />
       <ContentWrapper hasSidebar={!!user}>
         {children}
       </ContentWrapper>
       <ErrorConsole />
-      <TourTooltip />
-      <HelpButton />
+        <TourTooltip />
+        <HelpButton />
     </>
   );
 }
@@ -45,15 +45,13 @@ export default function AppLayout({
     <StackProvider app={stackClientApp}>
       <StackTheme>
         <AuthProvider>
-          <ErrorProvider>
-            <TourProvider>
-              <ErrorBoundary>
-                <LayoutContent>
-                  {children}
-                </LayoutContent>
-              </ErrorBoundary>
-            </TourProvider>
-          </ErrorProvider>
+          <TourProvider>
+            <ErrorBoundary>
+              <LayoutContent>
+                {children}
+              </LayoutContent>
+            </ErrorBoundary>
+          </TourProvider>
         </AuthProvider>
       </StackTheme>
     </StackProvider>

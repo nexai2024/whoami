@@ -31,14 +31,17 @@ const ErrorConsole: React.FC = () => {
 
   // Check if user has admin access
   useEffect(() => {
+    console.log('Checking feature client', isAdmin, viewMode, dateRange, errorType, resolvedFilter, searchQuery, page);
     checkFeatureClient('error_console_admin')
       .then(setIsAdmin)
       .catch(() => setIsAdmin(false));
+    console.log('Feature client checked', isAdmin);
   }, []);
-
+console.log('isAdmin', isAdmin);
   // Fetch historical errors when in historical mode
   useEffect(() => {
-    if (isAdmin && viewMode === 'historical') {
+    if (isAdmin && viewMode === 'historical') { 
+      console.log('Fetching historical errors', isAdmin, viewMode, dateRange, errorType, resolvedFilter, searchQuery, page);
       fetchHistoricalErrors();
     }
   }, [isAdmin, viewMode, dateRange, errorType, resolvedFilter, searchQuery, page]);

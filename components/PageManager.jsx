@@ -128,7 +128,7 @@ const PageManager = () => {
   };
 
   const copyPageUrl = (slug) => {
-    const pageUrl = `${window.location.origin}/#/${slug}`;
+    const pageUrl = `${window.location.origin}/p/${slug}`;
     navigator.clipboard.writeText(pageUrl);
     toast.success('Page URL copied to clipboard!');
   };
@@ -338,7 +338,7 @@ const PageManager = () => {
               </Link>
               
               <a
-                href={`#/${page.slug}`}
+                href={`/p/${page.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"

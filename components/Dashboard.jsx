@@ -220,7 +220,7 @@ export default function Dashboard() {
                       <SafeIcon name={undefined}  icon={FiEdit3} />
                     </Link>
                     <a
-                      href={page.customDomain ? `https://${page.customDomain}` : `/${page.slug}`}
+                      href={page.customDomain ? `https://${page.customDomain}` : `/p/${page.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-2 text-gray-400 hover:text-gray-600 transition-colors"

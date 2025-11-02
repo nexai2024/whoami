@@ -7,15 +7,16 @@ import {
   FiHome, FiUser, FiUsers, FiFileText, FiBook, FiGift, FiShoppingBag,
   FiGitBranch, FiMail, FiCalendar, FiBarChart2, FiTrendingUp,
   FiSettings, FiCreditCard, FiShield, FiFolder, FiRefreshCw,
-  FiChevronDown, FiChevronRight, FiMenu, FiX, FiLogOut, FiLink
+  FiChevronDown, FiChevronRight, FiMenu, FiX, FiLogOut, FiLink, 
+  FiGlobe
 } from 'react-icons/fi';
-import { useUser } from "@stackframe/stack";
+import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  const { currUser } = useAuth();
   const router = useRouter();
-  const user = useUser();
+  const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState({
     introduce: true,
@@ -90,7 +91,8 @@ export default function Sidebar() {
         { name: 'Campaigns', href: '/marketing/campaigns', icon: FiMail },
         { name: 'Schedule Posts', href: '/marketing/schedule', icon: FiCalendar },
         { name: 'Marketing Hub', href: '/marketing', icon: FiTrendingUp },
-        { name: 'Analytics', href: '/analytics', icon: FiBarChart2 }
+        { name: 'Analytics', href: '/analytics', icon: FiBarChart2 },
+        { name: 'Leads', href: '/leads', icon: FiUsers }
       ]
     },
     {
@@ -106,7 +108,10 @@ export default function Sidebar() {
       id: 'admin',
       name: 'Admin',
       icon: FiShield,
-      links: []
+      links: [
+        { name: 'Error Console', href: '/admin/error-console', icon: FiUser },
+        { name: 'Subdomains', href: '/admin/subdomain', icon: FiGlobe }
+      ]
     },
     {
       id: 'misc',
@@ -227,25 +232,25 @@ export default function Sidebar() {
         {!collapsed ? (
           <div className="flex items-center gap-3">
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-semibold">
-              {user?.displayName?.[0]?.toUpperCase() ||
-               user?.primaryEmail?.[0]?.toUpperCase() ||
+              {currUser?.displayName?.[0]?.toUpperCase() ||
+               currUser?.primaryEmail?.[0]?.toUpperCase() ||
                'U'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">
-                {user?.displayName || 'User'}
+                {currUser?.displayName || 'User'}
               </p>
               <p className="text-xs text-gray-400 truncate">
-                {user?.primaryEmail || ''}
+                {currUser?.primaryEmail || ''}
               </p>
             </div>
             <button
               onClick={() => {
-                if (user && typeof user.signOut === 'function') {
-                  user.signOut();
+                if (currUser && typeof currUser.signOut === 'function') {
+                  currUser.signOut();
                 }
-                router.push('/');
-              }}
+              router.push('/');
+            }}
               className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors"
               aria-label="Logout"
             >
@@ -255,8 +260,8 @@ export default function Sidebar() {
         ) : (
           <button
             onClick={() => {
-              if (user && typeof user.signOut === 'function') {
-                user.signOut();
+              if (currUser && typeof currUser.signOut === 'function') {
+                currUser.signOut();
               }
               router.push('/');
             }}

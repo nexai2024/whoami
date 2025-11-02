@@ -18,26 +18,26 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       )
     }
-
+   // console.log('User authenticated', user);
     if (!featureName) {
       return NextResponse.json(
         { error: 'featureName is required' },
         { status: 400 }
       )
     }
-
+    //console.log('Feature name', featureName);
     const result = await RateLimitService.checkFeatureAccess(
       user.id,
       featureName
     )
-
+    //console.log('Feature access result', result);
     if (result.allowed && incrementUsage) {
       await RateLimitService.incrementUsage(user.id, featureName)
     }
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error('Error checking feature access:', error)
+   // console.error('Error checking feature access:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

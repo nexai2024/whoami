@@ -10,7 +10,7 @@ import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
 
 // Get the model instance
-function getModel(modelName: string = 'gemini-1.5-pro'): GenerativeModel {
+function getModel(modelName: string = 'route-llm'): GenerativeModel {
   return genAI.getGenerativeModel({ model: modelName });
 }
 
@@ -28,6 +28,61 @@ export interface RetryOptions {
   maxDelay?: number;
 }
 
+/* stream = true # or false
+fetch('https://routellm.abacus.ai/v1/chat/completions', {
+  method: 'POST',
+  headers: {
+    Authorization: 'Bearer <api_key>',
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    model: 'route-llm',
+    messages: [
+      {
+        role: 'user',
+        content: 'What is the meaning of life?'
+      }
+    ],
+    stream: stream
+  })
+}
+if (stream) {
+  for (const line of response.iter_lines()) {
+    if (line) {
+      line = line.decode("utf-8");
+      if (line.startsWith("data: ")) {
+        line = line[6:];
+        if (line === "[DONE]") {
+          break;
+        }
+        const chunk = JSON.parse(line);
+        if (chunk["choices"][0].get("delta")) {
+          console.log(chunk["choices"][0]["delta"]["content"]);
+        }
+      }
+    }
+  }
+} else {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer <api_key>',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'route-llm',
+      messages: [
+        {
+          role: 'user',
+          content: 'What is the meaning of life?'
+        }
+      ],
+      stream: stream
+    })
+  });
+  console.log(await response.json());
+} */
+
 /**
  * Generate content using Google Gemini with automatic retry logic
  */
@@ -40,7 +95,7 @@ export async function generateContent(
     userPrompt,
     maxTokens = 4096,
     temperature = 0.7,
-    model = 'gemini-1.5-pro',
+    model = 'route-llm',
   } = options;
 
   const {
@@ -48,35 +103,80 @@ export async function generateContent(
     baseDelay = 1000,
     maxDelay = 10000,
   } = retryOptions;
-
+/* */
+let stream = false; // or false
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const geminiModel = getModel(model);
-
       // Combine system and user prompts for Gemini
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
-
-      const result = await geminiModel.generateContent({
-        contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
-        generationConfig: {
-          maxOutputTokens: maxTokens,
-          temperature: temperature,
+      const response = await fetch('https://routellm.abacus.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.ROUTE_LLM_API_KEY}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          model: model,
+          messages: [
+            {
+              role: 'system',
+              content: systemPrompt
+            },
+            {
+              role: 'user',
+              content: userPrompt
+            }
+          ],
+          stream: stream
+        })
       });
-
-      const response = result.response;
-      const text = response.text();
-
-      if (!text) {
-        throw new Error('No text content in Gemini response');
-      }
-
-      return text;
+      console.log("the response from the api is", response);
+      // if (stream) {
+      //   for (const line of response.iter_lines()) {
+      //     if (line) {
+      //       line = line.decode("utf-8");
+      //       if (line.startsWith("data: ")) {
+      //         line = line[6:];
+      //         if (line === "[DONE]") {
+      //           break;
+      //         }
+      //         const chunk = JSON.parse(line);
+      //         if (chunk["choices"][0].get("delta")) {
+      //           console.log(chunk["choices"][0]["delta"]["content"]);
+      //         }
+      //       }
+      //     }
+      //   }
+      // } else {
+        // const response = await fetch(url, {
+        //   method: 'POST',
+        //   headers: {
+        //     Authorization: 'Bearer <api_key>',
+        //     'Content-Type': 'application/json',
+        //   },
+        //   body: JSON.stringify({
+        //     model: model,
+        //     messages: [
+        //       {
+        //         role: 'system',
+        //         content: systemPrompt
+        //     },
+            
+        //       {
+        //         role: 'user',
+        //         content: userPrompt
+        //       }
+        //     ],
+        //     stream: stream
+        //   })
+        // });
+        const res = await response.json();
+      return res.choices[0].message.content;
     } catch (error) {
       lastError = error as Error;
-
+      console.log("the error is", error);
       // Don't retry on authentication errors
       if (error instanceof Error && error.message.includes('API key')) {
         throw new Error('Invalid Google Gemini API key');
@@ -99,6 +199,7 @@ export async function generateContent(
     }
   }
 
+   
   throw new Error(
     `Gemini API request failed after ${maxRetries} attempts: ${lastError?.message}`
   );

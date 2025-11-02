@@ -7,6 +7,7 @@ import { FiPlus, FiEdit3, FiPlay, FiPause, FiGitBranch, FiZap, FiActivity, FiClo
 import SafeIcon from '@/common/SafeIcon';
 import { useAuth } from '@/lib/auth/AuthContext.jsx';
 import toast from 'react-hot-toast';
+import NotReleased from '@/components/NotReleased';
 
 interface Workflow {
   id: string;
@@ -186,7 +187,9 @@ const WorkflowsPage = () => {
     if (filter === 'draft') return workflow.status === 'DRAFT';
     return true;
   });
-
+  if (process.env.NEXT_PUBLIC_BETA_FEATURE_RELEASE !== 'true') {
+    return <NotReleased />;
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
