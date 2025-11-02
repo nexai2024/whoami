@@ -14,23 +14,20 @@ export async function GET(
 ) {
   try {
     const { courseId } = await params;
-    const { searchParams } = new URL(request.url);
-    const email = searchParams.get('email');
+    const userId = request.headers.get('x-user-id');
 
-    if (!email) {
+    if (!userId) {
       return NextResponse.json(
-        { error: 'Email parameter required' },
-        { status: 400 }
+        { error: 'Authentication required' },
+        { status: 401 }
       );
     }
 
-    // Get enrollment
-    const enrollment = await prisma.courseEnrollment.findUnique({
+    // Get enrollment by userId
+    const enrollment = await prisma.courseEnrollment.findFirst({
       where: {
-        courseId_email: {
-          courseId,
-          email
-        }
+        courseId,
+        userId
       },
       include: {
         lessonProgress: {
@@ -73,9 +70,16 @@ export async function GET(
       );
     }
 
+    // Format response for compatibility with frontend
+    const lessonsCompleted = enrollment.lessonProgress
+      .filter(p => p.status === 'COMPLETED')
+      .map(p => p.lessonId);
+
     return NextResponse.json({
-      enrollment,
-      progress: enrollment.lessonProgress
+      enrolledAt: enrollment.createdAt,
+      lessonsCompleted,
+      currentLessonIndex: lessonsCompleted.length,
+      overallProgress: enrollment.progressPercentage
     });
   } catch (error) {
     console.error('Error fetching progress:', error);
@@ -92,9 +96,9 @@ export async function POST(
 ) {
   try {
     const { courseId } = await params;
+    const userId = request.headers.get('x-user-id');
     const body = await request.json();
     const {
-      email,
       lessonId,
       status,
       progressPercent,
@@ -104,20 +108,18 @@ export async function POST(
       quizScore
     } = body;
 
-    if (!email || !lessonId) {
+    if (!userId || !lessonId) {
       return NextResponse.json(
-        { error: 'Email and lessonId required' },
+        { error: 'Authentication and lessonId required' },
         { status: 400 }
       );
     }
 
-    // Get enrollment
-    const enrollment = await prisma.courseEnrollment.findUnique({
+    // Get enrollment by userId
+    const enrollment = await prisma.courseEnrollment.findFirst({
       where: {
-        courseId_email: {
-          courseId,
-          email
-        }
+        courseId,
+        userId
       }
     });
 

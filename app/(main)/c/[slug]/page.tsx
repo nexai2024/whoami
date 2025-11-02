@@ -61,13 +61,17 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
 
     try {
       setEnrolling(true);
+      const userEmail = user.primaryEmail || (course.accessType === 'EMAIL_GATE' ? email : '');
       const response = await fetch(`/api/courses/${course.id}/enroll`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': user.id
         },
-        body: JSON.stringify({ email: course.accessType === 'EMAIL_GATE' ? email : undefined })
+        body: JSON.stringify({ 
+          email: userEmail,
+          name: user.displayName || undefined 
+        })
       });
 
       if (response.ok) {

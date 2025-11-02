@@ -13,6 +13,7 @@ export async function POST(
 ) {
   try {
     const { courseId } = await params;
+    const userId = request.headers.get('x-user-id');
     const body = await request.json();
     const { email, name } = body;
 
@@ -48,15 +49,22 @@ export async function POST(
       );
     }
 
-    // Check if already enrolled
-    const existingEnrollment = await prisma.courseEnrollment.findUnique({
-      where: {
-        courseId_email: {
-          courseId,
-          email
-        }
-      }
-    });
+    // Check if already enrolled (by userId if authenticated, or by email)
+    const existingEnrollment = userId
+      ? await prisma.courseEnrollment.findFirst({
+          where: {
+            courseId,
+            userId
+          }
+        })
+      : await prisma.courseEnrollment.findUnique({
+          where: {
+            courseId_email: {
+              courseId,
+              email
+            }
+          }
+        });
 
     if (existingEnrollment) {
       return NextResponse.json(
@@ -80,6 +88,7 @@ export async function POST(
     const enrollment = await prisma.courseEnrollment.create({
       data: {
         courseId,
+        userId: userId || null,
         email,
         name,
         enrollmentSource: body.source || 'direct',

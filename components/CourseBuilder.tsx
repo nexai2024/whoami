@@ -9,7 +9,8 @@ import { CSS } from '@dnd-kit/utilities';
 
 const {
   FiPlus, FiSave, FiEye, FiSettings, FiTrash2, FiEdit3, FiMove,
-  FiVideo, FiFileText, FiHeadphones, FiBook, FiCheck, FiX, FiUpload
+  FiVideo, FiFileText, FiHeadphones, FiBook, FiCheck, FiX, FiUpload, 
+  FiHelpCircle
 } = FiIcons;
 
 interface Lesson {
@@ -32,6 +33,181 @@ interface CourseBuilderProps {
   courseId?: string;
   onSave?: (data: any) => void;
 }
+
+interface QuizBuilderProps {
+  lesson: Lesson;
+  updateLesson: (data: any) => void;
+}
+
+// Quiz Builder Component
+const QuizBuilder: React.FC<QuizBuilderProps> = ({ lesson, updateLesson }) => {
+  const quizData = lesson.quizData || { questions: [], passingScore: 70, timeLimit: 600 };
+  const [questions, setQuestions] = useState(quizData.questions || []);
+  const [passingScore, setPassingScore] = useState(quizData.passingScore || 70);
+  const [timeLimit, setTimeLimit] = useState(quizData.timeLimit || 600);
+
+  useEffect(() => {
+    updateLesson({ ...lesson, quizData: { questions, passingScore, timeLimit } });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions, passingScore, timeLimit]);
+
+  const addQuestion = () => {
+    setQuestions([...questions, {
+      id: `q${Date.now()}`,
+      type: 'multiple-choice',
+      question: '',
+      options: ['', '', '', ''],
+      correctAnswer: 0,
+      points: 10
+    }]);
+  };
+
+  const removeQuestion = (id: string) => {
+    setQuestions(questions.filter(q => q.id !== id));
+  };
+
+  const updateQuestion = (id: string, updates: any) => {
+    setQuestions(questions.map(q => q.id === id ? { ...q, ...updates } : q));
+  };
+
+  const addOption = (questionId: string) => {
+    setQuestions(questions.map(q => 
+      q.id === questionId 
+        ? { ...q, options: [...q.options, ''] }
+        : q
+    ));
+  };
+
+  const removeOption = (questionId: string, index: number) => {
+    setQuestions(questions.map(q => 
+      q.id === questionId 
+        ? { ...q, options: q.options.filter((_, i) => i !== index) }
+        : q
+    ));
+  };
+
+  const updateOption = (questionId: string, index: number, value: string) => {
+    setQuestions(questions.map(q => 
+      q.id === questionId 
+        ? { ...q, options: q.options.map((opt, i) => i === index ? value : opt) }
+        : q
+    ));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4">
+        <FiHelpCircle className="text-indigo-600" />
+        <span className="text-sm font-medium text-gray-900">Quiz Builder</span>
+        <span className="text-xs text-gray-500">({questions.length} questions)</span>
+      </div>
+
+      {/* Quiz Settings */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Passing Score (%)
+          </label>
+          <input
+            type="number"
+            value={passingScore}
+            onChange={(e) => setPassingScore(parseInt(e.target.value) || 0)}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500"
+            min="0"
+            max="100"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Time Limit (sec)
+          </label>
+          <input
+            type="number"
+            value={timeLimit}
+            onChange={(e) => setTimeLimit(parseInt(e.target.value) || 0)}
+            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500"
+            min="0"
+          />
+        </div>
+      </div>
+
+      {/* Questions List */}
+      <div className="space-y-3 max-h-96 overflow-y-auto">
+        {questions.map((q, idx) => (
+          <div key={q.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+            <div className="flex items-start justify-between mb-2">
+              <span className="text-xs font-semibold text-gray-700">Question {idx + 1}</span>
+              <button
+                onClick={() => removeQuestion(q.id)}
+                className="text-red-600 hover:text-red-800 text-xs"
+              >
+                <FiX />
+              </button>
+            </div>
+
+            <input
+              type="text"
+              value={q.question}
+              onChange={(e) => updateQuestion(q.id, { question: e.target.value })}
+              placeholder="Enter your question"
+              className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded mb-2 focus:ring-1 focus:ring-indigo-500"
+            />
+
+            {q.type === 'multiple-choice' && (
+              <div className="space-y-1">
+                {q.options.map((opt, optIdx) => (
+                  <div key={optIdx} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      checked={q.correctAnswer === optIdx}
+                      onChange={() => updateQuestion(q.id, { correctAnswer: optIdx })}
+                      className="text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={(e) => updateOption(q.id, optIdx, e.target.value)}
+                      placeholder={`Option ${optIdx + 1}`}
+                      className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500"
+                    />
+                    {q.options.length > 2 && (
+                      <button
+                        onClick={() => removeOption(q.id, optIdx)}
+                        className="text-red-600 text-xs px-1"
+                      >
+                        <FiX />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  onClick={() => addOption(q.id)}
+                  className="text-xs text-indigo-600 hover:text-indigo-800 mt-1"
+                >
+                  <FiPlus className="inline mr-1" /> Add Option
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={addQuestion}
+        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-indigo-500 hover:text-indigo-600"
+      >
+        <FiPlus />
+        Add Question
+      </button>
+
+      {questions.length === 0 && (
+        <p className="text-xs text-center text-gray-500 py-2">
+          No questions yet. Click "Add Question" to get started.
+        </p>
+      )}
+    </div>
+  );
+};
 
 const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
   const [course, setCourse] = useState<any>({
@@ -597,9 +773,39 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
                       </p>
                     </div>
 
+                    {/* Quiz Section */}
+                    <div className="border-t pt-4 mt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={selectedLesson.hasQuiz}
+                            onChange={(e) => setSelectedLesson({ ...selectedLesson, hasQuiz: e.target.checked })}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm font-medium text-gray-700">Add Quiz</span>
+                        </label>
+                        {selectedLesson.hasQuiz && (
+                          <button
+                            onClick={() => setSelectedLesson({ ...selectedLesson, hasQuiz: false, quizData: null })}
+                            className="text-xs text-red-600 hover:text-red-800"
+                          >
+                            Remove Quiz
+                          </button>
+                        )}
+                      </div>
+
+                      {selectedLesson.hasQuiz && (
+                        <QuizBuilder 
+                          lesson={selectedLesson}
+                          updateLesson={(data) => setSelectedLesson({ ...selectedLesson, quizData: data })}
+                        />
+                      )}
+                    </div>
+
                     <button
                       onClick={() => saveLesson(selectedLesson)}
-                      className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+                      className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 mt-4"
                     >
                       Save Lesson
                     </button>

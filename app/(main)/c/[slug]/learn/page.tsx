@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from "@stackframe/stack";
 import { useRouter } from 'next/navigation';
-import { FiCheckCircle, FiLock, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { FiCheckCircle, FiLock, FiChevronLeft, FiChevronRight, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 interface CourseLearnPageProps {
@@ -21,12 +21,22 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
+  const [quizSubmitted, setQuizSubmitted] = useState(false);
+  const [quizScore, setQuizScore] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
       loadCourseAndProgress();
     }
   }, [slug, user]);
+
+  // Reset quiz state when changing lessons
+  useEffect(() => {
+    setQuizAnswers({});
+    setQuizSubmitted(false);
+    setQuizScore(null);
+  }, [currentLessonIndex]);
 
   const loadCourseAndProgress = async () => {
     try {
@@ -140,6 +150,154 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
 
   const isLessonCompleted = (lessonId: string) => {
     return progress?.lessonsCompleted?.includes(lessonId) || false;
+  };
+
+  const handleQuizSubmit = async () => {
+    if (!currentLesson?.quizData?.questions) return;
+
+    const quiz = currentLesson.quizData;
+    const questions = quiz.questions;
+    let correct = 0;
+    const total = questions.length;
+
+    // Calculate score
+    questions.forEach((q: any) => {
+      if (quizAnswers[q.id] === q.correctAnswer) {
+        correct++;
+      }
+    });
+
+    const score = Math.round((correct / total) * 100);
+    setQuizScore(score);
+    setQuizSubmitted(true);
+
+    // Save quiz score to progress
+    try {
+      const response = await fetch(`/api/courses/${course.id}/progress`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || ''
+        },
+        body: JSON.stringify({
+          lessonId: currentLesson.id,
+          quizScore: score
+        })
+      });
+
+      if (response.ok) {
+        const passingScore = quiz.passingScore || 70;
+        if (score >= passingScore) {
+          toast.success(`Quiz passed! (${score}%)`);
+        } else {
+          toast.error(`Quiz score: ${score}% (Need ${passingScore}% to pass)`);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving quiz score:', error);
+    }
+  };
+
+  const renderQuiz = (lesson: any) => {
+    if (!lesson.hasQuiz || !lesson.quizData?.questions) return null;
+
+    const quiz = lesson.quizData;
+    const questions = quiz.questions;
+
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border p-8 mt-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-gray-900">Quiz</h3>
+          {quiz.timeLimit && (
+            <span className="text-sm text-gray-600">
+              Time Limit: {Math.floor(quiz.timeLimit / 60)}:{(quiz.timeLimit % 60).toString().padStart(2, '0')}
+            </span>
+          )}
+        </div>
+
+        {quizSubmitted && quizScore !== null ? (
+          <div className={`text-center py-8 ${quizScore >= quiz.passingScore ? 'text-green-600' : 'text-red-600'}`}>
+            <FiCheckCircle className={`mx-auto mb-4 ${quizScore >= quiz.passingScore ? 'text-green-500' : 'text-red-500'}`} size={48} />
+            <h4 className="text-2xl font-bold mb-2">Your Score: {quizScore}%</h4>
+            <p className="text-lg">
+              {quizScore >= quiz.passingScore 
+                ? `🎉 Congratulations! You passed! (Required: ${quiz.passingScore}%)`
+                : `You need ${quiz.passingScore}% to pass. Try again!`}
+            </p>
+            <div className="mt-6 space-y-3">
+              {questions.map((q: any, idx: number) => {
+                const isCorrect = quizAnswers[q.id] === q.correctAnswer;
+                return (
+                  <div key={q.id} className="text-left bg-gray-50 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <span className="font-medium text-gray-900">{idx + 1}. {q.question}</span>
+                      {isCorrect ? (
+                        <FiCheckCircle className="text-green-600 ml-2 flex-shrink-0" />
+                      ) : (
+                        <FiAlertCircle className="text-red-600 ml-2 flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="space-y-1 ml-4">
+                      {q.options.map((opt: string, optIdx: number) => (
+                        <div key={optIdx} className={`text-sm ${
+                          optIdx === q.correctAnswer ? 'text-green-700 font-semibold' :
+                          optIdx === quizAnswers[q.id] && !isCorrect ? 'text-red-600' :
+                          'text-gray-600'
+                        }`}>
+                          {optIdx === q.correctAnswer ? '✓ ' : optIdx === quizAnswers[q.id] ? '✗ ' : '  '}
+                          {opt}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-6">
+              {questions.map((q: any, idx: number) => (
+                <div key={q.id} className="border-b border-gray-200 pb-6">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">
+                    {idx + 1}. {q.question}
+                  </h4>
+                  <div className="space-y-2">
+                    {q.options.map((opt: string, optIdx: number) => (
+                      <label
+                        key={optIdx}
+                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
+                          quizAnswers[q.id] === optIdx 
+                            ? 'bg-indigo-50 border-2 border-indigo-500' 
+                            : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`question-${q.id}`}
+                          checked={quizAnswers[q.id] === optIdx}
+                          onChange={() => setQuizAnswers({ ...quizAnswers, [q.id]: optIdx })}
+                          className="text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <span className="ml-3 text-gray-900">{opt}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleQuizSubmit}
+              disabled={Object.keys(quizAnswers).length !== questions.length}
+              className="w-full mt-6 bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              Submit Quiz
+            </button>
+          </>
+        )}
+      </div>
+    );
   };
 
   const renderLessonContent = (lesson: any) => {
@@ -327,6 +485,9 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
                 )}
                 {renderLessonContent(currentLesson)}
               </div>
+
+              {/* Quiz */}
+              {renderQuiz(currentLesson)}
 
               {/* Navigation */}
               <div className="flex items-center justify-between">
