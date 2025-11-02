@@ -63,15 +63,15 @@ const QuizBuilder: React.FC<QuizBuilderProps> = ({ lesson, updateLesson }) => {
   };
 
   const removeQuestion = (id: string) => {
-    setQuestions(questions.filter(q => q.id !== id));
+    setQuestions(questions.filter((q: { id: string; }) => q.id !== id));
   };
 
   const updateQuestion = (id: string, updates: any) => {
-    setQuestions(questions.map(q => q.id === id ? { ...q, ...updates } : q));
+    setQuestions(questions.map((q: { id: string; }) => q.id === id ? { ...q, ...updates } : q));
   };
 
   const addOption = (questionId: string) => {
-    setQuestions(questions.map(q => 
+    setQuestions(questions.map((q: { id: string; options: any; }) => 
       q.id === questionId 
         ? { ...q, options: [...q.options, ''] }
         : q
@@ -79,17 +79,17 @@ const QuizBuilder: React.FC<QuizBuilderProps> = ({ lesson, updateLesson }) => {
   };
 
   const removeOption = (questionId: string, index: number) => {
-    setQuestions(questions.map(q => 
+    setQuestions(questions.map((q: { id: string; options: any[]; }) => 
       q.id === questionId 
-        ? { ...q, options: q.options.filter((_, i) => i !== index) }
+        ? { ...q, options: q.options.filter((_: any, i: number) => i !== index) }
         : q
     ));
   };
 
   const updateOption = (questionId: string, index: number, value: string) => {
-    setQuestions(questions.map(q => 
+    setQuestions(questions.map((q: { id: string; options: any[]; }) => 
       q.id === questionId 
-        ? { ...q, options: q.options.map((opt, i) => i === index ? value : opt) }
+        ? { ...q, options: q.options.map((opt: any, i: number) => i === index ? value : opt) }
         : q
     ));
   };
@@ -133,12 +133,12 @@ const QuizBuilder: React.FC<QuizBuilderProps> = ({ lesson, updateLesson }) => {
 
       {/* Questions List */}
       <div className="space-y-3 max-h-96 overflow-y-auto">
-        {questions.map((q, idx) => (
+        {questions.map((q: { id: React.Key | null | undefined; question: string | number | readonly string[] | undefined; type: string; options: any[]; correctAnswer: any; }, idx: number) => (
           <div key={q.id} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
             <div className="flex items-start justify-between mb-2">
               <span className="text-xs font-semibold text-gray-700">Question {idx + 1}</span>
               <button
-                onClick={() => removeQuestion(q.id)}
+                onClick={() => q.id && removeQuestion(String(q.id))}
                 className="text-red-600 hover:text-red-800 text-xs"
               >
                 <FiX />
@@ -147,32 +147,32 @@ const QuizBuilder: React.FC<QuizBuilderProps> = ({ lesson, updateLesson }) => {
 
             <input
               type="text"
-              value={q.question}
-              onChange={(e) => updateQuestion(q.id, { question: e.target.value })}
+              value={q.question || ""}
+              onChange={(e) => updateQuestion(String(q.id), { question: e.target.value })}
               placeholder="Enter your question"
               className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded mb-2 focus:ring-1 focus:ring-indigo-500"
             />
 
             {q.type === 'multiple-choice' && (
               <div className="space-y-1">
-                {q.options.map((opt, optIdx) => (
+                {q.options.map((opt: string | number | readonly string[] | undefined, optIdx: React.Key | null | undefined) => (
                   <div key={optIdx} className="flex items-center gap-2">
                     <input
                       type="radio"
                       checked={q.correctAnswer === optIdx}
-                      onChange={() => updateQuestion(q.id, { correctAnswer: optIdx })}
+                      onChange={() => updateQuestion(String(q.id), { correctAnswer: optIdx })}
                       className="text-indigo-600 focus:ring-indigo-500"
                     />
                     <input
                       type="text"
                       value={opt}
-                      onChange={(e) => updateOption(q.id, optIdx, e.target.value)}
-                      placeholder={`Option ${optIdx + 1}`}
+                      onChange={(e) => updateOption(String(q.id), typeof optIdx === 'number' ? optIdx : Number(optIdx), e.target.value)}
+                      placeholder={`Option ${typeof optIdx === 'number' ? optIdx + 1 : Number(optIdx) + 1}`}
                       className="flex-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500"
                     />
                     {q.options.length > 2 && (
                       <button
-                        onClick={() => removeOption(q.id, optIdx)}
+                        onClick={() => removeOption(String(q.id), typeof optIdx === 'number' ? optIdx : Number(optIdx))}
                         className="text-red-600 text-xs px-1"
                       >
                         <FiX />
@@ -181,7 +181,7 @@ const QuizBuilder: React.FC<QuizBuilderProps> = ({ lesson, updateLesson }) => {
                   </div>
                 ))}
                 <button
-                  onClick={() => addOption(q.id)}
+                  onClick={() => addOption(String(q.id))}
                   className="text-xs text-indigo-600 hover:text-indigo-800 mt-1"
                 >
                   <FiPlus className="inline mr-1" /> Add Option
