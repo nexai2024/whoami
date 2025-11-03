@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { z } from "zod";
 import prisma from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
 // import { client } from "@/edgedb";
 // import { deleteUser } from "@/src/queries/deleteUser.query";
@@ -112,42 +114,115 @@ export async function POST(request: Request) {
   if (parsedPayload.type === "user.created") {
     const data = parsedPayload.data;
 
-    await prisma.user.upsert({
-      where: { id: data.id },
-      update: {
-        email: data.primary_email,
-        displayName: data.display_name,
-        primaryEmailVerified: data.primary_email_verified,
-      },
-      create: {
-        id: data.id,
-        email: data.primary_email,
-        displayName: data.display_name,
-        primaryEmailVerified: data.primary_email_verified,
-      },
+    // Generate a unique username from email or display name
+    const generateUsername = (email?: string | null, displayName?: string | null) => {
+      if (displayName) {
+        return displayName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20);
+      }
+      if (email) {
+        return email.split('@')[0].toLowerCase().substring(0, 20);
+      }
+      return `user_${data.id.substring(0, 8)}`;
+    };
+
+    const username = generateUsername(data.primary_email, data.display_name);
+
+    // Generate a random password for Prisma User (not used for auth)
+    const randomPassword = crypto.randomBytes(32).toString('hex');
+    const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+    // Use transaction to ensure both User and Profile are created
+    await prisma.$transaction(async (tx: any) => {
+      // Check if user already exists
+      const existingUser = await tx.user.findUnique({
+        where: { id: data.id }
+      });
+
+      // Check if profile already exists
+      const existingProfile = await tx.profile.findUnique({
+        where: { userId: data.id }
+      });
+
+      if (!existingUser) {
+        // Create User record
+        await tx.user.create({
+          data: {
+            id: data.id,
+            email: data.primary_email || `stack-user-${data.id}@noemail.local`,
+            password: hashedPassword,
+          },
+        });
+      }
+
+      if (!existingProfile) {
+        // Find unique username by appending suffix if needed
+        let uniqueUsername = username;
+        let counter = 1;
+        while (await tx.profile.findUnique({ where: { username: uniqueUsername } })) {
+          uniqueUsername = `${username}${counter}`;
+          counter++;
+        }
+
+        // Create Profile record
+        await tx.profile.create({
+          data: {
+            userId: data.id,
+            username: uniqueUsername,
+            displayName: data.display_name || null,
+            avatar: data.profile_image_url || null,
+            plan: 'FREE',
+          },
+        });
+      } else {
+        // Update existing profile
+        await tx.profile.update({
+          where: { userId: data.id },
+          data: {
+            displayName: data.display_name || null,
+            avatar: data.profile_image_url || null,
+          },
+        });
+      }
     });
   } else if (parsedPayload.type === "user.updated") {
     const data = parsedPayload.data;
 
-    await prisma.user.upsert({
-      where: { id: data.id },
-      update: {
-        email: data.primary_email,
-        displayName: data.display_name,
-        primaryEmailVerified: data.primary_email_verified,
-      },
-      create: {
-        id: data.id,
-        email: data.primary_email,
-        displayName: data.display_name,
-        primaryEmailVerified: data.primary_email_verified,
-      },
+    // Update User record if it exists
+    const existingUser = await prisma.user.findUnique({
+      where: { id: data.id }
     });
+
+    if (existingUser && data.primary_email) {
+      await prisma.user.update({
+        where: { id: data.id },
+        data: {
+          email: data.primary_email,
+        },
+      });
+    }
+
+    // Update Profile if it exists
+    const existingProfile = await prisma.profile.findUnique({
+      where: { userId: data.id }
+    });
+
+    if (existingProfile) {
+      await prisma.profile.update({
+        where: { userId: data.id },
+        data: {
+          displayName: data.display_name || null,
+          avatar: data.profile_image_url || null,
+        },
+      });
+    }
   } else if (parsedPayload.type === "user.deleted") {
     const data = parsedPayload.data;
     
+    // Delete User (cascade will handle Profile deletion)
     await prisma.user.delete({
       where: { id: data.id },
+    }).catch(() => {
+      // User may not exist, ignore error
     });
   }
 
