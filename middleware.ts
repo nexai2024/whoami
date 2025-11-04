@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import subdomains from "./subdomains.json";
 import { stackServerApp } from "@/stack/server";
+import prisma from "@/lib/prisma";
 
 export const config = {
   matcher: [
@@ -8,8 +8,6 @@ export const config = {
     "/api/:path*"
   ],
 };
-
-type SubdomainEntry = string | { subdomain: string };
 
 export default async function middleware(req: Request) {
   const url = new URL(req.url);
@@ -56,40 +54,76 @@ export default async function middleware(req: Request) {
     }
   }
   
-  // Existing subdomain routing logic
+  // Domain and subdomain routing logic
   const hostname = req.headers.get("host") || "";
+  const hostnameLower = hostname.toLowerCase();
 
-  // Define list of allowed domains
-  // (including localhost and your deployed domain)
-  const allowedDomains = ["localhost:3000", "whoami.click"];
+  // Define list of allowed base domains (your main domain)
+  const allowedDomains = ["localhost:3000", "whoami.click", "whoami.bio"];
+  const isAllowedDomain = allowedDomains.some(domain => hostnameLower.includes(domain.toLowerCase()));
 
-  // Check if the current hostname is in the list of allowed domains
-  const isAllowedDomain = allowedDomains.some(domain => hostname.includes(domain));
+  try {
+    // Check for custom domain first
+    const customDomainPage = await prisma.page.findFirst({
+      where: {
+        customDomain: hostnameLower.split(':')[0], // Remove port if present
+        customDomainStatus: 'VERIFIED',
+        isActive: true,
+      },
+      select: {
+        id: true,
+        slug: true,
+      },
+    });
 
-  // Extract the potential subdomain from the URL
-  const subdomain = hostname.split(".")[0];
+    if (customDomainPage) {
+      // Rewrite to the page slug route
+      return NextResponse.rewrite(new URL(`/p/${customDomainPage.slug}${url.pathname}`, req.url));
+    }
 
-  // If user is on an allowed domain and it's not a subdomain, allow the request
-  if (
-    isAllowedDomain &&
-    !subdomains.subdomains.some((d: SubdomainEntry) =>
-      typeof d === "string" ? d === subdomain : d.subdomain === subdomain
-    )
-  ) {
+    // Check for subdomain
+    if (isAllowedDomain) {
+      const parts = hostnameLower.split('.');
+      
+      // If it's the base domain (no subdomain), allow normal routing
+      if (parts.length <= 2 || (parts.length === 3 && parts[0] === 'www')) {
+        return NextResponse.next();
+      }
+
+      // Extract subdomain (first part before base domain)
+      const subdomain = parts[0];
+
+      // Skip www subdomain
+      if (subdomain === 'www') {
+        return NextResponse.next();
+      }
+
+      // Check if subdomain exists in database
+      const subdomainPage = await prisma.page.findFirst({
+        where: {
+          subdomain: subdomain,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          slug: true,
+        },
+      });
+
+      if (subdomainPage) {
+        // Rewrite to the page slug route
+        return NextResponse.rewrite(new URL(`/p/${subdomainPage.slug}${url.pathname}`, req.url));
+      }
+
+      // Subdomain not found, return 404
+      return new Response(null, { status: 404 });
+    }
+
+    // Not an allowed domain and no custom domain match, allow normal routing
+    return NextResponse.next();
+  } catch (error) {
+    console.error("Middleware routing error:", error);
+    // On error, allow request to continue (fail open)
     return NextResponse.next();
   }
-
-  const subdomainData = subdomains.subdomains.find((d: SubdomainEntry) =>
-    typeof d === "string" ? d === subdomain : d.subdomain === subdomain
-  );
-
-  if (subdomainData) {
-    // Attach the subdomain data to the request
-    console.log("Subdomain matched:", subdomainData);
-    console.log("Rewriting URL to include subdomain:", `/${subdomain}${url.pathname}`, new URL(`/${subdomain}${url.pathname}`, req.url));
-    // Rewrite the URL to a dynamic path based on the subdomain
-    return NextResponse.rewrite(new URL(`/${subdomain}${url.pathname}`, req.url));
-  }
-
-  return new Response(null, { status: 404 });
 }

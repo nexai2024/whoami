@@ -70,7 +70,12 @@ model Page {
   description String?
   isActive    Boolean @default(true)
 
-  customDomain String?
+  // Domain configuration
+  customDomain            String?
+  customDomainStatus      DomainStatus? @default(PENDING)
+  customDomainVerifiedAt  DateTime?
+  customDomainVerificationToken String?
+  subdomain               String?  @unique
 
   // SEO and metadata
   metaTitle       String?
@@ -525,6 +530,12 @@ enum PlanEnum {
   CREATOR
   PRO
   BUSINESS
+}
+
+enum DomainStatus {
+  PENDING
+  VERIFIED
+  FAILED
 }
 
 enum BlockType {
