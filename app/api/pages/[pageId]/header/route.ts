@@ -7,12 +7,21 @@ export async function POST(
   { params }: { params: Promise<{ pageId: string }> }
 ) {
   const { pageId } = await params;
+  const userId = req.headers.get('x-user-id');
   const headerData = await req.json();
   
   try {
+    // Require authentication
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     console.log("Header data received for update:", headerData);
     
-    // Step 1: Validate page exists
+    // Step 1: Validate page exists and check ownership
     const page = await prisma.page.findUnique({
       where: { id: pageId },
       select: { id: true, userId: true }
@@ -26,9 +35,13 @@ export async function POST(
       );
     }
     
-    // TODO: Add authorization check when auth is implemented
-    // Verify currentUser.id === page.userId
-    // Return 403 if user doesn't own the page
+    // Verify user owns the page
+    if (page.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Forbidden - you can only update your own pages' },
+        { status: 403 }
+      );
+    }
     
     // Step 2: Validate header data structure
     if (!headerData || typeof headerData !== 'object' || Array.isArray(headerData)) {

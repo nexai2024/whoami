@@ -5,8 +5,17 @@ import { logger } from '@/lib/utils/logger';
 // POST: Reorder blocks for a page
 export async function POST(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
   const { pageId } = await params;
+  const userId = req.headers.get('x-user-id');
 
   try {
+    // Require authentication
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await req.json();
     const { blocks } = body;
 
@@ -18,9 +27,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pag
       );
     }
 
-    // Verify page exists
+    // Verify page exists and check ownership
     const page = await prisma.page.findUnique({
       where: { id: pageId },
+      select: { id: true, userId: true }
     });
 
     if (!page) {
@@ -30,11 +40,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pag
       );
     }
 
-    // TODO: Add authentication check
     // Verify user has permission to edit this page
-    // if (page.userId !== currentUser.id) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    // }
+    if (page.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Forbidden - you can only reorder blocks on your own pages' },
+        { status: 403 }
+      );
+    }
 
     // Update positions in a transaction for atomicity
     await prisma.$transaction(

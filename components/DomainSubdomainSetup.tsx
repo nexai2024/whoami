@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
-import SafeIcon from './SafeIcon';
+import SafeIcon from '@/common/SafeIcon';
 import toast from 'react-hot-toast';
 
 const { FiGlobe, FiCheck, FiAlertCircle, FiCopy, FiRefreshCw, FiX } = FiIcons;
@@ -287,7 +287,7 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
       <div className="bg-white rounded-xl shadow-sm border p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-indigo-100 rounded-lg">
-            <SafeIcon icon={FiGlobe} className="text-indigo-600 text-xl" />
+            <SafeIcon icon={FiGlobe} className="text-indigo-600 text-xl" name={undefined} />
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Custom Domain</h2>
@@ -325,9 +325,8 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center gap-3">
                 <SafeIcon 
-                  icon={getStatusIcon(domainConfig.customDomainStatus)} 
-                  className={`text-lg ${getStatusColor(domainConfig.customDomainStatus)}`} 
-                />
+                    icon={getStatusIcon(domainConfig.customDomainStatus)}
+                    className={`text-lg ${getStatusColor(domainConfig.customDomainStatus)}`} name={undefined}                />
                 <div>
                   <p className="font-medium text-gray-900">{domainConfig.customDomain}</p>
                   <p className={`text-sm capitalize ${getStatusColor(domainConfig.customDomainStatus)}`}>
@@ -345,9 +344,8 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
                     title="Verify domain"
                   >
                     <SafeIcon 
-                      icon={FiRefreshCw} 
-                      className={verifying ? 'animate-spin' : ''} 
-                    />
+                        icon={FiRefreshCw}
+                        className={verifying ? 'animate-spin' : ''} name={undefined}                    />
                   </button>
                 )}
                 
@@ -356,7 +354,7 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
                   className="p-2 text-red-600 hover:text-red-700 transition-colors"
                   title="Remove domain"
                 >
-                  <SafeIcon icon={FiX} />
+                  <SafeIcon icon={FiX} name={undefined} />
                 </button>
               </div>
             </div>
@@ -364,7 +362,7 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
             {domainConfig.customDomainStatus === 'VERIFIED' && (
               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                 <div className="flex items-center gap-2 text-green-700">
-                  <SafeIcon icon={FiCheck} />
+                  <SafeIcon icon={FiCheck} name={undefined} />
                   <p className="font-medium">Domain verified successfully!</p>
                 </div>
                 <p className="text-green-600 text-sm mt-1">
@@ -400,7 +398,7 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
                         onClick={() => copyToClipboard(record.name)}
                         className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        <SafeIcon icon={FiCopy} />
+                        <SafeIcon icon={FiCopy} name={undefined} />
                       </button>
                     </div>
                   </div>
@@ -412,7 +410,7 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
                         onClick={() => copyToClipboard(record.value)}
                         className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
                       >
-                        <SafeIcon icon={FiCopy} />
+                        <SafeIcon icon={FiCopy} name={undefined} />
                       </button>
                     </div>
                   </div>
@@ -433,7 +431,7 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
       <div className="bg-white rounded-xl shadow-sm border p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-purple-100 rounded-lg">
-            <SafeIcon icon={FiGlobe} className="text-purple-600 text-xl" />
+            <SafeIcon icon={FiGlobe} className="text-purple-600 text-xl" name={undefined} />
           </div>
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Subdomain</h2>
@@ -491,7 +489,7 @@ const DomainSubdomainSetup: React.FC<DomainSubdomainSetupProps> = ({ pageId }) =
                 className="p-2 text-red-600 hover:text-red-700 transition-colors"
                 title="Remove subdomain"
               >
-                <SafeIcon icon={FiX} />
+                <SafeIcon icon={FiX} name={undefined} />
               </button>
             </div>
           </div>

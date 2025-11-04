@@ -14,9 +14,12 @@ export async function GET() {
           },
         },
       },
-      orderBy: {
-        price: 'asc',
-      },
+      orderBy: [
+        {
+          // Order by planEnum tier: FREE (0), CREATOR (1), PRO (2), BUSINESS (3)
+          planEnum: 'asc'
+        }
+      ],
     })
 
     return NextResponse.json(plans)

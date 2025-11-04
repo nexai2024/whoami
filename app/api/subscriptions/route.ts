@@ -6,11 +6,27 @@ import prisma from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const userId = request.nextUrl.searchParams.get('userId')
+    const authenticatedUserId = request.headers.get('x-user-id')
 
     if (!userId) {
       return NextResponse.json(
         { error: 'userId is required' },
         { status: 400 }
+      )
+    }
+
+    if (!authenticatedUserId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // Verify user can only access their own subscription
+    if (userId !== authenticatedUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
       )
     }
 
@@ -49,6 +65,7 @@ export async function GET(request: NextRequest) {
 // POST /api/subscriptions
 export async function POST(request: NextRequest) {
   try {
+    const authenticatedUserId = request.headers.get('x-user-id')
     const body = await request.json()
     const { userId, planId, stripeSubscriptionId, stripeCustomerId } = body
 
@@ -56,6 +73,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'userId and planId are required' },
         { status: 400 }
+      )
+    }
+
+    if (!authenticatedUserId) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // Verify user can only create subscription for themselves
+    if (userId !== authenticatedUserId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
       )
     }
 

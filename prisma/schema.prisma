@@ -80,6 +80,7 @@ model Page {
   // SEO and metadata
   metaTitle       String?
   metaDescription String?
+  metaKeywords    String?
   ogImage         String?
 
   // Styling

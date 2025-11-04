@@ -12,13 +12,40 @@ export const config = {
 export default async function middleware(req: Request) {
   const url = new URL(req.url);
   
-  // Handle API routes with authentication
+  // Handle API routes
   if (url.pathname.startsWith('/api/')) {
+    // List of public API routes that don't require authentication
+    const publicRoutes = [
+      '/api/slug', // Public page fetching by slug
+      '/api/funnels/public', // Public funnel access
+      '/api/courses/slug', // Public course landing pages (published courses)
+      '/api/pages/public', // Public page access (if needed)
+    ];
+
+    // Check if this is a public route
+    // Also allow GET requests to /api/pages/[pageId] for public page viewing
+    const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route)) ||
+      (req.method === 'GET' && /^\/api\/pages\/[^\/]+$/.test(url.pathname));
+
     try {
-      // Get authenticated user from Stack
+      // Try to get authenticated user from Stack
       const user = await stackServerApp.getUser();
       
-      // Check if user exists and has id
+      // For public routes, allow access regardless of auth status
+      // but still add x-user-id header if user is authenticated
+      if (isPublicRoute) {
+        const requestHeaders = new Headers(req.headers);
+        if (user?.id) {
+          requestHeaders.set('x-user-id', user.id);
+        }
+        return NextResponse.next({
+          request: {
+            headers: requestHeaders
+          }
+        });
+      }
+
+      // For protected routes, require authentication
       if (!user || !user.id) {
         return new Response(
           JSON.stringify({ error: 'Unauthorized' }),
@@ -29,7 +56,7 @@ export default async function middleware(req: Request) {
         );
       }
       
-      // Clone request and add x-user-id header
+      // Clone request and add x-user-id header for protected routes
       const requestHeaders = new Headers(req.headers);
       requestHeaders.set('x-user-id', user.id);
       
@@ -43,7 +70,12 @@ export default async function middleware(req: Request) {
       // Log error for debugging
       console.error("Auth error in middleware:", error);
       
-      // Return 500 for auth errors
+      // For public routes, allow even if auth check fails
+      if (isPublicRoute) {
+        return NextResponse.next();
+      }
+      
+      // For protected routes, return error
       return new Response(
         JSON.stringify({ error: 'Internal server error' }),
         { 

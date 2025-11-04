@@ -22,7 +22,37 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ page
 // POST: Bulk create/update blocks for a page (UPSERT pattern)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
   const { pageId } = await params;
+  const userId = req.headers.get('x-user-id');
+  
   try {
+    // Require authentication
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Verify page ownership
+    const page = await prisma.page.findUnique({
+      where: { id: pageId },
+      select: { userId: true }
+    });
+
+    if (!page) {
+      return NextResponse.json(
+        { error: 'Page not found' },
+        { status: 404 }
+      );
+    }
+
+    if (page.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Forbidden - you can only modify your own pages' },
+        { status: 403 }
+      );
+    }
+
     const blocks = await req.json();
     logger.info('Saving blocks for page:', pageId, 'Total blocks:', blocks.length);
 
@@ -136,13 +166,50 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pag
 
 // DELETE: Remove a block by ID
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
+  const { pageId } = await params;
+  const userId = req.headers.get('x-user-id');
   const { searchParams } = new URL(req.url);
   const blockId = searchParams.get('blockId');
+  
   if (!blockId) {
     return NextResponse.json({ error: 'Missing blockId' }, { status: 400 });
   }
+
   try {
+    // Require authentication
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Verify page ownership via block's page
+    const block = await prisma.block.findUnique({
+      where: { id: blockId },
+      include: {
+        page: {
+          select: { userId: true }
+        }
+      }
+    });
+
+    if (!block) {
+      return NextResponse.json(
+        { error: 'Block not found' },
+        { status: 404 }
+      );
+    }
+
+    if (block.page.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Forbidden - you can only delete blocks from your own pages' },
+        { status: 403 }
+      );
+    }
+
     await prisma.block.delete({ where: { id: blockId } });
+    logger.info(`Block deleted: ${blockId} by user ${userId}`);
     return NextResponse.json({ success: true });
   } catch (error) {
     logger.error('Error deleting block:', error);

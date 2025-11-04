@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import FileUpload from './FileUpload';
-import CustomDomainSetup from './CustomDomainSetup';
+import DomainSubdomainSetup from './DomainSubdomainSetup';
+import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
 import { useUser } from '@stackframe/stack';
 import toast from 'react-hot-toast';
@@ -14,10 +15,13 @@ const {
 } = FiIcons;
 
 const Settings = () => {
+  const stackUser = useUser();
   const [activeTab, setActiveTab] = useState('profile');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [userPages, setUserPages] = useState([]);
+  const [selectedPageId, setSelectedPageId] = useState(null);
   const [formData, setFormData] = useState({
     displayName: '',
     email: '',
@@ -45,23 +49,41 @@ const Settings = () => {
 
   useEffect(() => {
     loadUserData();
-  }, []);
+    loadUserPages();
+  }, [stackUser]);
+
+  useEffect(() => {
+    // Auto-select first page when pages are loaded
+    if (userPages.length > 0 && !selectedPageId) {
+      setSelectedPageId(userPages[0].id);
+    }
+  }, [userPages]);
+
+  const loadUserPages = async () => {
+    if (!stackUser?.id) return;
+    try {
+      const pages = await PageService.getUserPages(stackUser.id);
+      setUserPages(pages);
+    } catch (error) {
+      logger.error('Error loading user pages:', error);
+    }
+  };
 
   const loadUserData = async () => {
+    if (!stackUser) return;
     try {
       setLoading(true);
-      const userData = await useUser();
-      setUser(userData);
+      setUser(stackUser);
       setFormData({
-        displayName: userData.profile?.displayName || '',
-        email: userData.email || '',
-        bio: userData.profile?.bio || '',
-        avatar: userData.profile?.avatar || null,
-        phone: userData.profile?.phone || '',
-        website: userData.profile?.website || '',
-        location: userData.profile?.location || '',
-        timezone: userData.profile?.timezone || 'UTC',
-        notifications: userData.profile?.notifications || {
+        displayName: stackUser.profile?.displayName || '',
+        email: stackUser.primaryEmail || '',
+        bio: stackUser.profile?.bio || '',
+        avatar: stackUser.profile?.avatar || null,
+        phone: stackUser.profile?.phone || '',
+        website: stackUser.profile?.website || '',
+        location: stackUser.profile?.location || '',
+        timezone: stackUser.profile?.timezone || 'UTC',
+        notifications: stackUser.profile?.notifications || {
           email: true,
           push: true,
           marketing: false
@@ -442,11 +464,50 @@ const Settings = () => {
                 </div>
               )}
               {activeTab === 'domains' && (
-                <CustomDomainSetup
-                  pageId="page_1"
-                  currentDomain={null}
-                  onDomainUpdate={(domain) => console.log('Domain updated:', domain)}
-                />
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900 mb-4">Domain & Subdomain Setup</h2>
+                    <p className="text-gray-600 mb-6">
+                      Configure custom domains and subdomains for your pages. Each page can have its own domain or subdomain.
+                    </p>
+                    
+                    {userPages.length === 0 ? (
+                      <div className="text-center py-8 bg-gray-50 rounded-lg">
+                        <SafeIcon name={undefined} icon={FiGlobe} className="text-gray-400 text-4xl mx-auto mb-4" />
+                        <p className="text-gray-600 mb-4">You don't have any pages yet.</p>
+                        <a
+                          href="/builder?new=true"
+                          className="text-indigo-600 hover:text-indigo-700 font-medium"
+                        >
+                          Create your first page →
+                        </a>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Select Page to Configure
+                          </label>
+                          <select
+                            value={selectedPageId || ''}
+                            onChange={(e) => setSelectedPageId(e.target.value)}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          >
+                            {userPages.map((page) => (
+                              <option key={page.id} value={page.id}>
+                                {page.title} ({page.slug})
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        {selectedPageId && (
+                          <DomainSubdomainSetup pageId={selectedPageId} />
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
               )}
               {activeTab === 'privacy' && (
                 <div className="text-center py-12">
