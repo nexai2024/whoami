@@ -108,7 +108,30 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       email,
     });
 
-    // TODO: Send confirmation email to buyer (future enhancement)
+    // Send purchase confirmation email
+    try {
+      const { sendPurchaseConfirmation } = await import('@/lib/services/emailService');
+      
+      // Get product details
+      const product = await prisma.product.findUnique({
+        where: { id: sale.productId },
+      });
+
+      if (product) {
+        await sendPurchaseConfirmation(email, {
+          productName: product.name,
+          amount: sale.amount,
+          currency: sale.currency,
+          purchaseId: sale.id,
+          downloadUrl: product.fileUrl || undefined,
+        });
+
+        logger.info('Purchase confirmation email sent', { saleId: sale.id });
+      }
+    } catch (emailError) {
+      // Log error but don't fail the sale recording
+      logger.error('Error sending purchase confirmation email:', emailError);
+    }
   } catch (err) {
     logger.error('Error creating sale record:', err);
     throw err;

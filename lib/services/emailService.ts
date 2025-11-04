@@ -358,6 +358,272 @@ export async function sendDripCourseEmail(
 }
 
 /**
+ * Booking confirmation email (to customer)
+ */
+export async function sendBookingConfirmation(
+  to: string,
+  data: {
+    customerName?: string;
+    coachName: string;
+    bookingDate: Date;
+    bookingTime: string;
+    duration: number;
+    bookingId: string;
+    coachEmail?: string;
+    notes?: string;
+  }
+): Promise<SendResult> {
+  const subject = `Booking Confirmed: ${data.bookingDate.toLocaleDateString()} at ${data.bookingTime}`;
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }
+    .info-box { background-color: #f8f9fa; padding: 20px; border-left: 4px solid #667eea; margin: 20px 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✓ Booking Confirmed!</h1>
+    </div>
+
+    ${data.customerName ? `<p>Hi ${data.customerName},</p>` : '<p>Hi there,</p>'}
+
+    <p>Your booking with <strong>${data.coachName}</strong> has been confirmed!</p>
+
+    <div class="info-box">
+      <p><strong>Date:</strong> ${formatDate(data.bookingDate)}</p>
+      <p><strong>Time:</strong> ${data.bookingTime}</p>
+      <p><strong>Duration:</strong> ${data.duration} minutes</p>
+      ${data.coachEmail ? `<p><strong>Coach Email:</strong> <a href="mailto:${data.coachEmail}">${data.coachEmail}</a></p>` : ''}
+      ${data.notes ? `<p><strong>Notes:</strong> ${data.notes}</p>` : ''}
+    </div>
+
+    <p>Please mark this time in your calendar. We'll send you a reminder 24 hours before your session.</p>
+
+    <div class="footer">
+      <p>Booking ID: ${data.bookingId}</p>
+      <p>If you need to reschedule or cancel, please contact ${data.coachName}${data.coachEmail ? ` at ${data.coachEmail}` : ''}.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `
+Booking Confirmed!
+
+${data.customerName ? `Hi ${data.customerName},` : 'Hi there,'}
+
+Your booking with ${data.coachName} has been confirmed!
+
+Date: ${formatDate(data.bookingDate)}
+Time: ${data.bookingTime}
+Duration: ${data.duration} minutes
+${data.coachEmail ? `Coach Email: ${data.coachEmail}` : ''}
+${data.notes ? `Notes: ${data.notes}` : ''}
+
+Please mark this time in your calendar. We'll send you a reminder 24 hours before your session.
+
+Booking ID: ${data.bookingId}
+If you need to reschedule or cancel, please contact ${data.coachName}.
+`;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  });
+}
+
+/**
+ * Booking notification email (to coach)
+ */
+export async function sendBookingNotification(
+  to: string,
+  data: {
+    coachName: string;
+    customerName: string;
+    customerEmail: string;
+    bookingDate: Date;
+    bookingTime: string;
+    duration: number;
+    bookingId: string;
+    notes?: string;
+  }
+): Promise<SendResult> {
+  const subject = `New Booking: ${data.customerName} - ${data.bookingDate.toLocaleDateString()} at ${data.bookingTime}`;
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }
+    .info-box { background-color: #f8f9fa; padding: 20px; border-left: 4px solid #10b981; margin: 20px 0; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📅 New Booking Received</h1>
+    </div>
+
+    <p>Hi ${data.coachName},</p>
+
+    <p>You have a new booking!</p>
+
+    <div class="info-box">
+      <p><strong>Customer:</strong> ${data.customerName}</p>
+      <p><strong>Email:</strong> <a href="mailto:${data.customerEmail}">${data.customerEmail}</a></p>
+      <p><strong>Date:</strong> ${formatDate(data.bookingDate)}</p>
+      <p><strong>Time:</strong> ${data.bookingTime}</p>
+      <p><strong>Duration:</strong> ${data.duration} minutes</p>
+      ${data.notes ? `<p><strong>Notes:</strong> ${data.notes}</p>` : ''}
+    </div>
+
+    <a href="${baseUrl}/bookings/${data.bookingId}" class="button">View Booking Details</a>
+
+    <div class="footer">
+      <p>Booking ID: ${data.bookingId}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `
+New Booking Received!
+
+Hi ${data.coachName},
+
+You have a new booking!
+
+Customer: ${data.customerName}
+Email: ${data.customerEmail}
+Date: ${formatDate(data.bookingDate)}
+Time: ${data.bookingTime}
+Duration: ${data.duration} minutes
+${data.notes ? `Notes: ${data.notes}` : ''}
+
+Booking ID: ${data.bookingId}
+`;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  });
+}
+
+/**
+ * Purchase confirmation email
+ */
+export async function sendPurchaseConfirmation(
+  to: string,
+  data: {
+    customerName?: string;
+    productName: string;
+    amount: number;
+    currency: string;
+    purchaseId: string;
+    downloadUrl?: string;
+  }
+): Promise<SendResult> {
+  const subject = `Purchase Confirmed: ${data.productName}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }
+    .info-box { background-color: #f8f9fa; padding: 20px; border-left: 4px solid #f59e0b; margin: 20px 0; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #f59e0b; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✓ Purchase Confirmed!</h1>
+    </div>
+
+    ${data.customerName ? `<p>Hi ${data.customerName},</p>` : '<p>Hi there,</p>'}
+
+    <p>Thank you for your purchase!</p>
+
+    <div class="info-box">
+      <p><strong>Product:</strong> ${data.productName}</p>
+      <p><strong>Amount:</strong> ${data.currency} ${data.amount.toFixed(2)}</p>
+      ${data.downloadUrl ? `<p><strong>Download:</strong> <a href="${data.downloadUrl}">Click here to download</a></p>` : ''}
+    </div>
+
+    ${data.downloadUrl ? `<a href="${data.downloadUrl}" class="button">Download Now</a>` : ''}
+
+    <div class="footer">
+      <p>Purchase ID: ${data.purchaseId}</p>
+      <p>If you have any questions about your purchase, please reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `
+Purchase Confirmed!
+
+${data.customerName ? `Hi ${data.customerName},` : 'Hi there,'}
+
+Thank you for your purchase!
+
+Product: ${data.productName}
+Amount: ${data.currency} ${data.amount.toFixed(2)}
+${data.downloadUrl ? `Download: ${data.downloadUrl}` : ''}
+
+Purchase ID: ${data.purchaseId}
+`;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  });
+}
+
+/**
  * Check if email service is configured
  */
 export function isConfigured(): boolean {
