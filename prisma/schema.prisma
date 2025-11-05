@@ -642,6 +642,7 @@ enum BlockType {
   WAITLIST
   NEWSLETTER
   CUSTOM
+  COURSE
 }
 
 enum TestStatus {
@@ -1548,6 +1549,8 @@ model CourseEnrollment {
   // Access
   expiresAt          DateTime?
   accessRevoked      Boolean            @default(false)
+  accessToken        String?            @unique
+  accessTokenExpiresAt DateTime?
   
   // Engagement
   lastAccessedAt     DateTime?
@@ -1559,6 +1562,7 @@ model CourseEnrollment {
 
   @@unique([courseId, email])
   @@index([courseId, progressPercentage])
+  @@index([accessToken])
   @@index([email])
   @@map("course_enrollments")
 }

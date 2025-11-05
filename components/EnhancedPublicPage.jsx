@@ -158,6 +158,14 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
         window.open(block.url, '_blank', 'noopener,noreferrer');
       } else if (block.type === 'PRODUCT') {
         handleProductPurchase(block);
+      } else if (block.type === 'COURSE') {
+        // Redirect to course landing page
+        const courseSlug = block.data?.courseSlug || block.data?.slug;
+        if (courseSlug) {
+          window.location.href = `/c/${courseSlug}`;
+        } else {
+          toast.error('Course link not configured');
+        }
       } else if (block.type === 'EMAIL_CAPTURE' || block.type === 'NEWSLETTER' || block.type === 'WAITLIST') {
         handleEmailCapture(block);
       }

@@ -20,6 +20,7 @@ export default async function middleware(req: Request) {
       '/api/funnels/public', // Public funnel access
       '/api/courses/slug', // Public course landing pages (published courses)
       '/api/pages/public', // Public page access (if needed)
+      '/api/webhooks/stack/user/sync', // Stack user sync webhook
     ];
 
     // Check if this is a public route

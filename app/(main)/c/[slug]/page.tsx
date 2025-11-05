@@ -21,6 +21,7 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
 
   useEffect(() => {
     loadCourse();
@@ -48,35 +49,59 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
   };
 
   const handleEnroll = async () => {
-    if (!user) {
-      toast.error('Please log in to enroll');
-      router.push('/handler/sign-in');
+    // For paid courses, authenticated users go to checkout
+    if (course.accessType === 'PAID' && user) {
+      handlePurchase();
       return;
     }
 
-    if (course.accessType === 'PAID') {
+    // For guest users enrolling in paid courses, they need to provide email first
+    if (course.accessType === 'PAID' && !user) {
+      if (!email) {
+        toast.error('Please enter your email to continue');
+        return;
+      }
+      // For paid courses, we'll redirect to checkout with email
       handlePurchase();
+      return;
+    }
+
+    // Validate email for guest enrollment
+    if (!user && !email) {
+      toast.error('Please enter your email to enroll');
       return;
     }
 
     try {
       setEnrolling(true);
-      const userEmail = user.primaryEmail || (course.accessType === 'EMAIL_GATE' ? email : '');
+      const userEmail = user ? user.primaryEmail : email;
+      const userName = user ? user.displayName : (name || undefined);
+      
       const response = await fetch(`/api/courses/${course.id}/enroll`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id
+          ...(user ? { 'x-user-id': user.id } : {})
         },
         body: JSON.stringify({ 
           email: userEmail,
-          name: user.displayName || undefined 
+          name: userName,
+          source: 'course_landing_page'
         })
       });
 
       if (response.ok) {
-        toast.success('Successfully enrolled!');
-        router.push(`/c/${slug}/learn`);
+        const data = await response.json();
+        toast.success('Successfully enrolled! Check your email for access link.');
+        
+        // If user is authenticated, redirect to learning page
+        if (user) {
+          router.push(`/c/${slug}/learn`);
+        } else {
+          // For guest users, show success message with email info
+          toast.success(`Access link sent to ${email}! Check your inbox.`, { duration: 5000 });
+          // Optionally redirect to a thank you page or show instructions
+        }
       } else {
         const data = await response.json();
         toast.error(data.error || 'Failed to enroll');
@@ -92,12 +117,21 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
   const handlePurchase = async () => {
     try {
       setEnrolling(true);
+      
+      // For guest users, include email in checkout metadata
+      const checkoutData: any = {};
+      if (!user && email) {
+        checkoutData.email = email;
+        checkoutData.name = name || undefined;
+      }
+
       const response = await fetch(`/api/courses/${course.id}/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user?.id || ''
-        }
+          ...(user ? { 'x-user-id': user.id } : {})
+        },
+        body: JSON.stringify(checkoutData)
       });
 
       if (response.ok) {
@@ -207,7 +241,36 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
               </button>
             ) : (
               <>
-                {course.accessType === 'EMAIL_GATE' && (
+                {/* Guest enrollment form (show for non-authenticated users) */}
+                {!user && (
+                  <div className="mb-4 space-y-3">
+                    <div>
+                      <input
+                        type="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Your name (optional)"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-600">
+                      No account needed! We'll send you an access link via email.
+                    </p>
+                  </div>
+                )}
+                
+                {/* Email gate field (only for authenticated users with EMAIL_GATE) */}
+                {user && course.accessType === 'EMAIL_GATE' && (
                   <div className="mb-4">
                     <input
                       type="email"
@@ -218,9 +281,10 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
                     />
                   </div>
                 )}
+                
                 <button
                   onClick={handleEnroll}
-                  disabled={enrolling || (course.accessType === 'EMAIL_GATE' && !email)}
+                  disabled={enrolling || (!user && !email) || (user && course.accessType === 'EMAIL_GATE' && !email)}
                   className="w-full bg-indigo-600 text-white px-6 py-4 rounded-lg hover:bg-indigo-700 transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {enrolling ? 'Processing...' : (

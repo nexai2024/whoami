@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUser } from "@stackframe/stack";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FiCheckCircle, FiLock, FiChevronLeft, FiChevronRight, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -16,6 +16,7 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
   const { slug } = params;
   const user = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [course, setCourse] = useState<any>(null);
   const [progress, setProgress] = useState<any>(null);
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
@@ -24,12 +25,22 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
   const [quizAnswers, setQuizAnswers] = useState<Record<string, number>>({});
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState<number | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [tokenEnrollment, setTokenEnrollment] = useState<any>(null);
 
   useEffect(() => {
-    if (user) {
+    // Check for access token in URL
+    const token = searchParams.get('token');
+    if (token) {
+      setAccessToken(token);
+      validateTokenAndLoad(token);
+    } else if (user) {
       loadCourseAndProgress();
+    } else {
+      toast.error('Please log in or use a valid access link');
+      router.push(`/c/${slug}`);
     }
-  }, [slug, user]);
+  }, [slug, user, searchParams]);
 
   // Reset quiz state when changing lessons
   useEffect(() => {
@@ -37,6 +48,62 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
     setQuizSubmitted(false);
     setQuizScore(null);
   }, [currentLessonIndex]);
+
+  const validateTokenAndLoad = async (token: string) => {
+    try {
+      setLoading(true);
+      
+      // Validate token
+      const tokenResponse = await fetch(`/api/courses/access/${token}`);
+      
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.json();
+        toast.error(errorData.error || 'Invalid or expired access link');
+        router.push(`/c/${slug}`);
+        return;
+      }
+
+      const enrollmentData = await tokenResponse.json();
+      setTokenEnrollment(enrollmentData.enrollment);
+
+      // Load course
+      const courseResponse = await fetch(`/api/courses/slug/${slug}`);
+
+      if (!courseResponse.ok) {
+        toast.error('Course not found');
+        router.push('/courses');
+        return;
+      }
+
+      const courseData = await courseResponse.json();
+      setCourse(courseData);
+
+      // Load lessons
+      const lessonsResponse = await fetch(`/api/courses/${courseData.id}/lessons`);
+
+      if (lessonsResponse.ok) {
+        const lessonsData = await lessonsResponse.json();
+        setCourse((prev: any) => ({
+          ...prev,
+          lessons: lessonsData.lessons || []
+        }));
+      }
+
+      // Load progress for this enrollment
+      const progressResponse = await fetch(`/api/courses/${courseData.id}/progress?enrollmentId=${enrollmentData.enrollment.id}`);
+
+      if (progressResponse.ok) {
+        const progressData = await progressResponse.json();
+        setProgress(progressData);
+      }
+    } catch (error) {
+      console.error('Error validating token and loading course:', error);
+      toast.error('Failed to load course');
+      router.push(`/c/${slug}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadCourseAndProgress = async () => {
     try {
@@ -55,16 +122,16 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
 
       const courseData = await courseResponse.json();
 
-      // Check if enrolled
-      if (!courseData.isEnrolled) {
+      // Check if enrolled (skip for token-based access)
+      if (!accessToken && !courseData.isEnrolled) {
         toast.error('You are not enrolled in this course');
-        router.push(`/courses/${slug}`);
+        router.push(`/c/${slug}`);
         return;
       }
 
       // Load full lesson content
       const lessonsResponse = await fetch(`/api/courses/${courseData.id}/lessons`, {
-        headers: { 'x-user-id': user?.id || '' }
+        headers: accessToken ? {} : { 'x-user-id': user?.id || '' }
       });
 
       if (lessonsResponse.ok) {
@@ -76,7 +143,11 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
 
       // Load progress
       const progressResponse = await fetch(`/api/courses/${courseData.id}/progress`, {
-        headers: { 'x-user-id': user?.id || '' }
+        headers: accessToken ? {} : { 'x-user-id': user?.id || '' },
+        ...(accessToken && tokenEnrollment ? { 
+          method: 'GET',
+          // Add enrollmentId as query param if needed
+        } : {})
       });
 
       if (progressResponse.ok) {

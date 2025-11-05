@@ -4,6 +4,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { generateAccessToken, getTokenExpiration } from '@/lib/utils/courseAccess';
+import { sendCourseEnrollmentConfirmation, sendCoachNewEnrollmentNotification } from '@/lib/services/emailService';
 
 const prisma = new PrismaClient();
 
@@ -24,13 +26,23 @@ export async function POST(
       );
     }
 
-    // Get course details
+    // Get course details with instructor info
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
         lessons: {
           orderBy: { order: 'asc' },
           take: 1
+        },
+        user: {
+          include: {
+            profile: {
+              select: {
+                displayName: true,
+                username: true
+              }
+            }
+          }
         }
       }
     });
@@ -84,6 +96,10 @@ export async function POST(
       );
     }
 
+    // Generate access token for guest users (non-authenticated)
+    const accessToken = !userId ? generateAccessToken() : null;
+    const accessTokenExpiresAt = !userId ? getTokenExpiration() : null;
+
     // Create enrollment
     const enrollment = await prisma.courseEnrollment.create({
       data: {
@@ -95,7 +111,9 @@ export async function POST(
         paymentStatus: course.accessType === 'PAID' ? 'completed' : null,
         paymentAmount: course.accessType === 'PAID' ? course.price : null,
         stripePaymentId: body.paymentIntentId || null,
-        currentLessonId: course.lessons[0]?.id || null
+        currentLessonId: course.lessons[0]?.id || null,
+        accessToken,
+        accessTokenExpiresAt
       },
       include: {
         course: {
@@ -142,8 +160,55 @@ export async function POST(
       });
     }
 
+    // Build access URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const accessUrl = accessToken 
+      ? `${baseUrl}/c/${course.slug}/learn?token=${accessToken}`
+      : userId
+      ? `${baseUrl}/c/${course.slug}/learn`
+      : null;
+
+    // Send enrollment confirmation email to student
+    try {
+      await sendCourseEnrollmentConfirmation(email, {
+        recipientName: name || undefined,
+        courseName: course.title,
+        courseSlug: course.slug,
+        accessUrl: accessUrl || undefined,
+        instructorName: course.user?.profile?.displayName || course.user?.profile?.username || undefined,
+        isPaid: course.accessType === 'PAID',
+        price: course.price ? Number(course.price) : undefined
+      });
+    } catch (emailError) {
+      console.error('Error sending enrollment confirmation email:', emailError);
+      // Don't fail enrollment if email fails
+    }
+
+    // Send notification email to coach/instructor
+    try {
+      const coachEmail = course.user?.email;
+      if (coachEmail) {
+        await sendCoachNewEnrollmentNotification(coachEmail, {
+          coachName: course.user?.profile?.displayName || course.user?.profile?.username || undefined,
+          studentName: name || undefined,
+          studentEmail: email,
+          courseName: course.title,
+          courseId: course.id,
+          isPaid: course.accessType === 'PAID',
+          price: course.price ? Number(course.price) : undefined,
+          enrollmentDate: new Date()
+        });
+      }
+    } catch (emailError) {
+      console.error('Error sending coach notification email:', emailError);
+      // Don't fail enrollment if email fails
+    }
+
     return NextResponse.json({
-      enrollment,
+      enrollment: {
+        ...enrollment,
+        accessUrl // Include access URL in response
+      },
       message: 'Successfully enrolled in course'
     }, { status: 201 });
   } catch (error) {

@@ -358,6 +358,177 @@ export async function sendDripCourseEmail(
 }
 
 /**
+ * Course enrollment confirmation email (to student)
+ */
+export async function sendCourseEnrollmentConfirmation(
+  to: string,
+  data: {
+    recipientName?: string;
+    courseName: string;
+    courseSlug: string;
+    accessUrl?: string;
+    instructorName?: string;
+    isPaid?: boolean;
+    price?: number;
+  }
+): Promise<SendResult> {
+  const subject = `Welcome to ${data.courseName}!`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }
+    .button { display: inline-block; padding: 14px 28px; background-color: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+    .info-box { background-color: #f8f9fa; padding: 15px; border-left: 4px solid #667eea; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 You're Enrolled!</h1>
+      <h2>${data.courseName}</h2>
+    </div>
+
+    ${data.recipientName ? `<p>Hi ${data.recipientName},</p>` : '<p>Hi there,</p>'}
+
+    <p>Congratulations! You've successfully enrolled in <strong>${data.courseName}</strong>.</p>
+
+    ${data.isPaid && data.price ? `
+    <div class="info-box">
+      <p><strong>Payment Confirmed:</strong> $${data.price}</p>
+    </div>
+    ` : ''}
+
+    ${data.accessUrl ? `
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${data.accessUrl}" class="button">Start Learning Now</a>
+    </div>
+    ` : ''}
+
+    ${data.instructorName ? `<p>${data.instructorName} is excited to have you in the course!</p>` : ''}
+
+    <p>You can access your course anytime by clicking the button above${data.accessUrl ? '' : ' or visiting your dashboard'}.</p>
+
+    <div class="footer">
+      <p>If you have any questions, feel free to reply to this email.</p>
+      <p>Happy learning! 🚀</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `
+You're Enrolled!
+
+${data.recipientName ? `Hi ${data.recipientName},` : 'Hi there,'}
+
+Congratulations! You've successfully enrolled in ${data.courseName}.
+
+${data.isPaid && data.price ? `Payment Confirmed: $${data.price}\n` : ''}
+${data.accessUrl ? `Start learning: ${data.accessUrl}\n` : ''}
+${data.instructorName ? `${data.instructorName} is excited to have you in the course!\n` : ''}
+
+You can access your course anytime${data.accessUrl ? ` at ${data.accessUrl}` : ''}.
+
+Happy learning! 🚀
+`;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  });
+}
+
+/**
+ * Course enrollment notification email (to instructor/coach)
+ */
+export async function sendCoachNewEnrollmentNotification(
+  to: string,
+  data: {
+    coachName?: string;
+    studentName?: string;
+    studentEmail: string;
+    courseName: string;
+    courseId: string;
+    isPaid?: boolean;
+    price?: number;
+    enrollmentDate: Date;
+  }
+): Promise<SendResult> {
+  const subject = `New Enrollment: ${data.courseName}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .info-box { background-color: #f0fdf4; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 New Student Enrolled!</h1>
+    </div>
+
+    ${data.coachName ? `<p>Hi ${data.coachName},</p>` : '<p>Hi there,</p>'}
+
+    <p>Great news! You have a new student enrolled in your course:</p>
+
+    <div class="info-box">
+      <p><strong>Course:</strong> ${data.courseName}</p>
+      <p><strong>Student:</strong> ${data.studentName || 'Anonymous'}</p>
+      <p><strong>Email:</strong> ${data.studentEmail}</p>
+      ${data.isPaid && data.price ? `<p><strong>Amount:</strong> $${data.price}</p>` : ''}
+      <p><strong>Enrolled:</strong> ${data.enrollmentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    </div>
+
+    <p>Keep up the great work! Your students are excited to learn from you.</p>
+
+    <div class="footer">
+      <p>View course analytics and manage students in your dashboard.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `
+New Student Enrolled!
+
+${data.coachName ? `Hi ${data.coachName},` : 'Hi there,'}
+
+Great news! You have a new student enrolled in your course:
+
+Course: ${data.courseName}
+Student: ${data.studentName || 'Anonymous'}
+Email: ${data.studentEmail}
+${data.isPaid && data.price ? `Amount: $${data.price}\n` : ''}
+Enrolled: ${data.enrollmentDate.toLocaleDateString()}
+
+Keep up the great work!
+`;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  });
+}
+
+/**
  * Booking confirmation email (to customer)
  */
 export async function sendBookingConfirmation(

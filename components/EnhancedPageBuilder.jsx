@@ -20,7 +20,7 @@ import TemplateBrowser from './TemplateBrowser';
 const {
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage,
   FiLink, FiShoppingBag, FiMail, FiMusic, FiVideo, FiCalendar,
-  FiUser, FiSettings, FiTag, FiShare2, FiLayout, FiUpload
+  FiUser, FiSettings, FiTag, FiShare2, FiLayout, FiUpload, FiBook
 } = FiIcons;
 
 // SortableBlock component for drag-and-drop functionality
@@ -162,6 +162,7 @@ const EnhancedPageBuilder = () => {
     { type: 'music', label: 'Music Player', icon: FiMusic, color: 'orange' },
     { type: 'video', label: 'Video Embed', icon: FiVideo, color: 'red' },
     { type: 'booking', label: 'Booking', icon: FiCalendar, color: 'indigo' },
+    { type: 'course', label: 'Course', icon: FiBook, color: 'purple' },
     { type: 'analytics', label: 'Analytics', icon: FiEye, color: 'teal' },
     { type: 'promo', label: 'Promo', icon: FiTag, color: 'yellow' },
     { type: 'discount', label: 'Discount', icon: FiTag, color: 'amber' },
@@ -293,6 +294,9 @@ const EnhancedPageBuilder = () => {
     switch (type) {
       case 'product':
         newBlock.data = { price: 0, currency: 'USD', stockStatus: 'in_stock' };
+        break;
+      case 'course':
+        newBlock.data = { courseId: '', courseSlug: '', title: '', buttonText: 'Enroll Now' };
         break;
       case 'link':
         newBlock.data = { url: '', openInNewTab: true };

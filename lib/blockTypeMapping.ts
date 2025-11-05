@@ -23,6 +23,7 @@ export function mapBlockType(frontendType: string): BlockType {
     'rss': BlockType.RSS_FEED,
     'contact': BlockType.CONTACT_FORM,
     'text': BlockType.TEXT_BLOCK,
+    'course': BlockType.COURSE,
   };
 
   // Check for special mappings first
