@@ -43,11 +43,11 @@ export default function AvailabilityPage() {
     try {
       setLoading(true);
       const [windowsRes, blackoutsRes] = await Promise.all([
-        fetch(`/api/availability/windows?userId=${user.id}`, {
-          headers: { 'x-user-id': user.id },
+        fetch(`/api/availability/windows?userId=${user?.id}`, {
+          headers: new Headers({ 'x-user-id': user?.id || '' }),
         }),
-        fetch(`/api/availability/blackouts?userId=${user.id}`, {
-          headers: { 'x-user-id': user.id },
+        fetch(`/api/availability/blackouts?userId=${user?.id}`, {
+          headers: new Headers({ 'x-user-id': user?.id || '' }),
         }),
       ]);
 
@@ -74,7 +74,7 @@ export default function AvailabilityPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
+          'x-user-id': user?.id || '',
         },
         body: JSON.stringify(formData),
       });
@@ -92,13 +92,13 @@ export default function AvailabilityPage() {
     }
   };
 
-  const handleDeleteWindow = async (id) => {
+  const handleDeleteWindow = async (id: any) => {
     if (!confirm('Delete this availability window?')) return;
 
     try {
       const response = await fetch(`/api/availability/windows/${id}`, {
         method: 'DELETE',
-        headers: { 'x-user-id': user.id },
+        headers: { 'x-user-id': user?.id || '' },
       });
 
       if (response.ok) {
@@ -116,7 +116,7 @@ export default function AvailabilityPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id,
+          'x-user-id': user?.id || '',
         },
         body: JSON.stringify({
           startDate: new Date(blackoutData.startDate).toISOString(),
@@ -139,13 +139,13 @@ export default function AvailabilityPage() {
     }
   };
 
-  const handleDeleteBlackout = async (id) => {
+  const handleDeleteBlackout = async (id: any) => {
     if (!confirm('Delete this blackout date?')) return;
 
     try {
       const response = await fetch(`/api/availability/blackouts/${id}`, {
         method: 'DELETE',
-        headers: { 'x-user-id': user.id },
+        headers: { 'x-user-id': user?.id || '' },
       });
 
       if (response.ok) {
@@ -237,16 +237,25 @@ export default function AvailabilityPage() {
         )}
 
         <div className="space-y-3">
-          {windows.map((window) => (
-            <div key={window.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+          {windows.map((window: {
+            id: number | string;
+            dayOfWeek: number;
+            startTime: string;
+            endTime: string;
+            isActive: boolean;
+          }) => (
+            <div
+              key={window.id}
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+            >
               <div>
                 <div className="font-medium">{DAYS[window.dayOfWeek]}</div>
                 <div className="text-sm text-gray-600">
-                  {window.startTime} - {window.endTime} ({window.isActive ? 'Active' : 'Inactive'})
+                  {window.startTime} - {window.endTime} ({window.isActive ? "Active" : "Inactive"})
                 </div>
               </div>
               <button
-                onClick={() => handleDeleteWindow(window.id)}
+                onClick={() => handleDeleteWindow((window as any).id)}
                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
               >
                 <FiTrash2 />
@@ -322,8 +331,11 @@ export default function AvailabilityPage() {
         )}
 
         <div className="space-y-3">
-          {blackouts.map((blackout) => (
-            <div key={blackout.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+          {blackouts.map((blackout: { id: string | number; startDate: string; endDate: string; reason?: string }) => (
+            <div
+              key={blackout.id}
+              className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+            >
               <div>
                 <div className="font-medium">
                   {new Date(blackout.startDate).toLocaleDateString()} - {new Date(blackout.endDate).toLocaleDateString()}

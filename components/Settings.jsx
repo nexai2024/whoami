@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import * as FiIcons from 'react-icons/fi';
 const { FiUser: FiUserIcon } = FiIcons;
 import SafeIcon from '../common/SafeIcon';
@@ -20,7 +20,30 @@ const {
 const Settings = () => {
   const stackUser = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('profile');
+  
+  // Check for tab from URL query params
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['profile', 'account', 'coach', 'billing', 'domains', 'privacy', 'notifications'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+  
+  // Listen for tab changes from sidebar
+  useEffect(() => {
+    const handleTabChange = (event) => {
+      const tab = event.detail?.tab;
+      if (tab) {
+        setActiveTab(tab);
+        router.replace(`/settings?tab=${tab}`, { scroll: false });
+      }
+    };
+    
+    window.addEventListener('settingsTabChange', handleTabChange);
+    return () => window.removeEventListener('settingsTabChange', handleTabChange);
+  }, [router]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

@@ -35,11 +35,11 @@ export default function BookingsPage() {
     try {
       setLoading(true);
       const url = filter === 'all'
-        ? `/api/bookings?userId=${user.id}`
-        : `/api/bookings?userId=${user.id}&status=${filter}`;
+        ? `/api/bookings?userId=${user?.id}`
+        : `/api/bookings?userId=${user?.id}&status=${filter}`;
       
       const response = await fetch(url, {
-        headers: { 'x-user-id': user.id },
+        headers: { 'x-user-id': user?.id || '' },
       });
 
       if (response.ok) {
@@ -54,7 +54,7 @@ export default function BookingsPage() {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | number | Date) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -63,7 +63,7 @@ export default function BookingsPage() {
     });
   };
 
-  const formatTime = (dateString) => {
+  const formatTime = (dateString: string | number | Date) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -112,40 +112,40 @@ export default function BookingsPage() {
           </div>
         ) : (
           <div className="divide-y">
-            {bookings.map((booking) => (
-              <div key={booking.id} className="p-6 hover:bg-gray-50 transition-colors">
+            {bookings.map((booking: any) => (
+              <div key={booking?.id as string} className="p-6 hover:bg-gray-50 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-lg font-semibold text-gray-900">
-                        {booking.customerName || booking.customerEmail}
+                        {(booking as any).customerName || (booking as any).customerEmail}
                       </h3>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[booking.status] || STATUS_COLORS.PENDING}`}>
-                        {booking.status}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${(STATUS_COLORS as any)[(booking as any).status] || STATUS_COLORS.PENDING}`}>
+                        {(booking as any).status}
                       </span>
                     </div>
                     <div className="space-y-1 text-sm text-gray-600">
                       <div className="flex items-center gap-2">
                         <FiCalendar />
-                        {formatDate(booking.startTime)}
+                        {formatDate((booking as any).startTime)}
                       </div>
                       <div className="flex items-center gap-2">
                         <FiClock />
-                        {formatTime(booking.startTime)} - {formatTime(booking.endTime)} ({booking.duration} min)
+                        {formatTime((booking as any).startTime)} - {formatTime((booking as any).endTime)} ({(booking as any).duration} min)
                       </div>
                       <div className="flex items-center gap-2">
                         <FiMail />
-                        {booking.customerEmail}
+                        {(booking as any).customerEmail}
                       </div>
-                      {booking.price && (
+                      {(booking as any).price && (
                         <div className="flex items-center gap-2">
                           <FiDollarSign />
-                          {booking.currency} {booking.price.toFixed(2)}
+                          {(booking as any).currency} {((booking as any).price as number).toFixed(2)}
                         </div>
                       )}
-                      {booking.notes && (
+                      {(booking as any).notes && (
                         <div className="mt-2 pt-2 border-t border-gray-200">
-                          <p className="text-gray-700">{booking.notes}</p>
+                          <p className="text-gray-700">{(booking as any).notes}</p>
                         </div>
                       )}
                     </div>

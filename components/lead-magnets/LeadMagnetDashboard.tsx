@@ -8,7 +8,9 @@
 import { useState, useEffect } from 'react';
 import { MagnetType, MagnetStatus, DeliveryMethod } from '@prisma/client';
 import toast from 'react-hot-toast';
-import { FiUpload } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@stackframe/stack';
+import { FiUpload, FiUsers } from 'react-icons/fi';
 
 interface LeadMagnet {
   id: string;
@@ -41,9 +43,12 @@ interface Template {
 }
 
 export default function LeadMagnetDashboard() {
+  const router = useRouter();
+  const user = useUser();
   const [magnets, setMagnets] = useState<LeadMagnet[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [leadsCount, setLeadsCount] = useState(0);
   const [activeTab, setActiveTab] = useState<'magnets' | 'templates'>('magnets');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -74,14 +79,33 @@ export default function LeadMagnetDashboard() {
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    fetchLeadMagnets();
-    fetchTemplates();
-  }, []);
+    if (user?.id) {
+      fetchLeadMagnets();
+      fetchTemplates();
+      fetchLeadsCount();
+    }
+  }, [user]);
+  
+  const fetchLeadsCount = async () => {
+    if (!user?.id) return;
+    try {
+      const response = await fetch(`/api/leads?userId=${user.id}`, {
+        headers: { 'x-user-id': user.id },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLeadsCount(data.leads?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching leads count:', error);
+    }
+  };
 
   const fetchLeadMagnets = async () => {
+    if (!user?.id) return;
     try {
       const response = await fetch('/api/lead-magnets', {
-        headers: { 'x-user-id': 'demo-user' }
+        headers: { 'x-user-id': user.id }
       });
       const data = await response.json();
       setMagnets(data.leadMagnets || []);
@@ -575,15 +599,31 @@ export default function LeadMagnetDashboard() {
               <h2 className="text-xl font-semibold">Active Lead Magnets</h2>
               <p className="text-sm text-gray-600">
                 {magnets.length} lead magnets created
+                {leadsCount > 0 && (
+                  <span className="ml-2 text-teal-600 font-medium">
+                    • {leadsCount} lead{leadsCount !== 1 ? 's' : ''} captured
+                  </span>
+                )}
               </p>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
-              data-tour-id="create-magnet-button"
-            >
-              + Create Lead Magnet
-            </button>
+            <div className="flex gap-3">
+              {leadsCount > 0 && (
+                <button
+                  onClick={() => router.push('/leads')}
+                  className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg hover:bg-teal-700 font-medium transition-colors"
+                >
+                  <FiUsers />
+                  View Leads ({leadsCount})
+                </button>
+              )}
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                data-tour-id="create-magnet-button"
+              >
+                + Create Lead Magnet
+              </button>
+            </div>
           </div>
 
           {/* Magnets Grid */}
