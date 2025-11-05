@@ -1,14 +1,11 @@
 "use client";
-import { BlackBoxProvider, BlackBoxUI } from '@/lib/blackbox';
-import { ErrorProvider } from './ErrorContext';
+import { ErrorProvider } from '@/components/ErrorContext';
 import { Toaster } from 'react-hot-toast';
 
-export default function BlackBoxWrapper({ children }: { children: React.ReactNode }) {
+export default function AppProviders({ children }: { children: React.ReactNode }) {
   return (
-    <BlackBoxProvider isDebug={true}>
-      <ErrorProvider>
-        {children}
-      </ErrorProvider>
+    <ErrorProvider>
+      {children}
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -36,8 +33,7 @@ export default function BlackBoxWrapper({ children }: { children: React.ReactNod
           },
         }}
       />
-      <BlackBoxUI /> 
-    </BlackBoxProvider>
+    </ErrorProvider>
   );
 }
 

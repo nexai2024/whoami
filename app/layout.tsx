@@ -2,7 +2,7 @@ import React from 'react';
 import type { Metadata } from 'next';
 import classNames from 'classnames';
 import { Geist, Geist_Mono } from 'next/font/google';
-import BlackBoxWrapper from '../components/BlackBoxWrapper';
+import AppProviders from '../components/AppProviders';
 
 export const metadata: Metadata = {
   title: "WhoAmI",
@@ -27,9 +27,9 @@ export default function RootLayout({
     return (
         <html lang="en">
           <body className={classNames(geistSans.variable, geistMono.variable, 'antialiased')}>
-            <BlackBoxWrapper>
+            <AppProviders>
               {children}
-            </BlackBoxWrapper>
+            </AppProviders>
           </body>
         </html>
     );

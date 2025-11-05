@@ -31,23 +31,32 @@ const ErrorConsole: React.FC = () => {
 
   // Check if user has admin access
   useEffect(() => {
-    console.log('Checking feature client', isAdmin, viewMode, dateRange, errorType, resolvedFilter, searchQuery, page);
     checkFeatureClient('error_console_admin')
       .then(setIsAdmin)
       .catch(() => setIsAdmin(false));
-    console.log('Feature client checked', isAdmin);
   }, []);
-console.log('isAdmin', isAdmin);
-  // Fetch historical errors when in historical mode
-  useEffect(() => {
-    if (isAdmin && viewMode === 'historical') { 
-      console.log('Fetching historical errors', isAdmin, viewMode, dateRange, errorType, resolvedFilter, searchQuery, page);
-      fetchHistoricalErrors();
-    }
-  }, [isAdmin, viewMode, dateRange, errorType, resolvedFilter, searchQuery, page]);
 
-  const fetchHistoricalErrors = async () => {
+  // Use refs to track fetch state and prevent infinite loops
+  const fetchingRef = React.useRef(false);
+  const lastFetchParamsRef = React.useRef<string>('');
+
+  // Fetch historical errors function - stable and memoized
+  const fetchHistoricalErrors = React.useCallback(async () => {
+    // Prevent concurrent fetches
+    if (fetchingRef.current) return;
+    
+    // Build params string to detect actual changes
+    const paramsString = `${dateRange}-${errorType}-${resolvedFilter}-${searchQuery}-${page}`;
+    
+    // Skip if params haven't changed (use ref to avoid dependency issues)
+    if (lastFetchParamsRef.current === paramsString) {
+      return;
+    }
+    
+    fetchingRef.current = true;
+    lastFetchParamsRef.current = paramsString;
     setLoading(true);
+    
     try {
       const params = new URLSearchParams({
         dateRange,
@@ -64,14 +73,38 @@ console.log('isAdmin', isAdmin);
         setHistoricalErrors(data.errors || []);
         setTotalPages(data.totalPages || 1);
       } else {
-        console.error('Failed to fetch historical errors');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to fetch errors' }));
+        console.error('Failed to fetch historical errors:', errorData.error);
       }
     } catch (error) {
       console.error('Error fetching historical errors:', error);
     } finally {
       setLoading(false);
+      // Reset fetch lock after a delay to allow retries
+      setTimeout(() => {
+        fetchingRef.current = false;
+      }, 1000);
     }
-  };
+  }, [dateRange, errorType, resolvedFilter, searchQuery, page]);
+
+  // Fetch historical errors when in historical mode - with proper debouncing
+  useEffect(() => {
+    if (!isAdmin || viewMode !== 'historical') {
+      // Reset when switching away from historical view
+      if (viewMode === 'session') {
+        setHistoricalErrors([]);
+        setPage(1);
+      }
+      return;
+    }
+    
+    // Debounce fetch to prevent rapid successive calls
+    const timeoutId = setTimeout(() => {
+      fetchHistoricalErrors();
+    }, 800);
+    
+    return () => clearTimeout(timeoutId);
+  }, [isAdmin, viewMode, fetchHistoricalErrors]);
 
   const handleResolve = async (errorId: string, resolved: boolean) => {
     try {
@@ -81,9 +114,12 @@ console.log('isAdmin', isAdmin);
         body: JSON.stringify({ resolved }),
       });
 
-      if (response.ok) {
-        // Refresh historical errors
-        fetchHistoricalErrors();
+      if (response.ok && viewMode === 'historical') {
+        // Refresh historical errors only if in historical mode, with delay to prevent rapid calls
+        setTimeout(() => {
+          lastFetchParamsRef.current = ''; // Force refresh
+          fetchHistoricalErrors();
+        }, 500);
       }
     } catch (error) {
       console.error('Error updating error status:', error);
@@ -104,7 +140,12 @@ console.log('isAdmin', isAdmin);
         setShowNotesModal(false);
         setNotes('');
         setSelectedError(null);
-        fetchHistoricalErrors();
+        if (viewMode === 'historical') {
+          setTimeout(() => {
+            lastFetchParamsRef.current = ''; // Force refresh
+            fetchHistoricalErrors();
+          }, 500);
+        }
       }
     } catch (error) {
       console.error('Error adding note:', error);

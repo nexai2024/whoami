@@ -76,7 +76,7 @@ const persistError = async (error: AppError) => {
 export const ErrorProvider = ({ children }: { children: ReactNode }) => {
   const [errors, setErrors] = useState<AppError[]>([]);
 
-  const addError = (err: Partial<AppError> | Error, context?: string) => {
+  const addError = React.useCallback((err: Partial<AppError> | Error, context?: string) => {
     // Capture current app state
     const url = typeof window !== 'undefined' ? window.location.href : undefined;
     const pathname = typeof window !== 'undefined' ? window.location.pathname : undefined;
@@ -106,10 +106,40 @@ export const ErrorProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window !== 'undefined') console.error('[AppError]', errorObj);
     
     // Persist to database (async, don't await to avoid blocking UI)
-    persistError(errorObj).catch(console.error);
-  };
+    persistError(errorObj).catch(() => {
+      // Silently fail - don't create error loop
+    });
+  }, []);
 
-  const clearErrors = () => setErrors([]);
+  const clearErrors = React.useCallback(() => {
+    setErrors([]);
+  }, []);
+
+  // Set up global error handlers
+  React.useEffect(() => {
+    // Handle window.onerror
+    const handleError = (event: ErrorEvent) => {
+      const error = event.error || new Error(event.message);
+      addError(error, 'window.onerror');
+    };
+
+    // Handle unhandled promise rejections
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+      const error = reason instanceof Error 
+        ? reason 
+        : new Error(String(reason || 'Unhandled promise rejection'));
+      addError(error, 'unhandled-rejection');
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, [addError]);
 
   return (
     <ErrorContext.Provider value={{ errors, addError, clearErrors }}>

@@ -1,15 +1,25 @@
 "use client"
 import React from 'react';
 import Link from 'next/link';
-import { ErrorContext, AppError } from './ErrorContext';
+import { useErrorContext, AppError } from './ErrorContext';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: React.ErrorInfo | null;
+}
 
 class ErrorBoundaryInner extends React.Component<{
   children: React.ReactNode;
   addError: (err: Partial<AppError> | Error, context?: string) => void;
-}, { hasError: boolean; error?: Error; info?: React.ErrorInfo }> {
+}, ErrorBoundaryState> {
   constructor(props: { children: React.ReactNode; addError: (err: Partial<AppError> | Error, context?: string) => void }) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
@@ -26,12 +36,14 @@ class ErrorBoundaryInner extends React.Component<{
         errorWithStack,
         'boundary: Caught by ErrorBoundary'
       );
-    } catch {}
-    this.setState({ hasError: true, error, info: errorInfo });
+    } catch (e) {
+      // Silently fail - don't create error loop
+    }
+    this.setState({ errorInfo });
   }
 
   handleReload = () => {
-    this.setState({ hasError: false, error: undefined, info: undefined });
+    this.setState({ hasError: false, error: null, errorInfo: null });
     if (typeof window !== 'undefined') {
       window.location.reload();
     }
@@ -40,15 +52,15 @@ class ErrorBoundaryInner extends React.Component<{
   render() {
     if (this.state.hasError) {
       return (
-        <div className="p-8 text-center text-red-600 flex flex-col items-center justify-center min-h-screen">
+        <div className="p-8 text-center text-red-600 flex flex-col items-center justify-center min-h-screen bg-gray-50">
           <h2 className="text-2xl font-bold mb-2">Something went wrong.</h2>
-          <p className="mb-4">An unexpected error occurred. Please try again or contact support.</p>
+          <p className="mb-4 text-gray-600">An unexpected error occurred. Please try again or contact support.</p>
           {this.state.error && (
             <details className="mb-4 text-left max-w-xl mx-auto bg-red-50 border border-red-200 rounded p-4 text-xs text-red-800">
-              <summary className="cursor-pointer font-semibold">Error Details</summary>
-              <div><b>Message:</b> {this.state.error.message}</div>
-              {this.state.info?.componentStack && (
-                <div className="mt-2"><b>Stack:</b> <pre>{this.state.info.componentStack}</pre></div>
+              <summary className="cursor-pointer font-semibold mb-2">Error Details</summary>
+              <div className="mt-2"><b>Message:</b> {this.state.error.message}</div>
+              {this.state.errorInfo?.componentStack && (
+                <div className="mt-2"><b>Stack:</b> <pre className="mt-1 whitespace-pre-wrap">{this.state.errorInfo.componentStack}</pre></div>
               )}
             </details>
           )}
@@ -70,17 +82,13 @@ class ErrorBoundaryInner extends React.Component<{
   }
 }
 
-// Wrapper component that consumes the ErrorContext and passes addError to ErrorBoundaryInner
+// Wrapper component that uses the ErrorContext hook
 export const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
+  const { addError } = useErrorContext();
+  
   return (
-    <ErrorContext.Consumer>
-      {(value) => (
-        <ErrorBoundaryInner addError={value?.addError || (() => {})}>
-          {children}
-        </ErrorBoundaryInner>
-      )}
-    </ErrorContext.Consumer>
+    <ErrorBoundaryInner addError={addError}>
+      {children}
+    </ErrorBoundaryInner>
   );
 };
-
-// Usage: <ErrorBoundary><App /></ErrorBoundary>

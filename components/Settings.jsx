@@ -149,19 +149,45 @@ const Settings = () => {
   };
 
   const handleSave = async () => {
+    if (!stackUser?.id) {
+      toast.error('You must be logged in to save settings');
+      return;
+    }
+
     try {
       setSaving(true);
-      await UserService.updateUser('user_1', {
-        profile: {
-          ...user.profile,
-          ...formData
-        }
+      
+      const response = await fetch(`/api/profiles/${stackUser.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': stackUser.id,
+        },
+        body: JSON.stringify({
+          displayName: formData.displayName,
+          bio: formData.bio,
+          avatar: formData.avatar,
+          phone: formData.phone,
+          website: formData.website,
+          location: formData.location,
+          timezone: formData.timezone,
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to save settings' }));
+        throw new Error(errorData.error || 'Failed to save settings');
+      }
+
+      const updatedProfile = await response.json();
       logger.info('User settings saved successfully');
       toast.success('Settings saved successfully!');
+      
+      // Reload user data to reflect changes
+      loadUserData();
     } catch (error) {
       logger.error('Error saving settings:', error);
-      toast.error('Failed to save settings. Please try again.');
+      toast.error(error.message || 'Failed to save settings. Please try again.');
     } finally {
       setSaving(false);
     }

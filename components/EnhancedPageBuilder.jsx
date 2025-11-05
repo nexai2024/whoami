@@ -200,14 +200,14 @@ const EnhancedPageBuilder = () => {
         setLoading(true);
         console.log("Initializing new page");
 
-        const newPage = await PageService.createPage({ userID: user.id });
+        const newPage = await PageService.createPage(user.id);
 
-        if (newPage.id) {
+        if (newPage && newPage.id) {
           console.log("New page created:", newPage);
           setPageData({
             id: newPage.id,
-            title: newPage.title,
-            description: newPage.description,
+            title: newPage.title || 'New Page',
+            description: newPage.description || '',
             headerData: {
               displayName: '',
               title: '',
