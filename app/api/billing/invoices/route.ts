@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       description: invoice.description || invoice.lines.data[0]?.description || 'Subscription',
       hostedInvoiceUrl: invoice.hosted_invoice_url,
       invoicePdf: invoice.invoice_pdf,
-      subscriptionId: invoice.subscription as string | null,
+      subscriptionId: (invoice as any).subscription as string | null,
     }));
 
     logger.info('Billing history fetched', {

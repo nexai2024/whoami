@@ -94,7 +94,10 @@ async function main() {
       console.log(`  ✓ Plan "${planData.name}" already exists`);
     } else {
       const created = await prisma.plan.create({
-        data: planData,
+        data: {
+          ...planData,
+          planEnum: planData.planEnum as any, // Type assertion for enum
+        },
       });
       createdPlans[planData.planEnum] = created;
       console.log(`  ✓ Created plan "${planData.name}"`);
