@@ -107,7 +107,14 @@ const EnhancedPageBuilder = () => {
     if (!pageId) return;
     async function fetchBlocks() {
       try {
-        const res = await fetch(`/api/pages/${pageId}/blocks`);
+        const userId = user?.id || currUser?.id;
+        const headers = {};
+        if (userId) {
+          headers['x-user-id'] = userId;
+        }
+        const res = await fetch(`/api/pages/${pageId}/blocks`, {
+          headers
+        });
         if (res.ok) {
           const data = await res.json();
           setBlocks(data);
@@ -130,8 +137,11 @@ const EnhancedPageBuilder = () => {
         console.error('Failed to fetch blocks:', err);
       }
     }
-    fetchBlocks();
-  }, [searchParams]);
+    // Only fetch blocks if we have a page ID and user is available
+    if (pageId && (user?.id || currUser?.id)) {
+      fetchBlocks();
+    }
+  }, [searchParams, user?.id, currUser?.id]);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -225,16 +235,21 @@ const EnhancedPageBuilder = () => {
     };
 
     if (pageId) {
-      loadPageData(pageId);
-    } else if (isNew && !pageData?.id && user?.id) {
+      // Wait for user to be available before loading page data
+      if (currUser?.id || user?.id) {
+        loadPageData(pageId);
+      }
+    } else if (isNew && !pageData?.id && (user?.id || currUser?.id)) {
       initializeNewPage();
     }
-  }, [pageId, isNew, user?.id, pageData?.id, router]);
+  }, [pageId, isNew, user?.id, currUser?.id, pageData?.id, router]);
 
   const loadPageData = async (pageId) => {
     try {
       setLoading(true);
-      const data = await PageService.getPageById(pageId);
+      // Pass user ID to allow access to unpublished pages (use currUser directly if user state not set yet)
+      const userId = user?.id || currUser?.id;
+      const data = await PageService.getPageById(pageId, userId);
       
       // Map API response to component structure
       // API returns 'pageHeader' but component expects 'headerData'
