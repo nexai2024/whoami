@@ -20,12 +20,9 @@ export default async function middleware(req: Request) {
       '/api/funnels/public', // Public funnel access
       '/api/courses/slug', // Public course landing pages (published courses)
       '/api/pages/public', // Public page access (if needed)
-      '/api/webhooks/stack/user/sync', // Stack user sync webhook
+      '/api/webhooks/stack/user/sync', // Stack user sync webhook    // Also allow GET requests to /api/pages/[pageId] for public page viewing
     ];
-
-    // Check if this is a public route
-    // Also allow GET requests to /api/pages/[pageId] for public page viewing
-    const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route)) ||
+      const isPublicRoute = publicRoutes.some(route => url.pathname.startsWith(route)) ||
       (req.method === 'GET' && /^\/api\/pages\/[^\/]+$/.test(url.pathname));
 
     try {

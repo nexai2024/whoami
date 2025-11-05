@@ -284,7 +284,12 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
                 
                 <button
                   onClick={handleEnroll}
-                  disabled={enrolling || (!user && !email) || (user && course.accessType === 'EMAIL_GATE' && !email)}
+                  disabled={
+                    enrolling ||
+                    (!user && !email) ||
+                    (user && course.accessType === 'EMAIL_GATE' && !email) ||
+                    false // make sure 'disabled' is boolean, not null
+                  }
                   className="w-full bg-indigo-600 text-white px-6 py-4 rounded-lg hover:bg-indigo-700 transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {enrolling ? 'Processing...' : (
