@@ -106,6 +106,15 @@ export default function Sidebar() {
       ]
     },
     {
+      id: 'coach',
+      name: 'Coach',
+      icon: FiUser,
+      links: [
+        { name: 'Availability', href: '/coach/availability', icon: FiCalendar },
+        { name: 'Bookings', href: '/coach/bookings', icon: FiCalendar }
+      ]
+    },
+    {
       id: 'admin',
       name: 'Admin',
       icon: FiShield,

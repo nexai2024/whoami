@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import * as FiIcons from 'react-icons/fi';
+const { FiUser: FiUserIcon } = FiIcons;
 import SafeIcon from '../common/SafeIcon';
 import FileUpload from './FileUpload';
 import DomainSubdomainSetup from './DomainSubdomainSetup';
+import CoachSettings from './CoachSettings';
 import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
 import { useUser } from '@stackframe/stack';
@@ -16,6 +19,7 @@ const {
 
 const Settings = () => {
   const stackUser = useUser();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +46,7 @@ const Settings = () => {
     { id: 'profile', label: 'Profile', icon: FiUser },
     { id: 'account', label: 'Account', icon: FiSettings },
     { id: 'billing', label: 'Billing', icon: FiCreditCard },
+    { id: 'coach', label: 'Coach', icon: FiUserIcon },
     { id: 'domains', label: 'Domains', icon: FiGlobe },
     { id: 'privacy', label: 'Privacy', icon: FiShield },
     { id: 'notifications', label: 'Notifications', icon: FiBell }
@@ -438,7 +443,13 @@ const Settings = () => {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    if (tab.id === 'billing') {
+                      router.push('/settings/billing');
+                    } else {
+                      setActiveTab(tab.id);
+                    }
+                  }}
                   className={`w-full flex items-center gap-3 px-4 py-3 text-left rounded-lg transition-colors ${
                     activeTab === tab.id
                       ? 'bg-indigo-100 text-indigo-700 font-medium'
@@ -457,10 +468,10 @@ const Settings = () => {
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               {activeTab === 'profile' && renderProfileTab()}
               {activeTab === 'account' && renderAccountTab()}
+              {activeTab === 'coach' && <CoachSettings />}
               {activeTab === 'billing' && (
                 <div className="text-center py-12">
-                  <SafeIcon name={undefined}  icon={FiCreditCard} className="text-gray-400 text-4xl mx-auto mb-4" />
-                  <p className="text-gray-600">Billing settings coming soon</p>
+                  <p className="text-gray-600">Redirecting to billing...</p>
                 </div>
               )}
               {activeTab === 'domains' && (
