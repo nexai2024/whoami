@@ -3,17 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from "@stackframe/stack";
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { FiCheckCircle, FiLock, FiChevronLeft, FiChevronRight, FiAlertCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 interface CourseLearnPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 export default function CourseLearnPage({ params }: CourseLearnPageProps) {
-  const { slug } = params;
+  const [slug, setSlug] = useState<string>('');
   const user = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,19 +29,49 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [tokenEnrollment, setTokenEnrollment] = useState<any>(null);
 
+  // Resolve params promise - params is a Promise in Next.js 15+
   useEffect(() => {
+    console.log('params');
+    let isMounted = true;
+    
+    async function loadSlug() {
+      try {
+        const resolvedParams = await params;
+        if (isMounted) {
+          setSlug(resolvedParams.slug);
+        }
+      } catch (error) {
+        console.error('Error resolving params:', error);
+        if (isMounted) {
+          toast.error('Failed to load course page');
+        }
+      }
+    }
+    
+    loadSlug();
+    
+    return () => {
+      isMounted = false;
+    };
+  });
+
+  useEffect(() => {
+    console.log('slug', slug);
+    if (!slug) return; // Wait for slug to be resolved
     // Check for access token in URL
     const token = searchParams.get('token');
     if (token) {
       setAccessToken(token);
       validateTokenAndLoad(token);
     } else if (user) {
+      console.log('loading course and progress for user', user);
       loadCourseAndProgress();
     } else {
+      console.log('no user, redirecting to course landing page');
       toast.error('Please log in or use a valid access link');
       router.push(`/c/${slug}`);
     }
-  }, [slug, user, searchParams]);
+  }, [slug, user, searchParams, router]);
 
   // Reset quiz state when changing lessons
   useEffect(() => {
@@ -108,7 +139,7 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
   const loadCourseAndProgress = async () => {
     try {
       setLoading(true);
-
+      console.log('loading course and progress 2 for user', user);
       // Load course
       const courseResponse = await fetch(`/api/courses/slug/${slug}`, {
         headers: { 'x-user-id': user?.id || '' }
@@ -438,18 +469,8 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Authentication Required</h1>
-          <p className="text-gray-600">You need to be logged in to access this course.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
+  // Show loading while slug is being resolved or course is loading
+  if (!slug || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -467,6 +488,27 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
     );
   }
 
+  // Check if user is authenticated OR has a valid token
+  const hasAccess = !!user || !!tokenEnrollment;
+
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+          <FiLock size={48} className="mx-auto text-red-500 mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600 mb-4">You need to be enrolled or use a valid access link to view this course.</p>
+          <button
+            onClick={() => router.push(`/c/${slug}`)}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Go to Course Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const currentLesson = course.lessons[currentLessonIndex];
   const isCurrentLessonUnlocked = isLessonUnlocked(currentLesson);
   const completedLessons = progress?.lessonsCompleted?.length || 0;
@@ -475,6 +517,11 @@ export default function CourseLearnPage({ params }: CourseLearnPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {accessToken && !user && (
+        <div className="bg-yellow-100 text-yellow-800 text-center py-2 text-sm absolute top-0 left-0 right-0 z-10">
+          You are viewing this course via an access link. <Link href="/handler/sign-up" className="underline">Create an account</Link> to save your progress permanently.
+        </div>
+      )}
       {/* Sidebar */}
       <aside className="w-80 bg-white border-r flex-shrink-0 overflow-y-auto">
         <div className="p-6 border-b">

@@ -14,7 +14,7 @@ interface CourseLandingPageProps {
 }
 
 export default function CourseLandingPage({ params }: CourseLandingPageProps) {
-  const { slug } = params;
+  
   const user = useUser();
   const router = useRouter();
   const [course, setCourse] = useState<any>(null);
@@ -22,7 +22,7 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
   const [enrolling, setEnrolling] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-
+  const [slug, setSlug] = useState<string>('');
   useEffect(() => {
     loadCourse();
   }, [slug, user]);
@@ -30,6 +30,8 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
   const loadCourse = async () => {
     try {
       setLoading(true);
+      const { slug } = await params;
+      setSlug(slug);
       const response = await fetch(`/api/courses/slug/${slug}`, {
         headers: user ? { 'x-user-id': user.id } : {}
       });
