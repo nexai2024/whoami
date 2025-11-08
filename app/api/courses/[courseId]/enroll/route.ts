@@ -3,7 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { generateAccessToken, getTokenExpiration } from '@/lib/utils/courseAccess';
 import { sendCourseEnrollmentConfirmation, sendCoachNewEnrollmentNotification } from '@/lib/services/emailService';
 
@@ -144,6 +144,25 @@ export async function POST(
       const subscriberPageId = course.leadMagnetId || `course:${courseId}`;
       const subscriberPageType = course.leadMagnetId ? 'LEAD_MAGNET' : 'COURSE';
 
+      const subscriberCreateData = Prisma.validator<Prisma.EmailSubscriberUncheckedCreateInput>()({
+        pageId: subscriberPageId,
+        pageType: subscriberPageType,
+        userId: course.userId,
+        email: normalizedEmail,
+        name,
+        source: `course:${courseId}`,
+        tags: subscriberTags,
+      });
+
+      const subscriberUpdateData = Prisma.validator<Prisma.EmailSubscriberUncheckedUpdateInput>()({
+        pageType: subscriberPageType,
+        userId: course.userId,
+        tags: {
+          push: subscriberTags,
+        },
+        source: `course:${courseId}`,
+      });
+
       await prisma.emailSubscriber.upsert({
         where: {
           pageId_email: {
@@ -151,23 +170,8 @@ export async function POST(
             email: normalizedEmail
           }
         },
-        create: {
-          pageId: subscriberPageId,
-          pageType: subscriberPageType,
-          userId: course.userId,
-          email: normalizedEmail,
-          name,
-          source: `course:${courseId}`,
-          tags: subscriberTags
-        },
-        update: {
-          pageType: subscriberPageType,
-          userId: course.userId,
-          tags: {
-            push: subscriberTags
-          },
-          source: `course:${courseId}`
-        }
+        create: subscriberCreateData,
+        update: subscriberUpdateData,
       });
     }
 
