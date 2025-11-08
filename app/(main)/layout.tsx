@@ -5,7 +5,6 @@ import { stackClientApp } from "../../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import './globals.css';
 import { AuthProvider } from "@/lib/auth/AuthContext"
-import { Suspense } from 'react';
 import { ensureOnboarded } from "./onboarding-functions";
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 import ErrorConsole from '../../components/ErrorConsole';
@@ -15,22 +14,41 @@ import { HelpButton } from '@/components/tours/HelpButton';
 import Header from '@/components/Header';
 import ContentWrapper from '@/components/ContentWrapper';
 import { useUser } from "@stackframe/stack";
+import { usePathname } from 'next/navigation';
 
 keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const user = useUser();
+  const pathname = usePathname();
+
+  const publicRoutePatterns = [
+    /^\/magnet(\/|$)/,
+    /^\/f(\/|$)/,
+    /^\/p(\/|$)/,
+    /^\/book(\/|$)/,
+    /^\/c\/[^/]+$/, // course landing pages
+  ];
+
+  const isPublicRoute = pathname
+    ? publicRoutePatterns.some((pattern) => pattern.test(pathname))
+    : false;
+
+  const showNavigation = !isPublicRoute;
 
   return (
     <>
- 
-      <Header />
-      <ContentWrapper hasSidebar={!!user}>
+      {showNavigation && <Header />}
+      <ContentWrapper hasSidebar={showNavigation && !!user}>
         {children}
       </ContentWrapper>
-      <ErrorConsole />
-        <TourTooltip />
-        <HelpButton />
+      {showNavigation && <ErrorConsole />}
+      {showNavigation && (
+        <>
+          <TourTooltip />
+          <HelpButton />
+        </>
+      )}
     </>
   );
 }

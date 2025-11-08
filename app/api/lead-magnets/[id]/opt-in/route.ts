@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, MagnetStatus } from '@prisma/client';
 import { randomBytes } from 'crypto';
+import { sendLeadMagnetDelivery } from '@/lib/services/emailService';
 
 const prisma = new PrismaClient();
 
@@ -53,42 +54,75 @@ export async function POST(
     }
 
     // Check if email already opted in
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const subscriber = await prisma.emailSubscriber.upsert({
+      where: {
+        pageId_email: {
+          pageId: leadMagnetId,
+          email: normalizedEmail,
+        },
+      },
+      create: {
+        email: normalizedEmail,
+        pageId: leadMagnetId,
+        pageType: 'LEAD_MAGNET',
+        userId: leadMagnet.userId,
+        name: name || null,
+        source: 'lead-magnet-opt-in',
+        tags: [
+          'lead-magnet',
+          ...(leadMagnet.slug ? [`magnet:${leadMagnet.slug}`] : []),
+        ],
+        isActive: true,
+      },
+      update: {
+        name: name || undefined,
+        pageType: 'LEAD_MAGNET',
+        userId: leadMagnet.userId,
+        source: 'lead-magnet-opt-in',
+        isActive: true,
+      },
+    });
+
     const existingDelivery = await prisma.leadMagnetDelivery.findFirst({
       where: {
         leadMagnetId,
-        email: email.toLowerCase(),
+        email: normalizedEmail,
       },
     });
 
     let delivery;
+    const tokenExpiresAt = new Date();
+    tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 30);
+    const deliveryToken = randomBytes(16).toString('hex');
 
     if (existingDelivery) {
       // Resend email to existing subscriber (don't create new record)
-      delivery = existingDelivery;
+      console.log(`Resending lead magnet to existing subscriber: ${email}`);
 
-      // Update emailSent timestamp
-      await prisma.leadMagnetDelivery.update({
+      delivery = await prisma.leadMagnetDelivery.update({
         where: { id: existingDelivery.id },
         data: {
           updatedAt: new Date(),
+          name,
+          deliveryToken,
+          tokenExpiresAt,
+          emailSent: true,
+          emailSubscriberId: subscriber.id,
         },
       });
-
-      console.log(`Resending lead magnet to existing subscriber: ${email}`);
-
-      // Calculate token expiration (30 days from now)
-      const tokenExpiresAt = new Date();
-      tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 30);
-
+    } else {
       // Create new delivery record
       delivery = await prisma.leadMagnetDelivery.create({
         data: {
           leadMagnetId,
-          email: email.toLowerCase(),
+          email: normalizedEmail,
           name,
-          deliveryToken: crypto.randomUUID(),
+          deliveryToken,
           tokenExpiresAt,
           emailSent: true,
+          emailSubscriberId: subscriber.id,
         },
       });
 
@@ -132,22 +166,30 @@ async function sendLeadMagnetDeliveryEmail(delivery: any, leadMagnet: any) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const downloadUrl = `${baseUrl}/api/lead-magnets/download/${delivery.deliveryToken}`;
 
-  // TODO: Implement actual email service (SendGrid, Resend, etc.)
-  // For now, just log to console
-  console.log('---');
-  console.log('LEAD MAGNET DELIVERY EMAIL');
-  console.log(`To: ${delivery.email}`);
-  console.log(`Subject: Your ${leadMagnet.name} is ready to download!`);
-  console.log('---');
-  console.log(`Hi ${delivery.name || 'there'}!`);
-  console.log('');
-  console.log(`Thanks for requesting "${leadMagnet.name}".`);
-  console.log('');
-  console.log('Click the link below to download:');
-  console.log(downloadUrl);
-  console.log('');
-  console.log('Link expires in 30 days.');
-  console.log('---');
+  try {
+    await sendLeadMagnetDelivery(delivery.email, {
+      recipientName: delivery.name || undefined,
+      magnetName: leadMagnet.name,
+      downloadUrl,
+      expiresIn: '30 days',
+    });
+
+    await prisma.leadMagnetDelivery.update({
+      where: { id: delivery.id },
+      data: {
+        delivered: true,
+        deliveredAt: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error('Failed to send lead magnet email via provider, logging fallback:', error);
+    console.log('---');
+    console.log('LEAD MAGNET DELIVERY EMAIL (FALLBACK LOG)');
+    console.log(`To: ${delivery.email}`);
+    console.log(`Subject: Your ${leadMagnet.name} is ready to download!`);
+    console.log(downloadUrl);
+    console.log('---');
+  }
 }
   // Email sending functionality not implemented yet.
   // In production, integrate with an email service like SendGrid, Resend, or SES here.

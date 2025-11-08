@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Lead, PipelineStage } from '@/types/leadData';
+import { Lead, PipelineStage, LeadCreateInput } from '@/types/leadData';
 import styles from './LeadManager.module.css';
 
 interface LeadDetailModalProps {
   lead: Lead | null;
   stages: PipelineStage[];
   isCreating: boolean;
-  onUpdate: (leadId: string, updates: Partial<Lead>) => void;
-  onCreate: (leadData: Omit<Lead, 'id'>) => void;
-  onDelete: (leadId: string) => void;
+  onUpdate: (leadId: string, updates: Partial<Lead>) => Promise<void> | void;
+  onCreate: (leadData: LeadCreateInput) => Promise<void> | void;
+  onDelete: (leadId: string) => Promise<void> | void;
   onClose: () => void;
 }
 
@@ -34,6 +34,9 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
     tags: [],
     source: '',
     lastContacted: new Date().toISOString().split('T')[0],
+    company: '',
+    notes: '',
+    estimatedValue: undefined,
   });
   const [newTag, setNewTag] = useState('');
 
@@ -47,7 +50,10 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         stageId: lead.stageId,
         tags: lead.tags || [],
         source: lead.source || '',
-        lastContacted: lead.lastContacted.split('T')[0], // Convert to date input format
+        lastContacted: (lead.lastContacted || new Date().toISOString()).split('T')[0], // Convert to date input format
+        company: lead.company || '',
+        notes: lead.notes || '',
+        estimatedValue: typeof lead.estimatedValue === 'number' ? lead.estimatedValue : undefined,
       });
     } else if (isCreating) {
       setFormData({
@@ -58,6 +64,9 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         tags: [],
         source: '',
         lastContacted: new Date().toISOString().split('T')[0],
+        company: '',
+        notes: '',
+        estimatedValue: undefined,
       });
     }
   }, [lead, isCreating, stages]);
@@ -87,7 +96,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   }, []);
 
   // Handle form submission
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.email) {
@@ -95,7 +104,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       return;
     }
 
-    const leadData = {
+    const leadData: LeadCreateInput = {
       name: formData.name,
       email: formData.email,
       phone: formData.phone,
@@ -103,20 +112,37 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
       tags: formData.tags,
       source: formData.source,
       lastContacted: formData.lastContacted ? `${formData.lastContacted}T00:00:00.000Z` : new Date().toISOString(),
+      company: formData.company,
+      notes: formData.notes,
+      estimatedValue:
+        typeof formData.estimatedValue === 'number'
+          ? formData.estimatedValue
+          : formData.estimatedValue == null
+          ? null
+          : Number(formData.estimatedValue),
     };
 
-    if (isCreating) {
-      onCreate(leadData as Omit<Lead, 'id'>);
-    } else if (lead) {
-      onUpdate(lead.id, leadData);
-      setIsEditing(false);
+    try {
+      if (isCreating) {
+        await onCreate(leadData);
+      } else if (lead) {
+        await onUpdate(lead.id, leadData);
+        setIsEditing(false);
+      }
+    } catch (submissionError) {
+      console.error('Error saving lead:', submissionError);
+      return;
     }
   }, [formData, isCreating, lead, onCreate, onUpdate]);
 
   // Handle delete confirmation
-  const handleDelete = useCallback(() => {
+  const handleDelete = useCallback(async () => {
     if (lead && window.confirm('Are you sure you want to delete this lead?')) {
-      onDelete(lead.id);
+      try {
+        await onDelete(lead.id);
+      } catch (deleteError) {
+        console.error('Error deleting lead:', deleteError);
+      }
     }
   }, [lead, onDelete]);
 
@@ -220,6 +246,50 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
               )}
             </div>
 
+            {/* Company field */}
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Company</label>
+              {isEditing || isCreating ? (
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  value={formData.company || ''}
+                  onChange={(e) => handleFieldChange('company', e.target.value)}
+                />
+              ) : (
+                <div className={styles.fieldValue}>{formData.company || '-'}</div>
+              )}
+            </div>
+
+            {/* Estimated value field */}
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Estimated Value</label>
+              {isEditing || isCreating ? (
+                <input
+                  type="number"
+                  className={styles.formInput}
+                  value={
+                    typeof formData.estimatedValue === 'number' && !Number.isNaN(formData.estimatedValue)
+                      ? formData.estimatedValue
+                      : formData.estimatedValue ?? ''
+                  }
+                  onChange={(e) =>
+                    handleFieldChange(
+                      'estimatedValue',
+                      e.target.value === '' ? undefined : Number(e.target.value)
+                    )
+                  }
+                  min={0}
+                />
+              ) : (
+                <div className={styles.fieldValue}>
+                  {typeof formData.estimatedValue === 'number' && !Number.isNaN(formData.estimatedValue)
+                    ? `$${formData.estimatedValue.toLocaleString()}`
+                    : '-'}
+                </div>
+              )}
+            </div>
+
             {/* Last contacted field */}
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Last Contacted</label>
@@ -234,6 +304,21 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                 <div className={styles.fieldValue}>
                   {formData.lastContacted ? new Date(formData.lastContacted).toLocaleDateString() : '-'}
                 </div>
+              )}
+            </div>
+
+            {/* Notes field */}
+            <div className={styles.formGroup}>
+              <label className={styles.formLabel}>Notes</label>
+              {isEditing || isCreating ? (
+                <textarea
+                  className={styles.formInput}
+                  value={formData.notes || ''}
+                  onChange={(e) => handleFieldChange('notes', e.target.value)}
+                  rows={4}
+                />
+              ) : (
+                <div className={styles.fieldValue}>{formData.notes || '-'}</div>
               )}
             </div>
 
@@ -319,7 +404,10 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                             stageId: lead.stageId,
                             tags: lead.tags || [],
                             source: lead.source || '',
-                            lastContacted: lead.lastContacted.split('T')[0],
+                            lastContacted: (lead.lastContacted || new Date().toISOString()).split('T')[0],
+                            company: lead.company || '',
+                            notes: lead.notes || '',
+                            estimatedValue: typeof lead.estimatedValue === 'number' ? lead.estimatedValue : undefined,
                           });
                         }
                       }

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Lead, PipelineStage, LeadManagerProps, ViewMode } from '@/types/leadData';
+import { Lead, PipelineStage, LeadManagerProps, ViewMode, LeadCreateInput } from '@/types/leadData';
 import KanbanView from './KanbanView';
 import ListView from './ListView';
 import LeadDetailModal from './LeadDetailModal';
@@ -57,19 +57,24 @@ const LeadManager: React.FC<LeadManagerProps> = ({
   }, []);
 
   // Handle lead creation
-  const handleCreateLead = useCallback((leadData: Omit<Lead, 'id'>) => {
-    onLeadCreate(leadData);
+  const handleCreateLead = useCallback(async (leadData: LeadCreateInput) => {
+    await onLeadCreate(leadData);
     handleModalClose();
   }, [onLeadCreate, handleModalClose]);
 
   // Handle lead update
   const handleUpdateLead = useCallback((leadId: string, updates: Partial<Lead>) => {
-    onLeadUpdate(leadId, updates);
+    const result = onLeadUpdate(leadId, updates);
+    if (result && typeof (result as Promise<unknown>).catch === 'function') {
+      (result as Promise<unknown>).catch((error) => {
+        console.error('Error updating lead from LeadManager:', error);
+      });
+    }
   }, [onLeadUpdate]);
 
   // Handle lead deletion
-  const handleDeleteLead = useCallback((leadId: string) => {
-    onLeadDelete(leadId);
+  const handleDeleteLead = useCallback(async (leadId: string) => {
+    await onLeadDelete(leadId);
     handleModalClose();
   }, [onLeadDelete, handleModalClose]);
 

@@ -6,12 +6,12 @@ import { logger } from '@/lib/utils/logger';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { email, pageId, blockId } = body;
+    const { email, pageId, blockId, pageType, userId, name, tags } = body;
 
     // Validation
-    if (!email || !pageId || !blockId) {
+    if (!email || !pageId || !pageType || !userId) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: email, pageId, blockId' },
+        { success: false, error: 'Missing required fields: email, pageId, pageType, userId' },
         { status: 400 }
       );
     }
@@ -25,17 +25,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Check if subscriber already exists for this page
     const existingSubscriber = await prisma.emailSubscriber.findUnique({
       where: {
         pageId_email: {
           pageId,
-          email,
+          email: normalizedEmail,
         },
       },
     });
 
     if (existingSubscriber) {
+      // Update metadata if needed
+      await prisma.emailSubscriber.update({
+        where: { id: existingSubscriber.id },
+        data: {
+          pageType,
+          userId,
+          source: blockId ?? existingSubscriber.source,
+          ...(name ? { name } : {}),
+          ...(Array.isArray(tags) && tags.length
+            ? { tags: Array.from(new Set([...(existingSubscriber.tags ?? []), ...tags])) }
+            : {}),
+        },
+      });
+
       // Return success but indicate already subscribed
       return NextResponse.json(
         {
@@ -54,9 +70,13 @@ export async function POST(req: NextRequest) {
     // Create new subscriber
     const subscriber = await prisma.emailSubscriber.create({
       data: {
-        email,
+        email: normalizedEmail,
         pageId,
-        source: blockId, // Store blockId in source field
+        pageType,
+        userId,
+        name: name || null,
+        source: blockId ?? null, // Store blockId in source field
+        tags: Array.isArray(tags) ? tags : [],
         isActive: true,
       },
     });

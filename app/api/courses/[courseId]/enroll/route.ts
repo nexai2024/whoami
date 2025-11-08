@@ -26,6 +26,8 @@ export async function POST(
       );
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Get course details with instructor info
     const course = await prisma.course.findUnique({
       where: { id: courseId },
@@ -73,7 +75,7 @@ export async function POST(
           where: {
             courseId_email: {
               courseId,
-              email
+              email: normalizedEmail
             }
           }
         });
@@ -105,7 +107,7 @@ export async function POST(
       data: {
         courseId,
         userId: userId || null,
-        email,
+        email: normalizedEmail,
         name,
         enrollmentSource: body.source || 'direct',
         paymentStatus: course.accessType === 'PAID' ? 'completed' : null,
@@ -138,24 +140,33 @@ export async function POST(
 
     // Add to email subscriber if it's a lead magnet
     if (course.isLeadMagnet && course.requiresEmail) {
+      const subscriberTags = ['course-enrolled', `course-${course.slug}`];
+      const subscriberPageId = course.leadMagnetId || `course:${courseId}`;
+      const subscriberPageType = course.leadMagnetId ? 'LEAD_MAGNET' : 'COURSE';
+
       await prisma.emailSubscriber.upsert({
         where: {
           pageId_email: {
-            pageId: 'lead-magnet', // You may want to link this to actual page
-            email
+            pageId: subscriberPageId,
+            email: normalizedEmail
           }
         },
         create: {
-          pageId: 'lead-magnet',
-          email,
+          pageId: subscriberPageId,
+          pageType: subscriberPageType,
+          userId: course.userId,
+          email: normalizedEmail,
           name,
           source: `course:${courseId}`,
-          tags: ['course-enrolled', `course-${course.slug}`]
+          tags: subscriberTags
         },
         update: {
+          pageType: subscriberPageType,
+          userId: course.userId,
           tags: {
-            push: ['course-enrolled', `course-${course.slug}`]
-          }
+            push: subscriberTags
+          },
+          source: `course:${courseId}`
         }
       });
     }
@@ -170,7 +181,7 @@ export async function POST(
 
     // Send enrollment confirmation email to student
     try {
-      await sendCourseEnrollmentConfirmation(email, {
+      await sendCourseEnrollmentConfirmation(normalizedEmail, {
         recipientName: name || undefined,
         courseName: course.title,
         courseSlug: course.slug,
@@ -191,7 +202,7 @@ export async function POST(
         await sendCoachNewEnrollmentNotification(coachEmail, {
           coachName: course.user?.profile?.displayName || course.user?.profile?.username || undefined,
           studentName: name || undefined,
-          studentEmail: email,
+          studentEmail: normalizedEmail,
           courseName: course.title,
           courseId: course.id,
           isPaid: course.accessType === 'PAID',

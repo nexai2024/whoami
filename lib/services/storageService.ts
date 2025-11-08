@@ -1,26 +1,23 @@
 /**
  * Storage Service
- * Handles file uploads to cloud storage (S3/R2)
+ * Handles file uploads using UploadThing with a local fallback
  * Used by Content Repurposing and Lead Magnet features
  */
 
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import crypto from 'crypto';
 import path from 'path';
+import fs from 'fs/promises';
+import { existsSync, mkdirSync } from 'fs';
+import { File as NodeFile } from 'buffer';
+import { UTApi } from 'uploadthing/server';
 
-// Initialize S3 client (compatible with both AWS S3 and Cloudflare R2)
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'auto',
-  endpoint: process.env.S3_ENDPOINT, // Optional, for R2
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-});
+const isUploadThingConfigured =
+  Boolean(process.env.UPLOADTHING_SECRET) && Boolean(process.env.UPLOADTHING_APP_ID);
 
-const BUCKET_NAME = process.env.S3_BUCKET_NAME || '';
-const CDN_URL = process.env.CDN_URL || '';
+const STORAGE_MODE: 'uploadthing' | 'local' = isUploadThingConfigured ? 'uploadthing' : 'local';
+
+// Initialize UploadThing API client when credentials are present
+const utapi = isUploadThingConfigured ? new UTApi() : null;
 
 export interface UploadOptions {
   folder?: string;
@@ -56,6 +53,37 @@ function generateUniqueFilename(originalFilename: string): string {
 /**
  * Upload a file buffer to storage
  */
+async function uploadToLocal(
+  buffer: Buffer,
+  originalFilename: string,
+  options: UploadOptions
+): Promise<UploadResult> {
+  const {
+    folder = 'uploads',
+    filename = generateUniqueFilename(originalFilename),
+    contentType = 'application/octet-stream',
+  } = options;
+
+  const uploadDir = path.join(process.cwd(), 'public', folder);
+
+  if (!existsSync(uploadDir)) {
+    mkdirSync(uploadDir, { recursive: true });
+  }
+
+  const filePath = path.join(uploadDir, filename);
+  await fs.writeFile(filePath, buffer);
+
+  const key = `${folder}/${filename}`;
+  const urlPath = `/${key}`;
+
+  return {
+    key,
+    url: urlPath,
+    size: buffer.length,
+    contentType,
+  };
+}
+
 export async function uploadFile(
   buffer: Buffer,
   originalFilename: string,
@@ -71,31 +99,38 @@ export async function uploadFile(
 
   const key = `${folder}/${filename}`;
 
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    Body: buffer,
-    ContentType: contentType,
-    ACL: isPublic ? 'public-read' : 'private',
-    Metadata: metadata,
-  });
+  if (STORAGE_MODE === 'uploadthing' && utapi) {
+    const uploadFilename = filename || generateUniqueFilename(originalFilename);
+    const fileForUpload = new NodeFile([buffer], uploadFilename, { type: contentType });
+    const uploadResponse = await utapi.uploadFiles(fileForUpload);
 
-  try {
-    await s3Client.send(command);
+    if (uploadResponse.error || !uploadResponse.data) {
+      throw new Error(uploadResponse.error?.message || 'UploadThing upload failed');
+    }
 
-    const url = CDN_URL
-      ? `${CDN_URL}/${key}`
-      : `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
+    const uploadedFile = Array.isArray(uploadResponse.data)
+      ? uploadResponse.data[0]
+      : uploadResponse.data;
 
     return {
-      key,
-      url,
-      size: buffer.length,
-      contentType,
+      key: uploadedFile.key,
+      url: uploadedFile.url,
+      size: uploadedFile.size,
+      contentType: uploadedFile.type || contentType,
     };
-  } catch (error) {
-    throw new Error(`Failed to upload file: ${(error as Error).message}`);
   }
+
+  if (STORAGE_MODE === 'local') {
+    return uploadToLocal(buffer, originalFilename, {
+      folder,
+      filename,
+      contentType,
+      isPublic,
+      metadata,
+    });
+  }
+
+  throw new Error('Storage client not configured');
 }
 
 /**
@@ -136,30 +171,11 @@ export async function generateUploadUrl(
   contentType: string,
   options: UploadOptions = {}
 ): Promise<{ uploadUrl: string; key: string; publicUrl: string }> {
-  const { folder = 'uploads' } = options;
-  const uniqueFilename = generateUniqueFilename(filename);
-  const key = `${folder}/${uniqueFilename}`;
+  if (STORAGE_MODE === 'uploadthing') {
+    throw new Error('Direct upload URLs are managed client-side via UploadThing components.');
+  }
 
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-    ContentType: contentType,
-    ACL: options.isPublic !== false ? 'public-read' : 'private',
-  });
-
-  const uploadUrl = await getSignedUrl(s3Client, command, {
-    expiresIn: 3600, // 1 hour
-  });
-
-  const publicUrl = CDN_URL
-    ? `${CDN_URL}/${key}`
-    : `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
-
-  return {
-    uploadUrl,
-    key,
-    publicUrl,
-  };
+  throw new Error('Direct upload URLs are not supported without UploadThing configuration.');
 }
 
 /**
@@ -169,39 +185,48 @@ export async function generateDownloadUrl(
   key: string,
   expiresIn: number = 3600
 ): Promise<string> {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
+  if (STORAGE_MODE === 'uploadthing') {
+    return `https://utfs.io/f/${key}`;
+  }
 
-  return getSignedUrl(s3Client, command, { expiresIn });
+  if (STORAGE_MODE === 'local') {
+    return `/${key}`;
+  }
+
+  throw new Error('Download URLs are not available without storage configuration.');
 }
 
 /**
  * Delete a file from storage
  */
 export async function deleteFile(key: string): Promise<void> {
-  const command = new DeleteObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: key,
-  });
-
-  try {
-    await s3Client.send(command);
-  } catch (error) {
-    throw new Error(`Failed to delete file: ${(error as Error).message}`);
+  if (STORAGE_MODE === 'uploadthing' && utapi) {
+    await utapi.deleteFiles(key);
+    return;
   }
+
+  if (STORAGE_MODE === 'local') {
+    const filePath = path.join(process.cwd(), 'public', key);
+    await fs.unlink(filePath).catch(() => undefined);
+    return;
+  }
+
+  throw new Error('Storage client not configured');
 }
 
 /**
  * Get public URL for a file key
  */
 export function getPublicUrl(key: string): string {
-  if (CDN_URL) {
-    return `${CDN_URL}/${key}`;
+  if (STORAGE_MODE === 'uploadthing') {
+    return `https://utfs.io/f/${key}`;
   }
 
-  return `https://${BUCKET_NAME}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`;
+  if (STORAGE_MODE === 'local') {
+    return `/${key}`;
+  }
+
+  throw new Error('Storage client not configured');
 }
 
 /**
@@ -247,11 +272,7 @@ export function validateFileSize(
  * Check if storage is configured
  */
 export function isConfigured(): boolean {
-  return !!(
-    process.env.AWS_ACCESS_KEY_ID &&
-    process.env.AWS_SECRET_ACCESS_KEY &&
-    BUCKET_NAME
-  );
+  return STORAGE_MODE === 'uploadthing';
 }
 
 // export default {

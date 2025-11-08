@@ -33,11 +33,11 @@ model User {
   postTemplates       PostTemplate[]
   campaignTemplates   CampaignTemplate[]
   onboarding          UserOnboarding?
-  pageTemplates       PageTemplate[]
+  pageTemplates       PageTemplate[] 
   courses             Course[]
   workflows           Workflow[]
   funnels             Funnel[]
-
+  leads               EmailSubscriber[]
   // Coach platform relations
   availabilityWindows AvailabilityWindow[]
   blackoutDates       BlackoutDate[]
@@ -51,7 +51,7 @@ model Profile {
   userId String @unique
 
   username    String  @unique
-  displayName String?
+  displayName String
   bio         String?
   avatar      String?
   theme       String  @default("default")
@@ -305,15 +305,26 @@ model Sale {
 model EmailSubscriber {
   id     String  @id @default(cuid())
   pageId String
+  pageType String
+  userId String
   email  String
   name   String?
   source String? // Which block they subscribed from
-
+  phone  String?
+  company String?
+  notes   String?
   tags String[] // For segmentation
-
+  pipelineStage LeadStage @default(NEW)
+  lastContactedAt DateTime?
+  lastActivityAt DateTime?
+  estimatedValue Int?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
-
+  user      User @relation(fields: [userId], references: [id])
+  @@index([userId])
+  @@index([userId, pipelineStage])
+  @@index([pipelineStage])
+  @@index([pageId, pageType])
   @@unique([pageId, email])
   @@map("email_subscribers")
 }
@@ -643,6 +654,16 @@ enum BlockType {
   NEWSLETTER
   CUSTOM
   COURSE
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
 }
 
 enum TestStatus {

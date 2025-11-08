@@ -229,16 +229,26 @@ export default function LeadMagnetDashboard() {
       const formDataToSend = new FormData();
       formDataToSend.append('file', file);
 
+      if (!user?.id) {
+        setFormErrors(prev => ({
+          ...prev,
+          file: 'You must be logged in to upload files.'
+        }));
+        return;
+      }
+
       const response = await fetch('/api/upload', {
         method: 'POST',
         headers: {
-          'x-user-id': 'demo-user'
+          'x-user-id': user.id
         },
         body: formDataToSend
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({
+          error: 'Upload failed. Please try again.'
+        }));
         setFormErrors(prev => ({ 
           ...prev, 
           file: errorData.error || 'Upload failed. Please try again.' 
@@ -247,7 +257,13 @@ export default function LeadMagnetDashboard() {
       }
 
       const data = await response.json();
-      setUploadedFileData(data);
+      setUploadedFileData({
+        fileUrl: data.url,
+        fileName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        storageKey: data.key,
+      });
       setFormErrors(prev => ({ ...prev, file: '' }));
     } catch (error) {
       console.error('Upload error:', error);
@@ -266,6 +282,11 @@ export default function LeadMagnetDashboard() {
     const validation = validateForm();
     if (!validation.isValid) {
       setFormErrors(validation.errors);
+      return;
+    }
+
+    if (!user?.id) {
+      toast.error('You must be logged in to create a lead magnet.');
       return;
     }
 
@@ -299,7 +320,7 @@ export default function LeadMagnetDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': 'demo-user'
+          'x-user-id': user.id
         },
         body: JSON.stringify(payload)
       });
@@ -331,10 +352,14 @@ export default function LeadMagnetDashboard() {
   };
 
   const handleViewDetails = async (magnetId: string) => {
+    if (!user?.id) {
+      toast.error('You must be logged in to view lead magnets.');
+      return;
+    }
     setDetailLoading(true);
     try {
       const response = await fetch(`/api/lead-magnets/${magnetId}`, {
-        headers: { 'x-user-id': 'demo-user' }
+        headers: { 'x-user-id': user.id }
       });
       
       if (response.ok) {
@@ -354,10 +379,14 @@ export default function LeadMagnetDashboard() {
   };
 
   const handleEdit = async (magnetId: string) => {
+    if (!user?.id) {
+      toast.error('You must be logged in to edit lead magnets.');
+      return;
+    }
     setDetailLoading(true);
     try {
       const response = await fetch(`/api/lead-magnets/${magnetId}`, {
-        headers: { 'x-user-id': 'demo-user' }
+        headers: { 'x-user-id': user.id }
       });
       
       if (response.ok) {
@@ -429,13 +458,18 @@ export default function LeadMagnetDashboard() {
       return;
     }
 
+    if (!user?.id) {
+      toast.error('You must be logged in to update lead magnets.');
+      return;
+    }
+
     setIsUpdating(true);
     try {
       const response = await fetch(`/api/lead-magnets/${selectedMagnet.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': 'demo-user'
+          'x-user-id': user.id
         },
         body: JSON.stringify(editFormData)
       });
@@ -459,7 +493,11 @@ export default function LeadMagnetDashboard() {
 
   const handleDeleteMagnet = async () => {
     if (!selectedMagnet) return;
-    
+    if (!user?.id) {
+      toast.error('You must be logged in to delete lead magnets.');
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this lead magnet? It will be archived.')) {
       return;
     }
@@ -467,7 +505,7 @@ export default function LeadMagnetDashboard() {
     try {
       const response = await fetch(`/api/lead-magnets/${selectedMagnet.id}`, {
         method: 'DELETE',
-        headers: { 'x-user-id': 'demo-user' }
+        headers: { 'x-user-id': user.id }
       });
 
       if (response.ok) {
@@ -487,12 +525,17 @@ export default function LeadMagnetDashboard() {
   const handlePublish = async (magnetId: string, currentStatus: MagnetStatus) => {
     const newStatus = currentStatus === 'ACTIVE' ? 'DRAFT' : 'ACTIVE';
 
+    if (!user?.id) {
+      toast.error('You must be logged in to update lead magnet status.');
+      return;
+    }
+
     try {
       const response = await fetch(`/api/lead-magnets/${magnetId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': 'demo-user',
+          'x-user-id': user.id,
         },
         body: JSON.stringify({ status: newStatus }),
       });

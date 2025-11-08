@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiMail, FiCheck } from 'react-icons/fi';
 
-const EmailCaptureModal = ({ block, pageId, onClose }) => {
+const EmailCaptureModal = ({ block, pageId, pageType = 'PAGE', ownerId, onClose }) => {
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -65,6 +66,12 @@ const EmailCaptureModal = ({ block, pageId, onClose }) => {
     setIsSubmitting(true);
 
     try {
+      if (!ownerId || !pageType) {
+        setError('Unable to submit at this time. Please try again later.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch('/api/email-subscribers', {
         method: 'POST',
         headers: {
@@ -74,6 +81,10 @@ const EmailCaptureModal = ({ block, pageId, onClose }) => {
           email: trimmedEmail,
           pageId: pageId,
           blockId: block.id,
+          pageType,
+          userId: ownerId,
+          name: block?.data?.nameCaptureEnabled ? name || undefined : undefined,
+          tags: block?.data?.tags || [],
         }),
       });
 

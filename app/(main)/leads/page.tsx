@@ -1,92 +1,211 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import LeadManager from "@/components/lead-management/LeadManager";
-import { Lead, PipelineStage } from "@/types/leadData";
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import LeadManager from '@/components/lead-management/LeadManager';
+import { Lead, PipelineStage, LeadCreateInput } from '@/types/leadData';
+import { useUser } from '@stackframe/stack';
+import toast from 'react-hot-toast';
+
+const DEFAULT_STAGES: PipelineStage[] = [
+  { id: 'new', title: 'New' },
+  { id: 'contacted', title: 'Contacted' },
+  { id: 'qualified', title: 'Qualified' },
+  { id: 'proposal', title: 'Proposal' },
+  { id: 'negotiation', title: 'Negotiation' },
+  { id: 'won', title: 'Won' },
+  { id: 'lost', title: 'Lost' },
+];
 
 export default function LeadsPage() {
-    // Initialize pipeline stages
-    const [stages, setStages] = useState<PipelineStage[]>([
-        { id: 'new', title: 'New' },
-        { id: 'contacted', title: 'Contacted' },
-        { id: 'qualified', title: 'Qualified' },
-        { id: 'proposal', title: 'Proposal' },
-        { id: 'negotiation', title: 'Negotiation' },
-        { id: 'won', title: 'Won' },
-        { id: 'lost', title: 'Lost' }
-    ]);
+  const user = useUser();
+  const stages = useMemo(() => DEFAULT_STAGES, []);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    // Initialize mock leads data
-    const [leads, setLeads] = useState<Lead[]>([
-        {
-            id: '1',
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            phone: '+1234567890',
-            stageId: 'new',
-            tags: ['enterprise', 'beta-user'],
-            source: 'Website',
-            lastContacted: new Date().toISOString()
+  const fetchLeads = useCallback(async () => {
+    if (!user?.id) {
+      setLeads([]);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/leads', {
+        headers: {
+          'x-user-id': user.id,
         },
-        {
-            id: '2',
-            name: 'Jane Smith',
-            email: 'jane.smith@example.com',
-            phone: '+0987654321',
-            stageId: 'contacted',
-            tags: ['small-business'],
-            source: 'Referral',
-            lastContacted: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-            id: '3',
-            name: 'Bob Johnson',
-            email: 'bob.johnson@example.com',
-            stageId: 'qualified',
-            tags: ['startup'],
-            source: 'Website',
-            lastContacted: new Date(Date.now() - 172800000).toISOString()
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Failed to load leads' }));
+        throw new Error(errorData.error || 'Failed to load leads');
+      }
+
+      const data = await response.json();
+      setLeads(Array.isArray(data.leads) ? data.leads : []);
+    } catch (err) {
+      console.error('Error fetching leads:', err);
+      const message = err instanceof Error ? err.message : 'Failed to load leads';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
+  const handleLeadUpdate = useCallback(
+    async (leadId: string, updates: Partial<Lead>) => {
+      if (!user?.id) {
+        toast.error('You must be logged in to update leads.');
+        return;
+      }
+
+      if (!updates || Object.keys(updates).length === 0) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/leads/${leadId}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id,
+          },
+          body: JSON.stringify(updates),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Failed to update lead' }));
+          throw new Error(errorData.error || 'Failed to update lead');
         }
-    ]);
 
-    // Handler to update a lead
-    const handleLeadUpdate = useCallback((leadId: string, updates: Partial<Lead>) => {
-        setLeads(prevLeads =>
-            prevLeads.map(lead =>
-                lead.id === leadId ? { ...lead, ...updates } : lead
-            )
+        const data = await response.json();
+        const updatedLead: Lead = data.lead;
+
+        setLeads((prev) =>
+          prev.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead))
         );
-        // TODO: Make API call to persist changes
-        console.log('Lead updated:', leadId, updates);
-    }, []);
 
-    // Handler to create a new lead
-    const handleLeadCreate = useCallback((newLeadData: Omit<Lead, 'id'>) => {
-        const newLead: Lead = {
-            id: `${Date.now()}`, // Generate ID
-            ...newLeadData
-        };
-        setLeads(prevLeads => [newLead, ...prevLeads]);
-        // TODO: Make API call to persist changes
-        console.log('Lead created:', newLead);
-    }, []);
+        const keys = Object.keys(updates);
+        const stageOnlyUpdate = keys.length === 1 && keys[0] === 'stageId';
 
-    // Handler to delete a lead
-    const handleLeadDelete = useCallback((leadId: string) => {
-        setLeads(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
-        // TODO: Make API call to persist changes
-        console.log('Lead deleted:', leadId);
-    }, []);
+        if (!stageOnlyUpdate) {
+          toast.success('Lead updated');
+        }
+      } catch (err) {
+        console.error('Error updating lead:', err);
+        const message = err instanceof Error ? err.message : 'Failed to update lead';
+        toast.error(message);
+        await fetchLeads();
+      }
+    },
+    [user?.id, fetchLeads]
+  );
 
+  const handleLeadCreate = useCallback(
+    async (newLeadData: LeadCreateInput) => {
+      if (!user?.id) {
+        toast.error('You must be logged in to create leads.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/leads', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': user.id,
+          },
+          body: JSON.stringify(newLeadData),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save lead');
+        }
+
+        const savedLead: Lead = data.lead;
+        setLeads((prev) => {
+          const withoutExisting = prev.filter((lead) => lead.id !== savedLead.id);
+          return [savedLead, ...withoutExisting];
+        });
+
+        toast.success(response.status === 201 ? 'Lead created' : 'Lead updated');
+      } catch (err) {
+        console.error('Error creating lead:', err);
+        const message = err instanceof Error ? err.message : 'Failed to save lead';
+        toast.error(message);
+        throw err;
+      }
+    },
+    [user?.id]
+  );
+
+  const handleLeadDelete = useCallback(
+    async (leadId: string) => {
+      if (!user?.id) {
+        toast.error('You must be logged in to delete leads.');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/leads/${leadId}`, {
+          method: 'DELETE',
+          headers: {
+            'x-user-id': user.id,
+          },
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Failed to delete lead' }));
+          throw new Error(errorData.error || 'Failed to delete lead');
+        }
+
+        setLeads((prev) => prev.filter((lead) => lead.id !== leadId));
+        toast.success('Lead deleted');
+      } catch (err) {
+        console.error('Error deleting lead:', err);
+        const message = err instanceof Error ? err.message : 'Failed to delete lead';
+        toast.error(message);
+        throw err;
+      }
+    },
+    [user?.id]
+  );
+
+  if (!user) {
     return (
-        <div>
-            <LeadManager
-                stages={stages}
-                leads={leads}
-                onLeadUpdate={handleLeadUpdate}
-                onLeadCreate={handleLeadCreate}
-                onLeadDelete={handleLeadDelete}
-            />
-        </div>
+      <div className="p-8 text-gray-500">
+        Please sign in to manage your leads.
+      </div>
     );
+  }
+
+  return (
+    <div className="p-4 md:p-6">
+      {loading && leads.length === 0 && (
+        <div className="mb-4 text-gray-500">Loading leads...</div>
+      )}
+      {error && (
+        <div className="mb-4 rounded border border-red-200 bg-red-50 p-4 text-red-700">
+          {error}
+        </div>
+      )}
+      <LeadManager
+        stages={stages}
+        leads={leads}
+        onLeadUpdate={handleLeadUpdate}
+        onLeadCreate={handleLeadCreate}
+        onLeadDelete={handleLeadDelete}
+      />
+    </div>
+  );
 }

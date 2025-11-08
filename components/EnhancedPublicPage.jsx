@@ -383,6 +383,8 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
             <EmailCaptureModal
               block={selectedBlock}
               pageId={page.id}
+              pageType={page.type || 'PAGE'}
+              ownerId={page.user?.id || page.userId}
               onClose={() => {
                 setShowEmailModal(false);
                 setSelectedBlock(null);
