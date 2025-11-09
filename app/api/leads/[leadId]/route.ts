@@ -40,7 +40,7 @@ export async function PATCH(
     const body = await request.json();
     const now = new Date();
 
-    const updateData: Prisma.EmailSubscriberUncheckedUpdateInput = {
+    const updateData: Record<string, unknown> = {
       lastActivityAt: now,
     };
 
@@ -108,7 +108,7 @@ export async function PATCH(
 
     const updatedLead = await prisma.emailSubscriber.update({
       where: { id: existingLead.id },
-      data: updateData,
+      data: updateData as Prisma.EmailSubscriberUncheckedUpdateInput,
     });
 
     return NextResponse.json({ lead: emailSubscriberToLead(updatedLead) });

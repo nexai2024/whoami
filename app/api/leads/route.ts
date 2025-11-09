@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     });
 
     const shouldUpdateTags = Array.isArray(tags);
-    const updateData: Prisma.EmailSubscriberUncheckedUpdateInput = {
+    const updateData: Record<string, unknown> = {
       name,
       phone,
       source,
@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
 
       subscriber = await prisma.emailSubscriber.update({
         where: { id: existing.id },
-        data: updateData,
+        data: updateData as Prisma.EmailSubscriberUncheckedUpdateInput,
       });
       status = 200;
     } else {
