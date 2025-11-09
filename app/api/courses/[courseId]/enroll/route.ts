@@ -144,7 +144,7 @@ export async function POST(
       const subscriberPageId = course.leadMagnetId || `course:${courseId}`;
       const subscriberPageType = course.leadMagnetId ? 'LEAD_MAGNET' : 'COURSE';
 
-      const subscriberCreateData = Prisma.validator<Prisma.EmailSubscriberUncheckedCreateInput>()({
+      const subscriberCreateData: Prisma.EmailSubscriberUncheckedCreateInput = {
         pageId: subscriberPageId,
         pageType: subscriberPageType,
         userId: course.userId,
@@ -152,16 +152,16 @@ export async function POST(
         name,
         source: `course:${courseId}`,
         tags: subscriberTags,
-      });
+      } as any;
 
-      const subscriberUpdateData = Prisma.validator<Prisma.EmailSubscriberUncheckedUpdateInput>()({
+      const subscriberUpdateData: Prisma.EmailSubscriberUncheckedUpdateInput = {
         pageType: subscriberPageType,
         userId: course.userId,
         tags: {
           push: subscriberTags,
         },
         source: `course:${courseId}`,
-      });
+      } as any;
 
       await prisma.emailSubscriber.upsert({
         where: {
