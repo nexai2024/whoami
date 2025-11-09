@@ -188,7 +188,7 @@ export default function CampaignAssets() {
 
       return (
         sum +
-        metrics.reduce((metricSum, value) => metricSum + (value ?? 0), 0)
+        metrics.reduce((metricSum: number, value) => metricSum + (value ?? 0), 0)
       );
     }, 0);
   }, [campaign]);

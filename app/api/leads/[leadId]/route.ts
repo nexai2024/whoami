@@ -20,6 +20,10 @@ async function getLeadForUser(leadId: string, userId: string) {
   return lead;
 }
 
+type EmailSubscriberUpdateData = Prisma.EmailSubscriberUpdateInput & {
+  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+};
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ leadId: string }> }
@@ -40,8 +44,8 @@ export async function PATCH(
     const body = await request.json();
     const now = new Date();
 
-    const updateData: Prisma.EmailSubscriberUpdateInput = {
-      lastContactedAt: now, // Tshould  be updating lastActivityAt but  thatt ncauses build error
+    const updateData: EmailSubscriberUpdateData = {
+      lastActivityAt: now,
     };
 
     if ('name' in body) {

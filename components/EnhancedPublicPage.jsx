@@ -236,61 +236,237 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
   ));
 
   // Memoized profile header component
-  const ProfileHeader = memo(({ user, shareMenuOpen, setShareMenuOpen, shareUrl }) => (
-    <motion.div
-      className="text-center mb-8 p-6 bg-white rounded-2xl shadow-sm"
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6 }}
-    >
-      <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
-        {user?.profile?.avatar ? (
-          <img
-            src={user.profile.avatar}
-            alt={user.profile.displayName}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <span className="text-white text-2xl font-bold">
-            {user?.profile?.displayName?.charAt(0) || user.profile?.username?.charAt(0) || 'U'}
-          </span>
-        )}
-      </div>
-      
-      <h1 className="text-2xl font-bold mb-2">
-        {user?.profile?.displayName || user.profile?.username}
-      </h1>
-      
-      {user.profile?.bio && (
-        <p className="text-gray-600 mb-4">{user.profile.bio}</p>
-      )}
+  const ProfileHeader = memo(
+    ({ headerData, user, shareMenuOpen, setShareMenuOpen, shareUrl }) => {
+      const data = headerData ?? {};
+      const avatar =
+        data.logoUrl ||
+        data.avatar ||
+        user?.profile?.avatar ||
+        null;
 
-      <div className="flex items-center justify-center gap-4">
-        <div className="relative">
-          <button
-            onClick={() => setShareMenuOpen(!shareMenuOpen)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-            aria-label="Share this page"
-          >
-            <SafeIcon name={undefined} icon={FiShare2} />
-            Share
-          </button>
-          {shareMenuOpen && (
-            <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border p-2 z-10">
-              <button
-                onClick={shareUrl}
-                className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded text-gray-700"
-                aria-label="Copy link to clipboard"
-              >
-                Copy Link
-              </button>
-            </div>
+      const displayName =
+        data.displayName ||
+        user?.profile?.displayName ||
+        user?.profile?.username ||
+        'Creator';
+
+      const title = data.title || null;
+      const company = data.company || null;
+      const bio =
+        data.bio ||
+        user?.profile?.bio ||
+        null;
+
+      const location =
+        data.showLocation && data.location ? data.location : null;
+
+      const initials =
+        displayName?.trim()?.charAt(0)?.toUpperCase() ||
+        user?.profile?.username?.trim()?.charAt(0)?.toUpperCase() ||
+        'U';
+
+      const showContact =
+        data.showContactInfo &&
+        (data.email || data.phone || data.website);
+
+      const socialEntries = data.showSocialLinks && data.socialLinks
+        ? Object.entries(data.socialLinks).filter(
+            ([, url]) => typeof url === 'string' && url.trim().length > 0
+          )
+        : [];
+
+      const containerClasses = (() => {
+        const base = 'relative mb-8 p-6 rounded-2xl transition-all';
+        const styleMap = {
+          minimal: 'bg-white text-gray-900 shadow-sm',
+          card: 'bg-white text-gray-900 border border-gray-200 shadow-md',
+          gradient:
+            'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg',
+          split: 'bg-white text-gray-900 border border-gray-200 shadow-sm',
+        };
+        return `${base} ${styleMap[data.headerStyle] || styleMap.minimal}`;
+      })();
+
+      const isGradient = data.headerStyle === 'gradient';
+
+      const contentLayoutClass =
+        data.headerStyle === 'split'
+          ? 'flex flex-col gap-6 md:flex-row md:items-center md:justify-between'
+          : 'text-center';
+
+      const avatarWrapperClass =
+        data.headerStyle === 'split'
+          ? 'w-24 h-24 flex-shrink-0 md:w-28 md:h-28'
+          : 'w-24 h-24 mx-auto';
+
+      const getSocialIcon = (platform) => {
+        const iconMap = {
+          instagram: FiInstagram,
+          twitter: FiTwitter,
+          linkedin: FiLinkedin,
+          facebook: FiFacebook,
+          youtube: FiYoutube,
+        };
+        return iconMap[platform] || FiGlobe;
+      };
+
+      return (
+        <motion.div
+          className={containerClasses}
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+        >
+          {data.backgroundImage && (
+            <div
+              className="absolute inset-0 rounded-2xl bg-cover bg-center opacity-20"
+              style={{ backgroundImage: `url(${data.backgroundImage})` }}
+            />
           )}
-        </div>
-      </div>
-    </motion.div>
-  ));
+          <div className="relative z-10">
+            <div className={contentLayoutClass}>
+              <div
+                className={`${avatarWrapperClass} mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center`}
+              >
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <span className="text-white text-2xl font-bold">
+                    {initials}
+                  </span>
+                )}
+              </div>
+
+              <div className={data.headerStyle === 'split' ? 'flex-1 text-left md:pl-6' : ''}>
+                <h1 className="text-2xl font-bold mb-1">{displayName}</h1>
+                {title && (
+                  <p className="text-lg opacity-80 mb-2">{title}</p>
+                )}
+                {company && (
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-sm mb-2 opacity-80">
+                    <SafeIcon name={undefined} icon={FiBuilding} />
+                    <span>{company}</span>
+                  </div>
+                )}
+                {location && (
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-sm mb-3 opacity-80">
+                    <SafeIcon name={undefined} icon={FiMapPin} />
+                    <span>{location}</span>
+                  </div>
+                )}
+                {bio && (
+                  <p className={`text-sm mb-4 max-w-xl mx-auto md:mx-0 ${isGradient ? 'opacity-95' : 'opacity-90 text-gray-600 md:text-gray-700'}`}>
+                    {bio}
+                  </p>
+                )}
+                {data.customIntroduction && (
+                  <div
+                    className={`rounded-lg p-3 mb-4 text-sm font-medium ${
+                      isGradient
+                        ? 'bg-white bg-opacity-10'
+                        : 'bg-gray-100'
+                    }`}
+                  >
+                    {data.customIntroduction}
+                  </div>
+                )}
+                {showContact && (
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-4 text-sm">
+                    {data.email && (
+                      <a
+                        href={`mailto:${data.email}`}
+                        className="flex items-center gap-1 hover:underline"
+                      >
+                        <SafeIcon name={undefined} icon={FiMail} />
+                        {data.email}
+                      </a>
+                    )}
+                    {data.phone && (
+                      <a
+                        href={`tel:${data.phone}`}
+                        className="flex items-center gap-1 hover:underline"
+                      >
+                        <SafeIcon name={undefined} icon={FiPhone} />
+                        {data.phone}
+                      </a>
+                    )}
+                    {data.website && (
+                      <a
+                        href={data.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 hover:underline"
+                      >
+                        <SafeIcon name={undefined} icon={FiGlobe} />
+                        Website
+                      </a>
+                    )}
+                  </div>
+                )}
+                {socialEntries.length > 0 && (
+                  <div className="flex items-center justify-center md:justify-start gap-3 mb-4">
+                    {socialEntries.map(([platform, url]) => {
+                      const Icon = getSocialIcon(platform);
+                      return (
+                        <a
+                          key={platform}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`w-10 h-10 rounded-full flex items-center justify-center transition ${
+                            isGradient
+                              ? 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
+                              : 'bg-black bg-opacity-10 text-gray-700 hover:bg-opacity-20'
+                          }`}
+                          aria-label={`${displayName} on ${platform}`}
+                        >
+                          <SafeIcon name={undefined} icon={Icon} />
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center gap-4">
+              <div className="relative">
+                <button
+                  onClick={() => setShareMenuOpen(!shareMenuOpen)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    isGradient
+                      ? 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                  }`}
+                  aria-label="Share this page"
+                >
+                  <SafeIcon name={undefined} icon={FiShare2} />
+                  Share
+                </button>
+                {shareMenuOpen && (
+                  <div className="absolute top-full mt-2 left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg border p-2 z-10">
+                    <button
+                      onClick={shareUrl}
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded text-gray-700"
+                      aria-label="Copy link to clipboard"
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      );
+    }
+  );
 
   // Memoized footer component
   const Footer = memo(() => (
@@ -315,6 +491,23 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
     </motion.div>
   ));
 
+  const headerData = page?.pageHeader?.data ?? {};
+  const resolvedDisplayName =
+    headerData?.displayName ||
+    page?.user?.profile?.displayName ||
+    page?.user?.profile?.username ||
+    null;
+  const resolvedDescription =
+    page?.metaDescription ||
+    headerData?.customIntroduction ||
+    page?.description ||
+    (resolvedDisplayName ? `Visit ${resolvedDisplayName}'s page` : null);
+  const resolvedOgImage =
+    page?.ogImage ||
+    headerData?.logoUrl ||
+    page?.user?.profile?.avatar ||
+    undefined;
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -328,12 +521,19 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
       {page && (
         <>
           <SEOHead
-            title={page.metaTitle || page.title || `${page.user?.profile?.displayName || page.user?.profile?.username}'s Page`}
-            description={page.metaDescription || page.description || `Visit ${page.user?.profile?.displayName || page.user?.profile?.username}'s page`}
-            ogImage={page.ogImage || page.user?.profile?.avatar}
+            title={
+              page.metaTitle ||
+              page.title ||
+              (resolvedDisplayName ? `${resolvedDisplayName}'s Page` : 'WhoAmI Page')
+            }
+            description={
+              resolvedDescription ||
+              'Discover this creator on WhoAmI.'
+            }
+            ogImage={resolvedOgImage}
             url={typeof window !== 'undefined' ? window.location.href : ''}
             keywords={page.metaKeywords}
-            author={page.user?.profile?.displayName || page.user?.profile?.username}
+            author={resolvedDisplayName || undefined}
           />
           <div
             className="min-h-screen py-8 px-4 flex flex-col items-center justify-center"
@@ -344,8 +544,9 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
             }}
           >
             <div className="w-full max-w-md mx-auto text-center">
-              {page.user && (
+              {(page.pageHeader || page.user) && (
                 <ProfileHeader 
+                  headerData={page.pageHeader?.data ?? {}}
                   user={page.user} 
                   shareMenuOpen={shareMenuOpen} 
                   setShareMenuOpen={setShareMenuOpen} 
