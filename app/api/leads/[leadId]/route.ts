@@ -20,10 +20,6 @@ async function getLeadForUser(leadId: string, userId: string) {
   return lead;
 }
 
-type EmailSubscriberUpdateData = Prisma.EmailSubscriberUpdateInput & {
-  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-};
-
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ leadId: string }> }
@@ -44,7 +40,7 @@ export async function PATCH(
     const body = await request.json();
     const now = new Date();
 
-    const updateData: EmailSubscriberUpdateData = {
+    const updateData: Prisma.EmailSubscriberUncheckedUpdateInput = {
       lastActivityAt: now,
     };
 
@@ -78,7 +74,7 @@ export async function PATCH(
     if ('notes' in body) {
       if (typeof body.notes === 'string') {
         const trimmed = body.notes.trim();
-        updateData.notes = trimmed.length ? body.notes : null;
+        updateData.notes = trimmed.length ? trimmed : null;
       } else if (body.notes == null) {
         updateData.notes = null;
       }

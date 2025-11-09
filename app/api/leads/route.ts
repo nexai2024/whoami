@@ -14,10 +14,6 @@ import {
   sanitizeString,
 } from './utils';
 
-type EmailSubscriberUpdateData = Prisma.EmailSubscriberUpdateInput & {
-  lastActivityAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
-};
-
 export async function GET(request: NextRequest) {
   try {
     const userId = request.headers.get('x-user-id') ?? request.nextUrl.searchParams.get('userId');
@@ -151,7 +147,7 @@ export async function POST(request: NextRequest) {
     });
 
     const shouldUpdateTags = Array.isArray(tags);
-    const updateData: EmailSubscriberUpdateData = {
+    const updateData: Prisma.EmailSubscriberUncheckedUpdateInput = {
       name,
       phone,
       source,
