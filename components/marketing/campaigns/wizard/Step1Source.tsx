@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useUser } from '@stackframe/stack';
 
 interface FormData {
   name: string;
@@ -31,23 +32,39 @@ interface Block {
 }
 
 export default function Step1Source({ formData, updateFormData }: Step1SourceProps) {
+  const user = useUser();
   const [products, setProducts] = useState<Product[]>([]);
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
 
   useEffect(() => {
+    if (!user?.id) {
+      setProducts([]);
+      setBlocks([]);
+    }
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
     if (formData.sourceType === 'PRODUCT') {
       fetchProducts();
     } else if (formData.sourceType === 'BLOCK') {
       fetchBlocks();
     }
-  }, [formData.sourceType]);
+  }, [formData.sourceType, user?.id]);
 
   const fetchProducts = async () => {
+    if (!user?.id) return;
     setLoadingProducts(true);
     try {
-      const response = await fetch('/api/products');
+      const response = await fetch('/api/products', {
+        headers: { 'x-user-id': user.id },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to load products: ${response.status}`);
+      }
       const data = await response.json();
       setProducts(data.products || []);
     } catch (error) {
@@ -58,9 +75,15 @@ export default function Step1Source({ formData, updateFormData }: Step1SourcePro
   };
 
   const fetchBlocks = async () => {
+    if (!user?.id) return;
     setLoadingBlocks(true);
     try {
-      const response = await fetch('/api/blocks');
+      const response = await fetch('/api/blocks', {
+        headers: { 'x-user-id': user.id },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to load blocks: ${response.status}`);
+      }
       const data = await response.json();
       setBlocks(data.blocks || []);
     } catch (error) {

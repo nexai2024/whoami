@@ -27,6 +27,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     /^\/f(\/|$)/,
     /^\/p(\/|$)/,
     /^\/book(\/|$)/,
+    /^\/$/,
     /^\/c\/[^/]+$/, // course landing pages
   ];
 

@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiCheck } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { useUser } from '@stackframe/stack';
 import Step1Source from './wizard/Step1Source';
 import Step2Platforms from './wizard/Step2Platforms';
 import Step3Customize from './wizard/Step3Customize';
@@ -33,6 +34,7 @@ const steps = [
 
 export default function CampaignWizard() {
   const router = useRouter();
+  const user = useUser();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -87,6 +89,13 @@ export default function CampaignWizard() {
   };
 
   const handleGenerate = async () => {
+    if (!user?.id) {
+      const message = 'You must be signed in to generate a campaign.';
+      setError(message);
+      toast.error(message);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -118,7 +127,10 @@ export default function CampaignWizard() {
 
       const response = await fetch('/api/campaigns/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
         body: JSON.stringify(payload),
       });
 

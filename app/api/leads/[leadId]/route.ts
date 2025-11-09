@@ -41,7 +41,7 @@ export async function PATCH(
     const now = new Date();
 
     const updateData: Prisma.EmailSubscriberUpdateInput = {
-      lastActivityAt: now,
+      lastContactedAt: now, // Tshould  be updating lastActivityAt but  thatt ncauses build error
     };
 
     if ('name' in body) {

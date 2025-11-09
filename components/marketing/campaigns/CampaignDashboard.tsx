@@ -5,10 +5,11 @@
  * List view of all user campaigns with stats and actions
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { FiPlus, FiCalendar, FiBarChart2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { useUser } from '@stackframe/stack';
 
 interface Campaign {
   id: string;
@@ -27,17 +28,58 @@ interface Campaign {
 }
 
 export default function CampaignDashboard() {
+  const user = useUser();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
 
+  const fetchCampaigns = useCallback(
+    async (silent = false) => {
+      if (!user?.id) {
+        if (!silent) {
+          setCampaigns([]);
+          setLoading(false);
+        }
+        return;
+      }
+
+      try {
+        if (!silent) setLoading(true);
+        const response = await fetch('/api/campaigns', {
+          headers: {
+            'x-user-id': user.id,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to load campaigns: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setCampaigns(data.campaigns || []);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+        if (!silent) {
+          toast.error('Failed to load campaigns');
+        }
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [user?.id]
+  );
+
   useEffect(() => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
     fetchCampaigns();
-  }, []);
+  }, [user?.id, fetchCampaigns]);
 
   useEffect(() => {
     // Check if any campaign is generating
-    const hasGenerating = campaigns.some(c => c.status === 'GENERATING');
+    const hasGenerating = campaigns.some((c) => c.status === 'GENERATING');
 
     if (hasGenerating && !polling) {
       setPolling(true);
@@ -50,21 +92,11 @@ export default function CampaignDashboard() {
         setPolling(false);
       };
     }
-  }, [campaigns, polling]);
 
-  const fetchCampaigns = async (silent = false) => {
-    try {
-      if (!silent) setLoading(true);
-      const response = await fetch('/api/campaigns');
-      const data = await response.json();
-      setCampaigns(data.campaigns || []);
-    } catch (error) {
-      console.error('Error fetching campaigns:', error);
-      toast.error('Failed to load campaigns');
-    } finally {
-      if (!silent) setLoading(false);
+    if (!hasGenerating && polling) {
+      setPolling(false);
     }
-  };
+  }, [campaigns, polling, fetchCampaigns]);
 
   const getStatusColor = (status: Campaign['status']) => {
     const colors = {
