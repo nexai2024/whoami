@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, MagnetStatus } from '@prisma/client';
+import { PrismaClient, MagnetStatus, Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { sendLeadMagnetDelivery } from '@/lib/services/emailService';
 
@@ -56,6 +56,28 @@ export async function POST(
     // Check if email already opted in
     const normalizedEmail = email.trim().toLowerCase();
 
+    const subscriberCreateData: Prisma.EmailSubscriberUncheckedCreateInput = {
+      email: normalizedEmail,
+      pageId: leadMagnetId,
+      pageType: 'LEAD_MAGNET' as any,
+      userId: leadMagnet.userId,
+      name: name || null,
+      source: 'lead-magnet-opt-in',
+      tags: [
+        'lead-magnet',
+        ...(leadMagnet.slug ? [`magnet:${leadMagnet.slug}`] : []),
+      ],
+      isActive: true,
+    } as any;
+
+    const subscriberUpdateData: Prisma.EmailSubscriberUncheckedUpdateInput = {
+      name: name || undefined,
+      pageType: 'LEAD_MAGNET' as any,
+      userId: leadMagnet.userId,
+      source: 'lead-magnet-opt-in',
+      isActive: true,
+    } as any;
+
     const subscriber = await prisma.emailSubscriber.upsert({
       where: {
         pageId_email: {
@@ -63,26 +85,8 @@ export async function POST(
           email: normalizedEmail,
         },
       },
-      create: {
-        email: normalizedEmail,
-        pageId: leadMagnetId,
-        pageType: 'LEAD_MAGNET',
-        userId: leadMagnet.userId,
-        name: name || null,
-        source: 'lead-magnet-opt-in',
-        tags: [
-          'lead-magnet',
-          ...(leadMagnet.slug ? [`magnet:${leadMagnet.slug}`] : []),
-        ],
-        isActive: true,
-      },
-      update: {
-        name: name || undefined,
-        pageType: 'LEAD_MAGNET',
-        userId: leadMagnet.userId,
-        source: 'lead-magnet-opt-in',
-        isActive: true,
-      },
+      create: subscriberCreateData,
+      update: subscriberUpdateData,
     });
 
     const existingDelivery = await prisma.leadMagnetDelivery.findFirst({
