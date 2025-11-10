@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
-import { Prisma, LeadStage } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import {
   DEFAULT_MANUAL_PAGE_TYPE,
   emailSubscriberToLead,
@@ -12,6 +12,7 @@ import {
   parseDateInput,
   parseTags,
   sanitizeString,
+  type LeadStage,
 } from './utils';
 
 export async function GET(request: NextRequest) {
