@@ -50,14 +50,19 @@ export async function GET(request: NextRequest) {
       ...(pipelineStageFilter ? { pipelineStage: pipelineStageFilter } : {}),
       ...(pageTypeFilter ? { pageType: pageTypeFilter } : {}),
       ...(pageIdFilter ? { pageId: pageIdFilter } : {}),
-    } as Prisma.EmailSubscriberWhereInput;
+    } as unknown as Prisma.EmailSubscriberWhereInput;
 
     if (search) {
       where.OR = [
         { email: { contains: search, mode: 'insensitive' } },
         { name: { contains: search, mode: 'insensitive' } },
-        { company: { contains: search, mode: 'insensitive' } },
-      ];
+        {
+          company: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ] as unknown as Prisma.EmailSubscriberWhereInput['OR'];
     }
 
     if (tagsFilter && tagsFilter.length > 0) {
