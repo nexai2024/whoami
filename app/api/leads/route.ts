@@ -45,20 +45,12 @@ export async function GET(request: NextRequest) {
           .filter(Boolean)
       : undefined;
 
-    const where: Prisma.EmailSubscriberWhereInput = {};
-    where.userId = userId;
-
-    if (pipelineStageFilter) {
-      where.pipelineStage = pipelineStageFilter;
-    }
-
-    if (pageTypeFilter) {
-      where.pageType = pageTypeFilter;
-    }
-
-    if (pageIdFilter) {
-      where.pageId = pageIdFilter;
-    }
+    const where = {
+      userId,
+      ...(pipelineStageFilter ? { pipelineStage: pipelineStageFilter } : {}),
+      ...(pageTypeFilter ? { pageType: pageTypeFilter } : {}),
+      ...(pageIdFilter ? { pageId: pageIdFilter } : {}),
+    } as Prisma.EmailSubscriberWhereInput;
 
     if (search) {
       where.OR = [
