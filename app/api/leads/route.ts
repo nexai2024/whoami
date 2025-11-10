@@ -45,32 +45,36 @@ export async function GET(request: NextRequest) {
           .filter(Boolean)
       : undefined;
 
-    const where = {
+    const whereConditions: Record<string, unknown> = {
       userId,
-      ...(pipelineStageFilter ? { pipelineStage: pipelineStageFilter } : {}),
-      ...(pageTypeFilter ? { pageType: pageTypeFilter } : {}),
-      ...(pageIdFilter ? { pageId: pageIdFilter } : {}),
-    } as unknown as Prisma.EmailSubscriberWhereInput;
+    };
 
-    if (search) {
-      where.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { name: { contains: search, mode: 'insensitive' } },
-        {
-          company: {
-            contains: search,
-            mode: 'insensitive',
-          },
-        },
-      ] as unknown as Prisma.EmailSubscriberWhereInput['OR'];
+    if (pipelineStageFilter) {
+      whereConditions.pipelineStage = pipelineStageFilter;
+    }
+
+    if (pageTypeFilter) {
+      whereConditions.pageType = pageTypeFilter;
+    }
+
+    if (pageIdFilter) {
+      whereConditions.pageId = pageIdFilter;
     }
 
     if (tagsFilter && tagsFilter.length > 0) {
-      where.tags = { hasSome: tagsFilter };
+      whereConditions.tags = { hasSome: tagsFilter };
+    }
+
+    if (search) {
+      whereConditions.OR = [
+        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
+        { company: { contains: search, mode: 'insensitive' } },
+      ];
     }
 
     const leads = await prisma.emailSubscriber.findMany({
-      where,
+      where: whereConditions as Prisma.EmailSubscriberWhereInput,
       orderBy: [
         { lastActivityAt: 'desc' },
         { lastContactedAt: 'desc' },
