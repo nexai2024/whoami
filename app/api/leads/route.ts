@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { revalidateTag, unstable_cache } from 'next/cache';
 import { logger } from '@/lib/utils/logger';
 import { Prisma } from '@prisma/client';
 import {
-  DEFAULT_MANUAL_PAGE_TYPE,
-  emailSubscriberToLead,
-  getManualPageId,
-  LEAD_STAGE_VALUES,
-  normalizeLeadStage,
-  parseEstimatedValue,
-  parseDateInput,
-  parseTags,
-  sanitizeString,
-  type LeadStage,
-} from './utils';
+  LeadConflictError,
+  LeadValidationError,
+  listLeads,
+  parseLeadListFilters,
+  getLeadCacheTag,
+  normalizeLeadFilterForCache,
+  upsertLead,
+} from '@/lib/services/leadService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,69 +20,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const search = sanitizeString(request.nextUrl.searchParams.get('search'));
-    const stageParam = sanitizeString(request.nextUrl.searchParams.get('stage'));
-    const pageTypeFilter = sanitizeString(request.nextUrl.searchParams.get('pageType'));
-    const pageIdFilter = sanitizeString(request.nextUrl.searchParams.get('pageId'));
-    const tagsParam = sanitizeString(request.nextUrl.searchParams.get('tags'));
+    const tagsFromParams = request.nextUrl.searchParams.getAll('tags');
+    const filters = parseLeadListFilters({
+      search: request.nextUrl.searchParams.get('search'),
+      stage: request.nextUrl.searchParams.get('stage'),
+      pageType: request.nextUrl.searchParams.get('pageType'),
+      pageId: request.nextUrl.searchParams.get('pageId'),
+      tags: tagsFromParams.length > 0 ? tagsFromParams : request.nextUrl.searchParams.get('tags'),
+    });
 
-    let pipelineStageFilter: LeadStage | undefined;
-    if (stageParam) {
-      const normalized = stageParam.toUpperCase();
-      if (!LEAD_STAGE_VALUES.includes(normalized as LeadStage)) {
-        return NextResponse.json({ error: 'Invalid stage filter' }, { status: 400 });
+    const normalizedFilters = normalizeLeadFilterForCache(filters);
+    const cacheKey = JSON.stringify(normalizedFilters);
+
+    const cachedList = unstable_cache(
+      () =>
+        listLeads({
+          userId,
+          filters: normalizedFilters,
+        }),
+      ['lead-service:list', userId, cacheKey],
+      {
+        tags: [getLeadCacheTag(userId)],
       }
-      pipelineStageFilter = normalized as LeadStage;
-    }
+    );
 
-    const tagsFilter = tagsParam
-      ? tagsParam
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean)
-      : undefined;
+    const leads = await cachedList();
 
-    const whereConditions: Record<string, unknown> = {
-      userId,
-    };
-
-    if (pipelineStageFilter) {
-      whereConditions.pipelineStage = pipelineStageFilter;
-    }
-
-    if (pageTypeFilter) {
-      whereConditions.pageType = pageTypeFilter;
-    }
-
-    if (pageIdFilter) {
-      whereConditions.pageId = pageIdFilter;
-    }
-
-    if (tagsFilter && tagsFilter.length > 0) {
-      whereConditions.tags = { hasSome: tagsFilter };
-    }
-
-    if (search) {
-      whereConditions.OR = [
-        { email: { contains: search, mode: 'insensitive' } },
-        { name: { contains: search, mode: 'insensitive' } },
-        { company: { contains: search, mode: 'insensitive' } },
-      ];
-    }
-
-    const leads = await prisma.emailSubscriber.findMany({
-      where: whereConditions as Prisma.EmailSubscriberWhereInput,
-      orderBy: [
-        { lastActivityAt: 'desc' },
-        { lastContactedAt: 'desc' },
-        { createdAt: 'desc' },
-      ],
-    });
-
-    return NextResponse.json({
-      leads: leads.map(emailSubscriberToLead),
-    });
+    return NextResponse.json({ leads });
   } catch (error) {
+    if (error instanceof LeadValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     logger.error('Error fetching leads:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
@@ -99,103 +65,34 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const email = sanitizeString(body.email);
-    const name = sanitizeString(body.name);
-    const phone = sanitizeString(body.phone);
-    const source = sanitizeString(body.source);
-    const company = sanitizeString(body.company);
-    const notes = typeof body.notes === 'string' ? body.notes.trim() : null;
-    const stageId = sanitizeString(body.stageId);
-    const pageIdInput = sanitizeString(body.pageId);
-    const pageTypeInput = sanitizeString(body.pageType);
-    const lastContactedInput = sanitizeString(body.lastContacted);
-    const tags = parseTags(body.tags);
-    const estimatedValue = parseEstimatedValue(body.estimatedValue);
-
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
-    }
-
-    const now = new Date();
-    const lastContactedAt = parseDateInput(lastContactedInput, now);
-    const pipelineStage = normalizeLeadStage(stageId);
-    const pageId = pageIdInput ?? getManualPageId(userId);
-    const pageType = pageTypeInput ?? DEFAULT_MANUAL_PAGE_TYPE;
-    const normalizedTags = tags ?? [];
-
-    const baseData: Prisma.EmailSubscriberUncheckedCreateInput = {
-      id: body.id ?? undefined,
-      userId,
-      pageId,
-      pageType,
-      email: email.toLowerCase(),
-      name,
-      phone,
-      source,
-      company,
-      notes,
-      tags: normalizedTags,
-      pipelineStage,
-      lastContactedAt,
-      lastActivityAt: now,
-      estimatedValue: estimatedValue ?? null,
-      isActive: true,
+    const payload = {
+      ...body,
+      stageId: body.stageId,
+      tags: body.tags,
     };
 
-    const existing = await prisma.emailSubscriber.findUnique({
-      where: {
-        pageId_email: {
-          pageId,
-          email: email.toLowerCase(),
-        },
-      },
+    const result = await upsertLead({
+      userId,
+      payload,
     });
 
-    const shouldUpdateTags = Array.isArray(tags);
-    const updateData: Record<string, unknown> = {
-      name,
-      phone,
-      source,
-      company,
-      notes,
-      pipelineStage: { set: pipelineStage },
-      lastContactedAt,
-      lastActivityAt: now,
-      estimatedValue: estimatedValue ?? null,
-      ...(shouldUpdateTags ? { tags: normalizedTags } : {}),
-    };
-
-    let subscriber;
-    let status = 201;
-
-    if (existing) {
-      if (existing.userId !== userId) {
-        return NextResponse.json({ error: 'Lead already exists for another user' }, { status: 409 });
-      }
-
-      subscriber = await prisma.emailSubscriber.update({
-        where: { id: existing.id },
-        data: updateData as Prisma.EmailSubscriberUncheckedUpdateInput,
-      });
-      status = 200;
-    } else {
-      subscriber = await prisma.emailSubscriber.create({
-        data: baseData,
-      });
-    }
+    revalidateTag(getLeadCacheTag(userId), {});
 
     return NextResponse.json(
       {
-        lead: emailSubscriberToLead(subscriber),
+        lead: result.lead,
       },
-      { status }
+      { status: result.created ? 201 : 200 }
     );
   } catch (error) {
+    if (error instanceof LeadValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    if (error instanceof LeadConflictError) {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
+
     logger.error('Error creating lead:', error);
 
     if (

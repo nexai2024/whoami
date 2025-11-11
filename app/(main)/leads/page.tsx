@@ -5,6 +5,12 @@ import LeadManager from '@/components/lead-management/LeadManager';
 import { Lead, PipelineStage, LeadCreateInput } from '@/types/leadData';
 import { useUser } from '@stackframe/stack';
 import toast from 'react-hot-toast';
+import {
+  deleteLeadAction,
+  fetchLeadsAction,
+  updateLeadAction,
+  upsertLeadAction,
+} from './actions';
 
 const DEFAULT_STAGES: PipelineStage[] = [
   { id: 'new', title: 'New' },
@@ -33,19 +39,33 @@ export default function LeadsPage() {
     setError(null);
 
     try {
-      const response = await fetch('/api/leads', {
-        headers: {
-          'x-user-id': user.id,
-        },
+      const result = await fetchLeadsAction({
+        userId: user.id,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to load leads' }));
-        throw new Error(errorData.error || 'Failed to load leads');
+      if (!result.success) {
+        throw new Error(result.error.message);
       }
 
-      const data = await response.json();
-      setLeads(Array.isArray(data.leads) ? data.leads : []);
+      // Ensure type compatibility: convert null phone to undefined if necessary
+      const leadsData = Array.isArray(result.data)
+        ? result.data.map((lead) => ({
+            ...lead,
+            phone: lead.phone === null ? undefined : lead.phone,
+          }))
+        : [];
+
+      // Only handle the fields that actually exist on type Lead
+      const fixedLeadsData = leadsData.map((lead) => ({
+        ...lead,
+        phone: lead.phone === null ? undefined : lead.phone,
+        source: lead.source === null ? undefined : lead.source,
+        company: lead.company === null ? undefined : lead.company,
+        notes: lead.notes === null ? undefined : lead.notes,
+        // Add further properties here if new nullable properties are added to Lead
+      }));
+
+      setLeads(fixedLeadsData);
     } catch (err) {
       console.error('Error fetching leads:', err);
       const message = err instanceof Error ? err.message : 'Failed to load leads';
@@ -72,25 +92,31 @@ export default function LeadsPage() {
       }
 
       try {
-        const response = await fetch(`/api/leads/${leadId}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': user.id,
-          },
-          body: JSON.stringify(updates),
+        const result = await updateLeadAction({
+          userId: user.id,
+          leadId,
+          updates,
+          revalidate: { path: '/leads' },
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Failed to update lead' }));
-          throw new Error(errorData.error || 'Failed to update lead');
+        if (!result.success) {
+          throw new Error(result.error.message);
         }
 
-        const data = await response.json();
-        const updatedLead: Lead = data.lead;
-
+        // Ensure the incoming 'result.data' is cast to 'Lead' type,
+        // and normalize nullable fields so the array always stays Lead[]
         setLeads((prev) =>
-          prev.map((lead) => (lead.id === updatedLead.id ? updatedLead : lead))
+          prev.map((lead) =>
+            lead.id === result.data.id
+              ? {
+                  ...result.data,
+                  phone: result.data.phone === null ? undefined : result.data.phone,
+                  source: result.data.source === null ? undefined : result.data.source,
+                  company: result.data.company === null ? undefined : result.data.company,
+                  notes: result.data.notes === null ? undefined : result.data.notes,
+                }
+              : lead
+          )
         );
 
         const keys = Object.keys(updates);
@@ -117,28 +143,30 @@ export default function LeadsPage() {
       }
 
       try {
-        const response = await fetch('/api/leads', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': user.id,
-          },
-          body: JSON.stringify(newLeadData),
+        const result = await upsertLeadAction({
+          userId: user.id,
+          payload: newLeadData,
+          revalidate: { path: '/leads' },
         });
 
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to save lead');
+        if (!result.success) {
+          throw new Error(result.error.message);
         }
 
-        const savedLead: Lead = data.lead;
+        // Normalize nullable fields to match Lead (no null values)
         setLeads((prev) => {
-          const withoutExisting = prev.filter((lead) => lead.id !== savedLead.id);
-          return [savedLead, ...withoutExisting];
+          const normalizedLead: Lead = {
+            ...result.data,
+            phone: result.data.phone === null ? undefined : result.data.phone,
+            source: result.data.source === null ? undefined : result.data.source,
+            company: result.data.company === null ? undefined : result.data.company,
+            notes: result.data.notes === null ? undefined : result.data.notes,
+          };
+          const withoutExisting = prev.filter((lead) => lead.id !== normalizedLead.id);
+          return [normalizedLead, ...withoutExisting];
         });
 
-        toast.success(response.status === 201 ? 'Lead created' : 'Lead updated');
+        toast.success('Lead saved');
       } catch (err) {
         console.error('Error creating lead:', err);
         const message = err instanceof Error ? err.message : 'Failed to save lead';
@@ -157,16 +185,14 @@ export default function LeadsPage() {
       }
 
       try {
-        const response = await fetch(`/api/leads/${leadId}`, {
-          method: 'DELETE',
-          headers: {
-            'x-user-id': user.id,
-          },
+        const result = await deleteLeadAction({
+          userId: user.id,
+          leadId,
+          revalidate: { path: '/leads' },
         });
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Failed to delete lead' }));
-          throw new Error(errorData.error || 'Failed to delete lead');
+        if (!result.success) {
+          throw new Error(result.error.message);
         }
 
         setLeads((prev) => prev.filter((lead) => lead.id !== leadId));
