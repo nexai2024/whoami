@@ -360,6 +360,29 @@
     color: #777;
   }
   
+  .richTextPreview {
+    min-height: 120px;
+    background-color: #f8f8f8;
+    padding: 0.75rem;
+    border-radius: 4px;
+  }
+  
+  .richTextPreview :global(p) {
+    margin: 0 0 0.5rem 0;
+  }
+
+  .richTextPreview :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .richTextPreview > div {
+    line-height: 1.6;
+  }
+  
+  .placeholder {
+    color: #999;
+  }
+  
   .formInput,
   .formSelect {
     width: 100%;

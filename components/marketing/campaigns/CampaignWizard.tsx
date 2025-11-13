@@ -16,6 +16,7 @@ import Step3Customize from './wizard/Step3Customize';
 import Step4Generate from './wizard/Step4Generate';
 import { generateCampaignAction } from '@/app/(main)/marketing/campaigns/actions';
 import { Platform } from '@prisma/client';
+import { stripHtml } from '@/lib/utils/richText';
 
 interface FormData {
   name: string;
@@ -60,7 +61,7 @@ export default function CampaignWizard() {
           return !!formData.sourceId;
         }
         if (formData.sourceType === 'CUSTOM') {
-          return !!formData.sourceText && formData.sourceText.trim().length > 0;
+          return stripHtml(formData.sourceText).length > 0;
         }
         return false;
       case 2:
@@ -123,7 +124,8 @@ export default function CampaignWizard() {
       } else if (formData.sourceType === 'CUSTOM' && formData.sourceText) {
         payload.customContent = {
           title: formData.name,
-          description: formData.sourceText,
+          description: stripHtml(formData.sourceText),
+          richDescription: formData.sourceText,
         };
       }
 

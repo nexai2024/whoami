@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Lead, PipelineStage, LeadCreateInput } from '@/types/leadData';
 import styles from './LeadManager.module.css';
+import RichTextEditor from '@/components/common/RichTextEditor';
+import DOMPurify from 'isomorphic-dompurify';
+import { isRichTextEmpty } from '@/lib/utils/richText';
 
 interface LeadDetailModalProps {
   lead: Lead | null;
@@ -326,14 +329,23 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>Notes</label>
               {isEditing || isCreating ? (
-                <textarea
-                  className={styles.formInput}
+                <RichTextEditor
                   value={formData.notes || ''}
-                  onChange={(e) => handleFieldChange('notes', e.target.value)}
-                  rows={4}
+                  onChange={(content) => handleFieldChange('notes', content)}
+                  placeholder="Add detailed notes about this lead..."
                 />
               ) : (
-                <div className={styles.fieldValue}>{formData.notes || '-'}</div>
+                <div className={`${styles.fieldValue} ${styles.richTextPreview}`}>
+                  {!isRichTextEmpty(formData.notes) ? (
+                    <div
+                      dangerouslySetInnerHTML={{
+                        __html: DOMPurify.sanitize(formData.notes),
+                      }}
+                    />
+                  ) : (
+                    <span className={styles.placeholder}>-</span>
+                  )}
+                </div>
               )}
             </div>
 

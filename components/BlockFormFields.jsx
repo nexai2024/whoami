@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import RichTextEditor from '@/components/common/RichTextEditor';
 
 /**
  * Comprehensive block-specific form fields for all 23 block types
@@ -52,6 +53,18 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
         rows={rows}
         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
         onChange={(e) => updateBlockData(field, e.target.value)}
+      />
+    </div>
+  );
+
+  const renderRichTextEditor = (label, field, placeholder = '', minHeight = 180) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>
+      <RichTextEditor
+        value={selectedBlock.data?.[field] || ''}
+        onChange={(value) => updateBlockData(field, value)}
+        placeholder={placeholder}
+        minHeight={minHeight}
       />
     </div>
   );
@@ -142,8 +155,8 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
         {renderNumberField('Price', 'price', 0)}
         {renderNumberField('Original Price', 'originalPrice', 0)}
         {renderTextField('Currency', 'currency', 'USD')}
-        {renderTextArea('Description', 'description', 'Short product description')}
-        {renderTextArea('Long Description', 'longDescription', 'Detailed product description', 5)}
+        {renderRichTextEditor('Description', 'description', 'Short product description')}
+        {renderRichTextEditor('Long Description', 'longDescription', 'Detailed product description', 240)}
         {renderStringArray('Product Images (URLs)', 'images', 'https://example.com/image.jpg')}
         {renderStringArray('Features', 'features', 'Key product feature')}
         {renderNumberField('Average Rating', 'averageRating', 0, 5, 0.1)}
@@ -156,10 +169,29 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
         {renderTextField('SKU', 'sku', 'Product SKU')}
         {renderTextField('Category', 'category', 'Product category')}
         {renderStringArray('Tags', 'tags', 'Product tag')}
-        {renderTextArea('Shipping Info', 'shippingInfo', 'Shipping details')}
-        {renderTextArea('Return Policy', 'returnPolicy', 'Return policy details')}
+        {renderRichTextEditor('Shipping Info', 'shippingInfo', 'Shipping details', 160)}
+        {renderRichTextEditor('Return Policy', 'returnPolicy', 'Return policy details', 160)}
         {renderTextField('Button Text', 'buttonText', 'Buy Now')}
         {renderTextField('Product URL', 'productUrl', 'https://store.com/product', 'url')}
+      </div>
+    );
+  }
+
+  // COURSE Block
+  if (blockType === 'course') {
+    return (
+      <div className="space-y-4 max-h-[600px] overflow-y-auto">
+        {renderTextField('Course ID', 'courseId', 'Optional course ID')}
+        {renderTextField('Course Slug', 'courseSlug', 'course-slug')}
+        {renderTextField('Headline', 'headline', 'Build your next skill')}
+        {renderTextField('Subheadline', 'subheadline', 'A transformational learning experience')}
+        {renderRichTextEditor('Course Description', 'description', 'Describe the course and who it is for', 220)}
+        {renderRichTextEditor('What You\'ll Learn', 'learningOutcomes', 'Highlight key takeaways (use bullet lists)', 220)}
+        {renderStringArray('Key Features', 'features', 'Weekly live Q&A')}
+        {renderTextField('Cover Image URL', 'coverImageUrl', 'https://example.com/course-cover.jpg', 'url')}
+        {renderTextField('Button Text', 'buttonText', 'Enroll Now')}
+        {renderTextField('Override CTA URL', 'ctaUrl', 'https://example.com/enroll', 'url')}
+        {renderCheckbox('Feature this block', 'featured')}
       </div>
     );
   }
@@ -187,14 +219,14 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   if (['email', 'email_capture', 'newsletter', 'waitlist'].includes(blockType)) {
     return (
       <div className="space-y-4 max-h-[600px] overflow-y-auto">
-        {renderTextArea('Description', 'description', 'Subscribe for updates')}
+        {renderRichTextEditor('Description', 'description', 'Share why people should subscribe', 180)}
         {renderTextField('Placeholder Text', 'placeholderText', 'Enter your email')}
         {renderTextField('Button Text', 'buttonText', 'Subscribe')}
-        {renderTextArea('Success Message', 'successMessage', 'Thank you for subscribing!')}
+        {renderRichTextEditor('Success Message', 'successMessage', 'Thank you for subscribing!', 140)}
         {renderCheckbox('Collect name', 'fieldsToCollect.name')}
         {renderCheckbox('Collect phone', 'fieldsToCollect.phone')}
         {renderTextField('Privacy Policy URL', 'privacyPolicyUrl', 'https://example.com/privacy', 'url')}
-        {renderTextArea('Consent Text', 'consentText', 'I agree to receive emails')}
+        {renderRichTextEditor('Consent Text', 'consentText', 'I agree to receive emails', 140)}
         {renderCheckbox('Require consent', 'requireConsent')}
         {renderCheckbox('Send welcome email', 'sendWelcomeEmail')}
         {renderTextField('List ID', 'listId', 'mailchimp-list-id')}
@@ -440,6 +472,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
       <div className="space-y-4">
         {renderTextField('Form Title', 'questionFormTitle', 'Ask Me Anything')}
         {renderTextField('Question Placeholder', 'questionPlaceholder', 'Your question...')}
+        {renderRichTextEditor('Intro Message', 'introMessage', 'Let visitors know what kinds of questions to ask', 180)}
         {renderCheckbox('Require Approval', 'requireApproval')}
         {renderCheckbox('Allow Voting', 'allowVoting')}
         {renderCheckbox('Display Answered Questions', 'displayAnsweredQuestions')}
@@ -450,6 +483,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
         ])}
         {renderTextField('Moderation Email', 'moderationEmail', 'mod@example.com', 'email')}
         {renderNumberField('Max Question Length', 'maxQuestionLength', 10, 1000)}
+        {renderRichTextEditor('Answer Guidelines', 'answerGuidelines', 'Share how you respond to questions', 160)}
       </div>
     );
   }
@@ -475,7 +509,7 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
   if (blockType === 'text' || blockType === 'text_block') {
     return (
       <div className="space-y-4">
-        {renderTextArea('Content', 'content', 'Your text content here...', 5)}
+        {renderRichTextEditor('Content', 'content', 'Your text content here...', 240)}
         {renderSelect('Heading Level', 'headingLevel', [
           { value: 'h1', label: 'Heading 1' },
           { value: 'h2', label: 'Heading 2' },
@@ -590,8 +624,8 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
           { value: 'password', label: 'Password' },
           { value: 'membership', label: 'Membership' }
         ])}
-        {renderTextArea('Preview Content', 'previewContent', 'Preview text...')}
-        {renderTextArea('Unlock Instructions', 'unlockMethod', 'How to unlock this content...')}
+        {renderRichTextEditor('Preview Content', 'previewContent', 'Preview text...', 200)}
+        {renderRichTextEditor('Unlock Instructions', 'unlockMethod', 'Explain how to unlock this content...', 180)}
         {renderNumberField('Price', 'price', 0)}
         {renderTextField('Currency', 'currency', 'USD')}
         {renderTextField('Password', 'password', '', 'password')}

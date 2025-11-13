@@ -7,6 +7,8 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@stackframe/stack';
+import RichTextEditor from '@/components/common/RichTextEditor';
+import { stripHtml } from '@/lib/utils/richText';
 import {
   fetchCampaignBlocksAction,
   fetchCampaignProductsAction,
@@ -33,7 +35,7 @@ interface Product {
 interface Block {
   id: string;
   type: string;
-  data: Record<string, unknown> | null;
+  data: Record<string, any> | null;
 }
 
 export default function Step1Source({ formData, updateFormData }: Step1SourceProps) {
@@ -248,16 +250,15 @@ export default function Step1Source({ formData, updateFormData }: Step1SourcePro
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Describe What You Want to Promote *
           </label>
-          <textarea
+          <RichTextEditor
             value={formData.sourceText || ''}
-            onChange={(e) => updateFormData({ sourceText: e.target.value })}
+            onChange={(content) => {
+              updateFormData({ sourceText: content });
+            }}
             placeholder="Describe your product, service, event, or offer in detail. Include key features, benefits, and what makes it special..."
-            maxLength={500}
-            rows={6}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
           <p className="text-xs text-gray-500 mt-1">
-            {(formData.sourceText || '').length}/500 characters
+            {stripHtml(formData.sourceText).length} characters
           </p>
         </div>
       )}

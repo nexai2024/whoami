@@ -11,6 +11,8 @@ import SEOHead from './SEOHead';
 import EmailCaptureModal from './EmailCaptureModal';
 import BlockRenderer from './BlockRenderer';
 import toast from 'react-hot-toast';
+import DOMPurify from 'isomorphic-dompurify';
+import { isRichTextEmpty } from '@/lib/utils/richText';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo, 
@@ -257,6 +259,7 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
         data.bio ||
         user?.profile?.bio ||
         null;
+      const bioHasContent = bio && !isRichTextEmpty(bio);
 
       const location =
         data.showLocation && data.location ? data.location : null;
@@ -360,10 +363,13 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                     <span>{location}</span>
                   </div>
                 )}
-                {bio && (
-                  <p className={`text-sm mb-4 max-w-xl mx-auto md:mx-0 ${isGradient ? 'opacity-95' : 'opacity-90 text-gray-600 md:text-gray-700'}`}>
-                    {bio}
-                  </p>
+                {bioHasContent && (
+                  <div
+                    className={`text-sm mb-4 max-w-xl mx-auto md:mx-0 leading-relaxed ${
+                      isGradient ? 'opacity-95' : 'opacity-90 text-gray-600 md:text-gray-700'
+                    }`}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(bio) }}
+                  />
                 )}
                 {data.customIntroduction && (
                   <div

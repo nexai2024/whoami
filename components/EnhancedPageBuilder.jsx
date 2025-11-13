@@ -296,7 +296,20 @@ const EnhancedPageBuilder = () => {
         newBlock.data = { price: 0, currency: 'USD', stockStatus: 'in_stock' };
         break;
       case 'course':
-        newBlock.data = { courseId: '', courseSlug: '', title: '', buttonText: 'Enroll Now' };
+        newBlock.data = {
+          courseId: '',
+          courseSlug: '',
+          headline: '',
+          subheadline: '',
+          description: '',
+          learningOutcomes: '',
+          features: [],
+          coverImageUrl: '',
+          buttonText: 'Enroll Now',
+          ctaUrl: '',
+          featured: false,
+          title: ''
+        };
         break;
       case 'link':
         newBlock.data = { url: '', openInNewTab: true };
@@ -337,7 +350,13 @@ const EnhancedPageBuilder = () => {
         newBlock.data = { platforms: { facebook: true, twitter: true }, buttonStyle: 'icons' };
         break;
       case 'ama':
-        newBlock.data = { questionFormTitle: 'Ask Me Anything', answerFormat: 'text' };
+        newBlock.data = {
+          questionFormTitle: 'Ask Me Anything',
+          questionPlaceholder: 'Your question...',
+          introMessage: '',
+          answerGuidelines: '',
+          answerFormat: 'text'
+        };
         break;
       case 'contact':
         newBlock.data = { submitButtonText: 'Send Message', enableCaptcha: true };
@@ -355,7 +374,18 @@ const EnhancedPageBuilder = () => {
         newBlock.data = { feedUrl: '', itemCount: 10, layout: 'list' };
         break;
       case 'gated':
-        newBlock.data = { contentType: 'file', accessRequirement: 'email' };
+        newBlock.data = {
+          contentType: 'file',
+          accessRequirement: 'email',
+          previewContent: '',
+          unlockMethod: '',
+          price: 0,
+          currency: 'USD',
+          password: '',
+          contentUrl: '',
+          successRedirectUrl: '',
+          expirationHours: 24
+        };
         break;
       case 'custom':
         newBlock.data = { allowScripts: false };
@@ -639,6 +669,8 @@ const EnhancedPageBuilder = () => {
       ama_block: FiMail,
       gated: FiSettings,
       gated_content: FiSettings,
+      course: FiBook,
+      course_block: FiBook,
       rss: FiLink,
       rss_feed: FiLink,
       portfolio: FiImage,
@@ -649,6 +681,21 @@ const EnhancedPageBuilder = () => {
       text_block: FiEdit3
     };
     return iconMap[normalizedType] || FiLink;
+  };
+
+  const stripHtml = (value) => {
+    if (typeof value !== 'string') return '';
+    return value
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const summarizeText = (value, fallback = '', length = 80) => {
+    const text = stripHtml(value) || fallback;
+    if (!text) return '';
+    return text.length > length ? `${text.slice(0, length - 1)}…` : text;
   };
 
   // Helper function to render block summary
@@ -666,7 +713,11 @@ const EnhancedPageBuilder = () => {
       case 'email_capture':
       case 'newsletter':
       case 'waitlist':
-        return <p className="text-sm text-gray-600">{block.data?.description || 'Email capture'}</p>;
+        return (
+          <p className="text-sm text-gray-600">
+            {summarizeText(block.data?.description, 'Email capture')}
+          </p>
+        );
       case 'promo':
         return <p className="text-sm text-yellow-600">Code: {block.data?.promoCode || 'N/A'}</p>;
       case 'discount':
@@ -689,10 +740,22 @@ const EnhancedPageBuilder = () => {
         return <p className="text-sm text-sky-600">{block.data?.platform || 'Social'} - @{block.data?.username || 'user'}</p>;
       case 'ama':
       case 'ama_block':
-        return <p className="text-sm text-violet-600">Q&A Block</p>;
+        return (
+          <p className="text-sm text-violet-600">
+            {summarizeText(block.data?.introMessage, 'Q&A Block', 60)}
+          </p>
+        );
       case 'gated':
       case 'gated_content':
-        return <p className="text-sm text-fuchsia-600">{block.data?.accessRequirement || 'Gated'} access</p>;
+        return (
+          <p className="text-sm text-fuchsia-600">
+            {summarizeText(
+              block.data?.previewContent,
+              `${block.data?.accessRequirement || 'Gated'} access`,
+              60
+            )}
+          </p>
+        );
       case 'rss':
       case 'rss_feed':
         return <p className="text-sm text-orange-600 truncate">{block.data?.feedUrl || 'RSS Feed'}</p>;
@@ -703,7 +766,26 @@ const EnhancedPageBuilder = () => {
         return <p className="text-sm text-zinc-600">Contact Form</p>;
       case 'text':
       case 'text_block':
-        return <p className="text-sm text-neutral-600">{block.data?.headingLevel || 'Text'}</p>;
+        return (
+          <p className="text-sm text-neutral-600">
+            {summarizeText(
+              block.data?.content,
+              block.data?.headingLevel ? `${block.data.headingLevel.toUpperCase()} Block` : 'Text Block',
+              60
+            )}
+          </p>
+        );
+      case 'course':
+      case 'course_block':
+        return (
+          <p className="text-sm text-purple-600">
+            {summarizeText(
+              block.data?.headline || block.data?.description,
+              'Course block',
+              60
+            )}
+          </p>
+        );
       case 'divider':
         return <p className="text-sm text-stone-600">{block.data?.style || 'solid'} line</p>;
       case 'image':

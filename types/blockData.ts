@@ -26,6 +26,21 @@ export interface ProductBlockData {
   productUrl?: string;
 }
 
+export interface CourseBlockData {
+  courseId?: string;
+  courseSlug?: string;
+  headline?: string;
+  subheadline?: string;
+  description?: string;
+  learningOutcomes?: string;
+  features?: string[];
+  coverImageUrl?: string;
+  buttonText?: string;
+  ctaUrl?: string;
+  featured?: boolean;
+  title?: string; // legacy support
+}
+
 export interface PromoBlockData {
   promoCode: string;
   description?: string;
@@ -197,12 +212,14 @@ export interface SocialFeedBlockData {
 export interface AmaBlockData {
   questionFormTitle?: string;
   questionPlaceholder?: string;
+  introMessage?: string;
   requireApproval?: boolean;
   allowVoting?: boolean;
   displayAnsweredQuestions?: boolean;
   answerFormat?: 'text' | 'video' | 'audio';
   moderationEmail?: string;
   maxQuestionLength?: number;
+  answerGuidelines?: string;
 }
 
 // Content Display Blocks
@@ -312,6 +329,7 @@ export interface CustomBlockData {
 // Union type for all block data types
 export type BlockData =
   | ProductBlockData
+  | CourseBlockData
   | PromoBlockData
   | DiscountBlockData
   | LinkBlockData

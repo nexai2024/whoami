@@ -7,6 +7,7 @@ import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
 import toast from 'react-hot-toast';
 import TemplateBrowser from './TemplateBrowser';
+import RichTextEditor from '@/components/common/RichTextEditor';
 
 const { 
   FiUser, FiEdit3, FiMail, FiPhone, FiGlobe, FiMapPin, 
@@ -48,9 +49,7 @@ const HeaderCustomizer = ({ pageId, currentHeader, onSave, onPreview }) => {
     showLocation: true,
     customIntroduction: '',
     ...currentHeader
-  });
-console.log('Current Header:', currentHeader);
-console.log('Header Data State:', headerData);
+});
   const [activeTab, setActiveTab] = useState('basic');
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
@@ -186,12 +185,10 @@ console.log('Header Data State:', headerData);
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Bio/Description
         </label>
-        <textarea
-          value={headerData.bio}
-          onChange={(e) => handleInputChange('bio', e.target.value)}
+        <RichTextEditor
+          value={headerData.bio || ''}
+          onChange={(content) => handleInputChange('bio', content)}
           placeholder="Tell visitors about yourself..."
-          rows={3}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
         />
       </div>
 
@@ -199,12 +196,11 @@ console.log('Header Data State:', headerData);
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Custom Introduction
         </label>
-        <textarea
-          value={headerData.customIntroduction}
-          onChange={(e) => handleInputChange('customIntroduction', e.target.value)}
+        <RichTextEditor
+          value={headerData.customIntroduction || ''}
+          onChange={(content) => handleInputChange('customIntroduction', content)}
           placeholder="Add a personal welcome message or call-to-action..."
-          rows={2}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+          minHeight={120}
         />
         <p className="text-xs text-gray-500 mt-1">
           This will appear below your bio as a highlighted message
@@ -375,7 +371,6 @@ console.log('Header Data State:', headerData);
         pageId={pageId}
         onApply={(templateId) => {
           // Template will be applied and page will reload
-          console.log('Bio template applied:', templateId);
         }}
         showAIGenerate={true}
       />
@@ -613,14 +608,21 @@ const HeaderPreview = ({ headerData }) => {
             )}
 
             {/* Bio */}
-            {headerData.bio && (
-              <p className="text-sm opacity-80 mb-3 max-w-md mx-auto">{headerData.bio}</p>
+            {!isRichTextEmpty(headerData.bio) && (
+              <div
+                className="text-sm opacity-80 mb-3 max-w-md mx-auto leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(headerData.bio || '') }}
+              />
             )}
 
             {/* Custom Introduction */}
-            {headerData.customIntroduction && (
-              <div className="bg-black bg-opacity-10 rounded-lg p-3 mb-4">
-                <p className="text-sm font-medium">{headerData.customIntroduction}</p>
+            {!isRichTextEmpty(headerData.customIntroduction) && (
+              <div className="bg-black bg-opacity-10 rounded-lg p-3 mb-4 text-sm font-medium leading-relaxed">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize(headerData.customIntroduction || ''),
+                  }}
+                />
               </div>
             )}
 

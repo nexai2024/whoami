@@ -1,6 +1,8 @@
 "use client";
 import React from 'react';
 import * as FiIcons from 'react-icons/fi';
+import classNames from 'classnames';
+import DOMPurify from 'isomorphic-dompurify';
 import SafeIcon from '../common/SafeIcon';
 
 const {
@@ -27,6 +29,40 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     cursor: 'pointer'
   };
   
+  const getSanitizedHtml = (html) => {
+    if (typeof html !== 'string') return null;
+    const sanitized = DOMPurify.sanitize(html);
+    const plain = sanitized
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return plain ? sanitized : null;
+  };
+
+  const renderRichText = (html, options = {}) => {
+    const { wrapperClass = '', proseClass = 'prose max-w-none text-current' } = options;
+    const sanitized = getSanitizedHtml(html);
+    if (!sanitized) return null;
+    return (
+      <div className={wrapperClass}>
+        <div
+          className={classNames(proseClass)}
+          dangerouslySetInnerHTML={{ __html: sanitized }}
+        />
+      </div>
+    );
+  };
+
+  const formatAccessRequirement = (value) => {
+    if (!value) return 'Gated Access';
+    return value
+      .toString()
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+  };
+
   // Debug log
   console.log('BlockRenderer rendering block:', block.type, 'with styles:', baseStyles);
   // LINK Block
@@ -56,6 +92,10 @@ const BlockRenderer = ({ block, onBlockClick }) => {
 
   // PRODUCT Block
   if (block.type === 'PRODUCT') {
+    const productDescription = renderRichText(block.data?.description, {
+      wrapperClass: 'text-gray-600 mb-2',
+      proseClass: 'prose-sm max-w-none text-current',
+    });
     return (
       <div className={`${baseStyles} bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-center`} onClick={() => onBlockClick(block)}>
         <div className="flex flex-col items-center gap-4">
@@ -64,9 +104,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
           )}
           <div className="flex flex-col items-center">
             <h3 className="font-bold text-gray-900 mb-1">{block.title}</h3>
-            {block.data?.description && (
-              <p className="text-sm text-gray-600 mb-2">{block.data.description}</p>
-            )}
+            {productDescription}
             <div className="flex flex-col items-center gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold text-green-600">
@@ -99,18 +137,127 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     );
   }
 
+  // COURSE Block
+  if (block.type === 'COURSE') {
+    const courseDescription = renderRichText(block.data?.description, {
+      wrapperClass: 'text-gray-700 mb-3 text-left',
+      proseClass: 'prose max-w-none text-current',
+    });
+    const learningOutcomes = renderRichText(block.data?.learningOutcomes, {
+      wrapperClass: 'text-gray-700 text-left',
+      proseClass: 'prose-sm max-w-none text-current',
+    });
+    const headline = block.data?.headline || block.title;
+    const subheadline = block.data?.subheadline;
+
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-indigo-50 to-purple-50 border-indigo-200`} onClick={() => onBlockClick(block)}>
+        <div className="flex flex-col gap-4 text-left">
+          {block.data?.coverImageUrl && (
+            <img
+              src={block.data.coverImageUrl}
+              alt={headline}
+              className="w-full h-40 object-cover rounded-lg"
+            />
+          )}
+          <div>
+            <h3 className="font-bold text-gray-900 mb-1">{headline}</h3>
+            {subheadline && <p className="text-sm text-gray-500 mb-3">{subheadline}</p>}
+            {courseDescription}
+          </div>
+          {learningOutcomes && (
+            <div className="bg-white border border-indigo-100 rounded-lg p-3">
+              <p className="text-sm font-semibold text-indigo-600 mb-2">What you'll learn</p>
+              {learningOutcomes}
+            </div>
+          )}
+          <div className="bg-white rounded-lg p-3 text-center border border-indigo-100">
+            <p className="text-sm font-medium text-indigo-600">
+              {block.data?.buttonText || 'Explore Course'}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // EMAIL_CAPTURE / NEWSLETTER / WAITLIST Blocks
   if (['EMAIL_CAPTURE', 'NEWSLETTER', 'WAITLIST'].includes(block.type)) {
+    const captureDescription = renderRichText(block.data?.description, {
+      wrapperClass: 'text-gray-600 mb-4',
+      proseClass: 'prose-sm max-w-none text-current',
+    });
     return (
       <div className={`${baseStyles} bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200`} onClick={() => onBlockClick(block)}>
         <div className="text-center">
           <SafeIcon name={undefined}  icon={FiMail} className="text-3xl text-purple-600 mx-auto mb-3" />
           <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
-          {block.data?.description && (
-            <p className="text-sm text-gray-600 mb-4">{block.data.description}</p>
-          )}
+          {captureDescription}
           <div className="bg-white rounded-lg p-3 text-center">
             <p className="text-sm font-medium text-purple-600">{block.data?.buttonText || 'Subscribe'}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // AMA Block
+  if (block.type === 'AMA' || block.type === 'AMA_BLOCK') {
+    const introMessage = renderRichText(block.data?.introMessage, {
+      wrapperClass: 'text-gray-700 text-left',
+      proseClass: 'prose-sm max-w-none text-current',
+    });
+    const answerGuidelines = renderRichText(block.data?.answerGuidelines, {
+      wrapperClass: 'text-xs text-violet-700 text-left',
+      proseClass: 'prose-sm max-w-none text-current',
+    });
+    const placeholder = block.data?.questionPlaceholder || 'Type your question...';
+    const title = block.title || block.data?.questionFormTitle || 'Ask Me Anything';
+
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-violet-50 to-purple-50 border-violet-200`} onClick={() => onBlockClick(block)}>
+        <div className="flex flex-col gap-3 text-left">
+          <h3 className="font-bold text-gray-900">{title}</h3>
+          {introMessage}
+          <div className="bg-white rounded-lg p-3 border border-violet-100">
+            <p className="text-sm text-gray-500">{placeholder}</p>
+          </div>
+          {answerGuidelines && (
+            <div className="bg-white/70 rounded-lg p-3 border border-violet-100">
+              <p className="text-xs font-semibold text-violet-700 mb-1">Answer Guidelines</p>
+              {answerGuidelines}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // GATED_CONTENT Block
+  if (block.type === 'GATED_CONTENT' || block.type === 'GATED') {
+    const previewContent = renderRichText(block.data?.previewContent, {
+      wrapperClass: 'text-gray-700 mb-4 text-left',
+      proseClass: 'prose-sm max-w-none text-current',
+    });
+    const unlockInstructions = renderRichText(block.data?.unlockMethod, {
+      wrapperClass: 'text-xs text-gray-500 text-left',
+      proseClass: 'prose-sm max-w-none text-current',
+    });
+    const requirementLabel = formatAccessRequirement(block.data?.accessRequirement);
+    const price =
+      typeof block.data?.price === 'number' && block.data.price > 0
+        ? `${block.data?.currency || 'USD'}${block.data.price}`
+        : null;
+
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-fuchsia-50 to-pink-50 border-fuchsia-200`} onClick={() => onBlockClick(block)}>
+        <div className="text-left">
+          <h3 className="font-bold text-gray-900 mb-2">{block.title || 'Gated Content'}</h3>
+          {previewContent}
+          <div className="bg-white rounded-lg p-3 border border-fuchsia-100">
+            <p className="text-sm font-semibold text-fuchsia-600 mb-2">{requirementLabel}</p>
+            {price && <p className="text-sm text-gray-600 mb-2">Price: {price}</p>}
+            {unlockInstructions}
           </div>
         </div>
       </div>
@@ -270,13 +417,20 @@ const BlockRenderer = ({ block, onBlockClick }) => {
       right: 'text-right',
       justify: 'text-justify'
     }[block.data?.textAlign || 'center'];
-
-    const sizeClass = {
+    const fontSize = block.data?.fontSize || 'medium';
+    const proseSizeClass = {
+      small: 'prose-sm',
+      medium: 'prose',
+      large: 'prose-lg',
+      xl: 'prose-lg'
+    }[fontSize] || 'prose';
+    const fallbackSizeClass = {
       small: 'text-sm',
       medium: 'text-base',
       large: 'text-lg',
       xl: 'text-xl'
-    }[block.data?.fontSize || 'medium'];
+    }[fontSize] || 'text-base';
+    const sanitizedContent = getSanitizedHtml(block.data?.content);
 
     return (
       <div
@@ -287,9 +441,24 @@ const BlockRenderer = ({ block, onBlockClick }) => {
           padding: `${block.data?.padding || 24}px`
         }}
       >
-        <div className={sizeClass}>
-          {block.data?.content || block.title}
-        </div>
+        {sanitizedContent ? (
+          <div
+            className={classNames({
+              'mx-auto': alignmentClass === 'text-center' || alignmentClass === 'text-justify',
+              'ml-auto': alignmentClass === 'text-right'
+            })}
+          >
+            <div
+              className={classNames(
+                proseSizeClass,
+                'max-w-none text-current'
+              )}
+              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+            />
+          </div>
+        ) : (
+          <p className={classNames('leading-relaxed', fallbackSizeClass)}>{block.title}</p>
+        )}
       </div>
     );
   }
