@@ -89,7 +89,7 @@ export default function Sidebar() {
       icon: FiPlus,
       description: 'Build content',
       links: [
-        { name: 'Pages', href: '/builder?new=true', icon: FiFileText, hot: true, description: 'Build bio pages' },
+        { name: 'Pages', href: '/dashboard', icon: FiFileText, hot: true, description: 'Build bio pages' },
         { name: 'Lead Magnets', href: '/marketing/lead-magnets', icon: FiGift, hot: true, description: 'Grow your list' },
         { name: 'Courses', href: '/courses?new=true', icon: FiBook, hot: true, description: 'Create courses' },
         { name: 'Products', href: '/marketing/products', icon: FiShoppingBag, description: 'Sell digital products' },

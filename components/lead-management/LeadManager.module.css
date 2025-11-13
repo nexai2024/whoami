@@ -267,6 +267,10 @@
     flex: 2;
   }
   
+  .columnSource {
+    flex: 1.5;
+  }
+  
   .stageDropdown {
     padding: 0.25rem 0.5rem;
     border: 1px solid #ddd;
@@ -348,6 +352,12 @@
     font-weight: 500;
     color: #333;
     font-size: 0.9rem;
+  }
+  
+  .helperText {
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: #777;
   }
   
   .formInput,
@@ -578,4 +588,95 @@
   .emptyState h3 {
     margin-bottom: 1rem;
     color: #666;
+  }
+
+  .contextMenuBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    background: transparent;
+  }
+
+  .contextMenu {
+    position: absolute;
+    min-width: 220px;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    animation: fadeInScale 0.15s ease-out;
+  }
+
+  .contextMenuItem {
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 0.9rem;
+    color: #333;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+  }
+
+  .contextMenuItem:hover {
+    background-color: #f0f4ff;
+    color: #1a5ad7;
+  }
+
+  .contextMenuDanger {
+    color: #c62828;
+  }
+
+  .contextMenuDanger:hover {
+    background-color: #fdecea;
+    color: #b71c1c;
+  }
+
+  .contextMenuGroup {
+    border-top: 1px solid #eee;
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .contextMenuGroupLabel {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #888;
+    padding: 0 0.75rem;
+  }
+
+  .contextMenuSubItem {
+    padding: 0.4rem 0.75rem;
+    border: none;
+    background: none;
+    text-align: left;
+    font-size: 0.85rem;
+    color: #555;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+  }
+
+  .contextMenuSubItem:hover {
+    background-color: #eef3ff;
+    color: #1a5ad7;
+  }
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
   }

@@ -14,6 +14,8 @@ import Step1Source from './wizard/Step1Source';
 import Step2Platforms from './wizard/Step2Platforms';
 import Step3Customize from './wizard/Step3Customize';
 import Step4Generate from './wizard/Step4Generate';
+import { generateCampaignAction } from '@/app/(main)/marketing/campaigns/actions';
+import { Platform } from '@prisma/client';
 
 interface FormData {
   name: string;
@@ -125,23 +127,26 @@ export default function CampaignWizard() {
         };
       }
 
-      const response = await fetch('/api/campaigns/generate', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-user-id': user.id,
+      const result = await generateCampaignAction({
+        userId: user.id,
+        payload: {
+          ...payload,
+          config: {
+            ...payload.config,
+            platforms: payload.config.platforms as (Platform | string)[],
+          },
         },
-        body: JSON.stringify(payload),
+        revalidate: {
+          path: '/marketing/campaigns',
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate campaign');
+      if (!result.success) {
+        throw new Error(result.error.message);
       }
 
       toast.success('Campaign generation started!');
-      router.push(`/marketing/campaigns/${data.campaignId}`);
+      router.push(`/marketing/campaigns/${result.data.campaignId}`);
     } catch (err: any) {
       console.error('Error generating campaign:', err);
       setError(err.message || 'Failed to generate campaign. Please try again.');

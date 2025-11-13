@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { FiPlus, FiCalendar, FiBarChart2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useUser } from '@stackframe/stack';
+import { fetchCampaignsAction } from '@/app/(main)/marketing/campaigns/actions';
 
 interface Campaign {
   id: string;
@@ -45,18 +46,15 @@ export default function CampaignDashboard() {
 
       try {
         if (!silent) setLoading(true);
-        const response = await fetch('/api/campaigns', {
-          headers: {
-            'x-user-id': user.id,
-          },
+        const result = await fetchCampaignsAction({
+          userId: user.id,
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to load campaigns: ${response.status}`);
+        if (!result.success) {
+          throw new Error(result.error.message);
         }
 
-        const data = await response.json();
-        setCampaigns(data.campaigns || []);
+        setCampaigns(result.data || []);
       } catch (error) {
         console.error('Error fetching campaigns:', error);
         if (!silent) {

@@ -1,18 +1,10 @@
 /**
  * AI Service
- * Shared service for interacting with Google Gemini API
+ * Shared service for interacting with OpenAI models
  * Used by Campaign Generator, Content Repurposing, and Lead Magnet features
  */
 
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
-
-// Initialize Google Gemini
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
-
-// Get the model instance
-function getModel(modelName: string = 'route-llm'): GenerativeModel {
-  return genAI.getGenerativeModel({ model: modelName });
-}
+import OpenAI from 'openai';
 
 export interface GenerateOptions {
   systemPrompt: string;
@@ -28,63 +20,52 @@ export interface RetryOptions {
   maxDelay?: number;
 }
 
-/* stream = true # or false
-fetch('https://routellm.abacus.ai/v1/chat/completions', {
-  method: 'POST',
-  headers: {
-    Authorization: 'Bearer <api_key>',
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    model: 'route-llm',
-    messages: [
-      {
-        role: 'user',
-        content: 'What is the meaning of life?'
-      }
-    ],
-    stream: stream
-  })
+const openaiApiKey = process.env.OPENAI_API_KEY;
+const openaiClient = openaiApiKey ? new OpenAI({ apiKey: openaiApiKey }) : null;
+
+function ensureClient(): OpenAI {
+  if (!openaiClient) {
+    throw new Error('OpenAI API key is not configured');
+  }
+  return openaiClient;
 }
-if (stream) {
-  for (const line of response.iter_lines()) {
-    if (line) {
-      line = line.decode("utf-8");
-      if (line.startsWith("data: ")) {
-        line = line[6:];
-        if (line === "[DONE]") {
-          break;
+
+function extractMessageContent(content: unknown): string {
+  if (!content) {
+    return '';
+  }
+
+  if (typeof content === 'string') {
+    return content;
+  }
+
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') {
+          return part;
         }
-        const chunk = JSON.parse(line);
-        if (chunk["choices"][0].get("delta")) {
-          console.log(chunk["choices"][0]["delta"]["content"]);
+        if (part && typeof part === 'object' && 'text' in part) {
+          return (part as { text?: string }).text ?? '';
         }
-      }
+        return '';
+      })
+      .join('\n')
+      .trim();
+  }
+
+  if (typeof content === 'object' && 'text' in (content as Record<string, unknown>)) {
+    const text = (content as { text?: string }).text;
+    if (typeof text === 'string') {
+      return text;
     }
   }
-} else {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: 'Bearer <api_key>',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'route-llm',
-      messages: [
-        {
-          role: 'user',
-          content: 'What is the meaning of life?'
-        }
-      ],
-      stream: stream
-    })
-  });
-  console.log(await response.json());
-} */
+
+  return String(content);
+}
 
 /**
- * Generate content using Google Gemini with automatic retry logic
+ * Generate content using OpenAI with automatic retry logic
  */
 export async function generateContent(
   options: GenerateOptions,
@@ -95,7 +76,7 @@ export async function generateContent(
     userPrompt,
     maxTokens = 4096,
     temperature = 0.7,
-    model = 'route-llm',
+    model = 'gpt-4o-mini',
   } = options;
 
   const {
@@ -103,91 +84,52 @@ export async function generateContent(
     baseDelay = 1000,
     maxDelay = 10000,
   } = retryOptions;
-/* */
-let stream = false; // or false
-  let lastError: Error | null = null;
+
+  let lastError: unknown = null;
+  const client = ensureClient();
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      // Combine system and user prompts for Gemini
-      const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
-      const response = await fetch('https://routellm.abacus.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.ROUTE_LLM_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt
-            },
-            {
-              role: 'user',
-              content: userPrompt
-            }
-          ],
-          stream: stream
-        })
+      const response = await client.chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: maxTokens,
+        temperature,
       });
-      console.log("the response from the api is", response);
-      // if (stream) {
-      //   for (const line of response.iter_lines()) {
-      //     if (line) {
-      //       line = line.decode("utf-8");
-      //       if (line.startsWith("data: ")) {
-      //         line = line[6:];
-      //         if (line === "[DONE]") {
-      //           break;
-      //         }
-      //         const chunk = JSON.parse(line);
-      //         if (chunk["choices"][0].get("delta")) {
-      //           console.log(chunk["choices"][0]["delta"]["content"]);
-      //         }
-      //       }
-      //     }
-      //   }
-      // } else {
-        // const response = await fetch(url, {
-        //   method: 'POST',
-        //   headers: {
-        //     Authorization: 'Bearer <api_key>',
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({
-        //     model: model,
-        //     messages: [
-        //       {
-        //         role: 'system',
-        //         content: systemPrompt
-        //     },
-            
-        //       {
-        //         role: 'user',
-        //         content: userPrompt
-        //       }
-        //     ],
-        //     stream: stream
-        //   })
-        // });
-        const res = await response.json();
-      return res.choices[0].message.content;
-    } catch (error) {
-      lastError = error as Error;
-      console.log("the error is", error);
-      // Don't retry on authentication errors
-      if (error instanceof Error && error.message.includes('API key')) {
-        throw new Error('Invalid Google Gemini API key');
+
+      const message = response.choices[0]?.message;
+      const content = extractMessageContent(message?.content);
+
+      if (!content) {
+        throw new Error('OpenAI returned an empty response');
       }
 
-      // Don't retry on invalid request errors
-      if (error instanceof Error && error.message.includes('invalid')) {
+      return content;
+    } catch (error) {
+      lastError = error;
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'status' in error &&
+        typeof (error as { status?: number }).status === 'number'
+      ) {
+        const status = (error as { status?: number }).status;
+        if (status && status < 500 && status !== 429) {
+          throw error;
+        }
+        if (status === 401 || status === 403) {
+          throw new Error('Invalid or unauthorized OpenAI API key');
+        }
+      }
+
+      if (error instanceof Error && /invalid/i.test(error.message)) {
         throw error;
       }
 
-      // Retry on rate limit or server errors
       if (attempt < maxRetries - 1) {
         const delay = Math.min(
           baseDelay * Math.pow(2, attempt),
@@ -199,20 +141,76 @@ let stream = false; // or false
     }
   }
 
-   
   throw new Error(
-    `Gemini API request failed after ${maxRetries} attempts: ${lastError?.message}`
+    `OpenAI request failed after ${maxRetries} attempts: ${
+      lastError instanceof Error ? lastError.message : String(lastError)
+    }`
   );
 }
 
 /**
  * Generate structured JSON content with automatic parsing
  */
+function extractBalancedJson(payload: string): string | null {
+  const startIndex = payload.search(/[{\[]/);
+  if (startIndex === -1) {
+    return null;
+  }
+
+  const stack: string[] = [];
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = startIndex; i < payload.length; i++) {
+    const char = payload[i];
+
+    if (inString) {
+      if (escapeNext) {
+        escapeNext = false;
+      } else if (char === '\\') {
+        escapeNext = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+
+    if (char === '{' || char === '[') {
+      stack.push(char);
+      continue;
+    }
+
+    if (char === '}' || char === ']') {
+      if (stack.length === 0) {
+        return null;
+      }
+
+      const opening = stack.pop();
+      if (
+        (char === '}' && opening !== '{') ||
+        (char === ']' && opening !== '[')
+      ) {
+        return null;
+      }
+
+      if (stack.length === 0) {
+        return payload.slice(startIndex, i + 1);
+      }
+    }
+  }
+
+  return null;
+}
+
 export async function generateJSON<T = Record<string, string>>(
   options: GenerateOptions,
   retryOptions?: RetryOptions
 ): Promise<T> {
-  // Add JSON instruction to the prompt
   const enhancedOptions = {
     ...options,
     userPrompt: `${options.userPrompt}\n\nIMPORTANT: Return ONLY valid JSON, no additional text or explanation.`,
@@ -221,27 +219,19 @@ export async function generateJSON<T = Record<string, string>>(
   const content = await generateContent(enhancedOptions, retryOptions);
 
   try {
-    // Try to extract JSON from markdown code blocks if present
     const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-    const jsonString = jsonMatch ? jsonMatch[1] : content;
+    const jsonCandidate = jsonMatch ? jsonMatch[1] : content;
+    const trimmed = jsonCandidate.trim();
+    const balancedJson = extractBalancedJson(trimmed);
 
-    // Remove any text before the first { or [
-    const trimmedJson = jsonString.trim();
-    const jsonStart = Math.max(
-      trimmedJson.indexOf('{') >= 0 ? trimmedJson.indexOf('{') : Infinity,
-      trimmedJson.indexOf('[') >= 0 ? trimmedJson.indexOf('[') : Infinity
-    );
-
-    if (jsonStart === Infinity) {
+    if (!balancedJson) {
       throw new Error('No JSON found in response');
     }
 
-    const cleanedJson = trimmedJson.substring(jsonStart);
-
-    return JSON.parse(cleanedJson) as T;
+    return JSON.parse(balancedJson) as T;
   } catch (error) {
     throw new Error(
-      `Failed to parse Gemini response as JSON: ${(error as Error).message}`
+      `Failed to parse OpenAI response as JSON: ${(error as Error).message}`
     );
   }
 }
@@ -630,5 +620,5 @@ Return complete block JSON, no markdown formatting.`;
  * Check if API key is configured
  */
 export function isConfigured(): boolean {
-  return !!process.env.GOOGLE_GEMINI_API_KEY;
+  return !!openaiApiKey;
 }

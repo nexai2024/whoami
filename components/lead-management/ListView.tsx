@@ -8,6 +8,8 @@ interface ListViewProps {
   leads: Lead[];
   onLeadUpdate: (leadId: string, updates: Partial<Lead>) => void;
   onLeadSelect: (leadId: string) => void;
+  onLeadContextMenu: (lead: Lead, position: { x: number; y: number }) => void;
+  sourceLabels?: Record<string, string>;
 }
 
 interface RowData {
@@ -15,6 +17,8 @@ interface RowData {
   stages: PipelineStage[];
   onLeadUpdate: (leadId: string, updates: Partial<Lead>) => void;
   onLeadSelect: (leadId: string) => void;
+  onLeadContextMenu: (lead: Lead, position: { x: number; y: number }) => void;
+  sourceLabels?: Record<string, string>;
 }
 
 /**
@@ -26,10 +30,14 @@ const ListView: React.FC<ListViewProps> = ({
   leads,
   onLeadUpdate,
   onLeadSelect,
+  onLeadContextMenu,
+  sourceLabels,
 }) => {
   // Row renderer for virtualized list
   const Row = useCallback(({ index, style, data }: { index: number; style: React.CSSProperties; data: RowData }) => {
     const lead = data.leads[index];
+    const resolvedSource =
+      lead.source ? data.sourceLabels?.[lead.source] ?? lead.source : undefined;
     
     const handleStageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       e.stopPropagation(); // Prevent row click
@@ -41,6 +49,10 @@ const ListView: React.FC<ListViewProps> = ({
         style={style}
         className={styles.tableRow}
         onClick={() => data.onLeadSelect(lead.id)}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          data.onLeadContextMenu(lead, { x: event.clientX, y: event.clientY });
+        }}
       >
         <div className={styles.columnName}>{lead.name}</div>
         <div className={styles.columnEmail}>{lead.email}</div>
@@ -70,6 +82,9 @@ const ListView: React.FC<ListViewProps> = ({
             <span style={{ color: '#999' }}>-</span>
           )}
         </div>
+        <div className={styles.columnSource}>
+          {resolvedSource || <span style={{ color: '#999' }}>-</span>}
+        </div>
       </div>
     );
   }, []);
@@ -80,6 +95,8 @@ const ListView: React.FC<ListViewProps> = ({
     stages,
     onLeadUpdate,
     onLeadSelect,
+    onLeadContextMenu,
+    sourceLabels,
   };
 
   // Calculate list height (subtract header height)
@@ -94,6 +111,7 @@ const ListView: React.FC<ListViewProps> = ({
         <div className={styles.columnPhone}>Phone</div>
         <div className={styles.columnStage}>Stage</div>
         <div className={styles.columnTags}>Tags</div>
+        <div className={styles.columnSource}>Source</div>
       </div>
 
       {/* Virtualized list body */}

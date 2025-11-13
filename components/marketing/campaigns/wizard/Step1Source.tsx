@@ -7,6 +7,11 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@stackframe/stack';
+import {
+  fetchCampaignBlocksAction,
+  fetchCampaignProductsAction,
+} from '@/app/(main)/marketing/campaigns/actions';
+import toast from 'react-hot-toast';
 
 interface FormData {
   name: string;
@@ -28,7 +33,7 @@ interface Product {
 interface Block {
   id: string;
   type: string;
-  data: any;
+  data: Record<string, unknown> | null;
 }
 
 export default function Step1Source({ formData, updateFormData }: Step1SourceProps) {
@@ -59,16 +64,16 @@ export default function Step1Source({ formData, updateFormData }: Step1SourcePro
     if (!user?.id) return;
     setLoadingProducts(true);
     try {
-      const response = await fetch('/api/products', {
-        headers: { 'x-user-id': user.id },
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to load products: ${response.status}`);
+      const result = await fetchCampaignProductsAction({ userId: user.id });
+      if (!result.success) {
+        throw new Error(result.error.message);
       }
-      const data = await response.json();
-      setProducts(data.products || []);
+      setProducts(result.data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to load products. Please try again.'
+      );
     } finally {
       setLoadingProducts(false);
     }
@@ -78,16 +83,16 @@ export default function Step1Source({ formData, updateFormData }: Step1SourcePro
     if (!user?.id) return;
     setLoadingBlocks(true);
     try {
-      const response = await fetch('/api/blocks', {
-        headers: { 'x-user-id': user.id },
-      });
-      if (!response.ok) {
-        throw new Error(`Failed to load blocks: ${response.status}`);
+      const result = await fetchCampaignBlocksAction({ userId: user.id });
+      if (!result.success) {
+        throw new Error(result.error.message);
       }
-      const data = await response.json();
-      setBlocks(data.blocks || []);
+      setBlocks(result.data || []);
     } catch (error) {
       console.error('Error fetching blocks:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to load blocks. Please try again.'
+      );
     } finally {
       setLoadingBlocks(false);
     }

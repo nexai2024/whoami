@@ -8,13 +8,21 @@ interface LeadCardProps {
   lead: Lead;
   isDragging?: boolean;
   onClick: () => void;
+  onContextMenu?: (event: React.MouseEvent) => void;
+  sourceLabel?: string;
 }
 
 /**
  * Individual lead card component used in Kanban view
  * Integrates with @dnd-kit for drag-and-drop functionality
  */
-const LeadCard: React.FC<LeadCardProps> = ({ lead, isDragging, onClick }) => {
+const LeadCard: React.FC<LeadCardProps> = ({
+  lead,
+  isDragging,
+  onClick,
+  onContextMenu,
+  sourceLabel,
+}) => {
   const {
     attributes,
     listeners,
@@ -42,6 +50,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, isDragging, onClick }) => {
       style={style}
       className={`${styles.leadCard} ${isDragging || isSortableDragging ? styles.isDragging : ''}`}
       onClick={onClick}
+      onContextMenu={onContextMenu}
       {...attributes}
       {...listeners}
     >
@@ -52,9 +61,9 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, isDragging, onClick }) => {
         <div className={styles.leadPhone}>{lead.phone}</div>
       )}
 
-      {lead.source && (
+      {(sourceLabel ?? lead.source) && (
         <div className={styles.leadSource}>
-          <span className={styles.fieldLabel}>Source:</span> {lead.source}
+          <span className={styles.fieldLabel}>Source:</span> {sourceLabel ?? lead.source}
         </div>
       )}
 

@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
+import prisma from '@/lib/prisma';
 
 import {
   deleteLead,
@@ -211,6 +212,71 @@ export async function deleteLeadAction(
     return {
       success: true,
       data: { success: true },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: mapLeadServiceError(error),
+    };
+  }
+}
+
+export interface FetchLeadSourceDetailsOptions {
+  userId: string;
+  sourceIds: string[];
+}
+
+export async function fetchLeadSourceDetailsAction(
+  options: FetchLeadSourceDetailsOptions
+): Promise<LeadActionResult<Record<string, string>>> {
+  try {
+    const uniqueIds = Array.from(new Set(options.sourceIds.filter((id): id is string => !!id)));
+
+    if (uniqueIds.length === 0) {
+      return {
+        success: true,
+        data: {},
+      };
+    }
+
+    const [blocks, products] = await Promise.all([
+      prisma.block.findMany({
+        where: {
+          id: { in: uniqueIds },
+          page: {
+            userId: options.userId,
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+        },
+      }),
+      prisma.product.findMany({
+        where: {
+          id: { in: uniqueIds },
+          userId: options.userId,
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      }),
+    ]);
+
+    const resolved: Record<string, string> = {};
+
+    blocks.forEach((block) => {
+      resolved[block.id] = block.title;
+    });
+
+    products.forEach((product) => {
+      resolved[product.id] = product.name;
+    });
+
+    return {
+      success: true,
+      data: resolved,
     };
   } catch (error) {
     return {

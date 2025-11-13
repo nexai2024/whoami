@@ -4,9 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, CampaignStatus } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { CampaignStatus } from '@prisma/client';
+import { logger } from '@/lib/utils/logger';
+import { listCampaigns } from '@/lib/services/campaignService';
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,62 +23,28 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') as CampaignStatus | null;
 
-    const campaigns = await prisma.campaign.findMany({
-      where: {
-        userId,
-        ...(status && { status }),
-      },
-      include: {
-        assets: {
-          select: {
-            id: true,
-            status: true,
-            platform: true,
-          },
-        },
-        // scheduledPosts: {
-        //   select: {
-        //     id: true,
-        //   },
-        // },
-        product: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
+    let parsedStatus: CampaignStatus | undefined;
+    if (status) {
+      const normalized = status.toUpperCase();
+      if (Object.values(CampaignStatus).includes(normalized as CampaignStatus)) {
+        parsedStatus = normalized as CampaignStatus;
+      } else {
+        return NextResponse.json({ error: 'Invalid status filter' }, { status: 400 });
+      }
+    }
+
+    const campaigns = await listCampaigns({
+      userId,
+      filters: {
+        status: parsedStatus,
       },
     });
 
     return NextResponse.json({
-      campaigns: campaigns.map((campaign) => {
-        // Get unique platforms from assets
-        const platforms = [...new Set(campaign.assets.map(a => a.platform).filter(Boolean))];
-
-        return {
-          id: campaign.id,
-          name: campaign.name,
-          status: campaign.status,
-          goal: campaign.goal,
-          sourceType: campaign.productId ? 'PRODUCT' : campaign.blockId ? 'BLOCK' : 'CUSTOM',
-          platforms: platforms,
-          createdAt: campaign.createdAt.toISOString(),
-          product: campaign.product,
-          _count: {
-            assets: campaign.assets.length,
-            //scheduledPosts: campaign.scheduledPosts?.length || 0,
-          },
-          stats: {
-            totalEngagement: 0, // TODO: Calculate from analytics
-          },
-        };
-      }),
+      campaigns,
     });
   } catch (error) {
-    console.error('Error fetching campaigns:', error);
+    logger.error('Error fetching campaigns', { error });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -6,6 +6,8 @@ interface LeadDetailModalProps {
   lead: Lead | null;
   stages: PipelineStage[];
   isCreating: boolean;
+  startInEditMode?: boolean;
+  sourceLabels?: Record<string, string>;
   onUpdate: (leadId: string, updates: Partial<Lead>) => Promise<void> | void;
   onCreate: (leadData: LeadCreateInput) => Promise<void> | void;
   onDelete: (leadId: string) => Promise<void> | void;
@@ -20,12 +22,14 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   lead,
   stages,
   isCreating,
+  startInEditMode = false,
+  sourceLabels,
   onUpdate,
   onCreate,
   onDelete,
   onClose,
 }) => {
-  const [isEditing, setIsEditing] = useState(isCreating);
+  const [isEditing, setIsEditing] = useState(isCreating || startInEditMode);
   const [formData, setFormData] = useState<Partial<Lead>>({
     name: '',
     email: '',
@@ -40,8 +44,10 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   });
   const [newTag, setNewTag] = useState('');
 
-  // Initialize form data when lead changes
+  // Initialize form data when lead or initial state changes
   useEffect(() => {
+    setIsEditing(isCreating || startInEditMode);
+
     if (lead) {
       setFormData({
         name: lead.name,
@@ -69,7 +75,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         estimatedValue: undefined,
       });
     }
-  }, [lead, isCreating, stages]);
+  }, [lead, isCreating, startInEditMode, stages]);
 
   // Handle form field changes
   const handleFieldChange = useCallback((field: keyof Lead, value: any) => {
@@ -242,7 +248,16 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   placeholder="e.g., Website, Referral"
                 />
               ) : (
-                <div className={styles.fieldValue}>{formData.source || '-'}</div>
+                <div className={styles.fieldValue}>
+                  {formData.source
+                    ? sourceLabels?.[formData.source] ?? formData.source
+                    : '-'}
+                </div>
+              )}
+              {isEditing && formData.source && sourceLabels?.[formData.source] && (
+                <div className={styles.helperText}>
+                  Display name: {sourceLabels[formData.source]}
+                </div>
               )}
             </div>
 

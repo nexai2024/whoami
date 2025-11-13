@@ -7,6 +7,7 @@ import { useUser } from '@stackframe/stack';
 import toast from 'react-hot-toast';
 import {
   deleteLeadAction,
+  fetchLeadSourceDetailsAction,
   fetchLeadsAction,
   updateLeadAction,
   upsertLeadAction,
@@ -28,6 +29,43 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sourceLabels, setSourceLabels] = useState<Record<string, string>>({});
+
+  const refreshSourceLabels = useCallback(
+    async (leadsList: Lead[]) => {
+      if (!user?.id) {
+        setSourceLabels({});
+        return;
+      }
+
+      const ids = Array.from(
+        new Set(
+          leadsList
+            .map((lead) => lead.source)
+            .filter((value): value is string => typeof value === 'string' && value.length > 0)
+        )
+      );
+
+      if (ids.length === 0) {
+        setSourceLabels({});
+        return;
+      }
+
+      try {
+        const result = await fetchLeadSourceDetailsAction({
+          userId: user.id,
+          sourceIds: ids,
+        });
+
+        if (result.success) {
+          setSourceLabels(result.data);
+        }
+      } catch (err) {
+        console.error('Error resolving lead sources:', err);
+      }
+    },
+    [user?.id]
+  );
 
   const fetchLeads = useCallback(async () => {
     if (!user?.id) {
@@ -80,6 +118,10 @@ export default function LeadsPage() {
     fetchLeads();
   }, [fetchLeads]);
 
+  useEffect(() => {
+    void refreshSourceLabels(leads);
+  }, [leads, refreshSourceLabels]);
+
   const handleLeadUpdate = useCallback(
     async (leadId: string, updates: Partial<Lead>) => {
       if (!user?.id) {
@@ -106,17 +148,19 @@ export default function LeadsPage() {
         // Ensure the incoming 'result.data' is cast to 'Lead' type,
         // and normalize nullable fields so the array always stays Lead[]
         setLeads((prev) =>
-          prev.map((lead) =>
-            lead.id === result.data.id
-              ? {
-                  ...result.data,
-                  phone: result.data.phone === null ? undefined : result.data.phone,
-                  source: result.data.source === null ? undefined : result.data.source,
-                  company: result.data.company === null ? undefined : result.data.company,
-                  notes: result.data.notes === null ? undefined : result.data.notes,
-                }
-              : lead
-          )
+          prev.map((lead) => {
+            if (lead.id !== result.data.id) {
+              return lead;
+            }
+
+            return {
+              ...result.data,
+              phone: result.data.phone === null ? undefined : result.data.phone,
+              source: result.data.source === null ? undefined : result.data.source,
+              company: result.data.company === null ? undefined : result.data.company,
+              notes: result.data.notes === null ? undefined : result.data.notes,
+            };
+          })
         );
 
         const keys = Object.keys(updates);
@@ -228,6 +272,7 @@ export default function LeadsPage() {
       <LeadManager
         stages={stages}
         leads={leads}
+        sourceLabels={sourceLabels}
         onLeadUpdate={handleLeadUpdate}
         onLeadCreate={handleLeadCreate}
         onLeadDelete={handleLeadDelete}

@@ -32,6 +32,7 @@ export type ViewMode = 'kanban' | 'list';
 export interface LeadManagerProps {
   stages: PipelineStage[];
   leads: Lead[];
+  sourceLabels?: Record<string, string>;
   onLeadUpdate: (leadId: string, updates: Partial<Lead>) => Promise<void> | void;
   onLeadCreate: (newLeadData: LeadCreateInput) => Promise<void> | void;
   onLeadDelete: (leadId: string) => Promise<void> | void;

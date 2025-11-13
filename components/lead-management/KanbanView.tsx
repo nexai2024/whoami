@@ -10,14 +10,9 @@ import {
   useSensor,
   useSensors,
   DragOverEvent,
-  Active,
-  Over,
+  useDroppable,
 } from '@dnd-kit/core';
-import {
-  SortableContext,
-  arrayMove,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Lead, PipelineStage } from '@/types/leadData';
 import LeadCard from './LeadCard';
 import styles from './LeadManager.module.css';
@@ -25,8 +20,10 @@ import styles from './LeadManager.module.css';
 interface KanbanViewProps {
   stages: PipelineStage[];
   leads: Lead[];
-  onLeadUpdate: (leadId: string, updates: Partial<Lead>) => void;
+  onLeadUpdate: (leadId: string, updates: Partial<Lead>) => Promise<void> | void;
   onLeadSelect: (leadId: string) => void;
+  onLeadContextMenu: (lead: Lead, position: { x: number; y: number }) => void;
+  sourceLabels?: Record<string, string>;
 }
 
 /**
@@ -38,6 +35,8 @@ const KanbanView: React.FC<KanbanViewProps> = ({
   leads,
   onLeadUpdate,
   onLeadSelect,
+  onLeadContextMenu,
+  sourceLabels,
 }) => {
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [overId, setOverId] = React.useState<string | null>(null);
@@ -82,27 +81,57 @@ const KanbanView: React.FC<KanbanViewProps> = ({
   }, []);
 
   // Handle drag end - update lead stage
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over) {
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+
       setActiveId(null);
       setOverId(null);
-      return;
-    }
 
-    const leadId = active.id as string;
-    const targetStageId = over.id as string;
-    const lead = leads.find(l => l.id === leadId);
+      if (!over) {
+        return;
+      }
 
-    if (lead && lead.stageId !== targetStageId && stages.some(s => s.id === targetStageId)) {
-      // Update the lead's stage
-      onLeadUpdate(leadId, { stageId: targetStageId });
-    }
+      const activeLead = leads.find((lead) => lead.id === active.id);
+      if (!activeLead) {
+        return;
+      }
 
-    setActiveId(null);
-    setOverId(null);
-  }, [leads, stages, onLeadUpdate]);
+      let targetStageId: string | undefined;
+
+      const overData = over.data.current as
+        | {
+            type?: 'lead' | 'column';
+            containerId?: string;
+            sortable?: {
+              containerId?: string;
+            };
+          }
+        | undefined;
+
+      if (overData?.type === 'column') {
+        targetStageId = over.id as string;
+      } else if (overData?.sortable?.containerId) {
+        targetStageId = overData.sortable.containerId;
+      } else if (overData?.containerId) {
+        targetStageId = overData.containerId;
+      } else if (typeof over.id === 'string') {
+        const targetLead = leads.find((lead) => lead.id === over.id);
+        targetStageId = targetLead?.stageId ?? (over.id as string);
+      }
+
+      if (!targetStageId || targetStageId === activeLead.stageId) {
+        return;
+      }
+
+      if (!stages.some((stage) => stage.id === targetStageId)) {
+        return;
+      }
+
+      await onLeadUpdate(activeLead.id, { stageId: targetStageId });
+    },
+    [leads, stages, onLeadUpdate]
+  );
 
   // Handle drag cancel
   const handleDragCancel = useCallback(() => {
@@ -122,7 +151,11 @@ const KanbanView: React.FC<KanbanViewProps> = ({
       <div className={styles.kanbanContainer}>
         {stages.map((stage) => {
           const stageLeads = leadsByStage.get(stage.id) || [];
-          const isDraggingOver = overId === stage.id;
+          const { setNodeRef: setStageRef, isOver: isStageOver } = useDroppable({
+            id: stage.id,
+            data: { type: 'column', stageId: stage.id },
+          });
+          const isDraggingOver = isStageOver || overId === stage.id;
 
           return (
             <div key={stage.id} className={styles.stageColumn}>
@@ -130,17 +163,16 @@ const KanbanView: React.FC<KanbanViewProps> = ({
                 <h3 className={styles.stageTitle}>{stage.title}</h3>
                 <div className={styles.leadCount}>{stageLeads.length} leads</div>
               </div>
-              
+
               <div className={styles.stageContent}>
                 <SortableContext
                   id={stage.id}
-                  items={stageLeads.map(l => l.id)}
+                  items={stageLeads.map((l) => l.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div
+                    ref={setStageRef}
                     className={`${styles.dropzone} ${isDraggingOver ? styles.isDraggingOver : ''}`}
-                    // Make the stage droppable by giving it the stage ID
-                    data-droppable-id={stage.id}
                   >
                     {stageLeads.map((lead) => (
                       <LeadCard
@@ -148,9 +180,15 @@ const KanbanView: React.FC<KanbanViewProps> = ({
                         lead={lead}
                         isDragging={activeId === lead.id}
                         onClick={() => onLeadSelect(lead.id)}
+                        onContextMenu={(event) =>
+                          onLeadContextMenu(lead, { x: event.clientX, y: event.clientY })
+                        }
+                        sourceLabel={
+                          lead.source ? sourceLabels?.[lead.source] ?? lead.source : undefined
+                        }
                       />
                     ))}
-                    
+
                     {/* Empty state */}
                     {stageLeads.length === 0 && !isDraggingOver && (
                       <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>
@@ -169,7 +207,16 @@ const KanbanView: React.FC<KanbanViewProps> = ({
       <DragOverlay>
         {activeLead && (
           <div style={{ opacity: 0.8, transform: 'rotate(3deg)' }}>
-            <LeadCard lead={activeLead} isDragging={true} onClick={() => {}} />
+            <LeadCard
+              lead={activeLead}
+              isDragging={true}
+              onClick={() => {}}
+              sourceLabel={
+                activeLead.source
+                  ? sourceLabels?.[activeLead.source] ?? activeLead.source
+                  : undefined
+              }
+            />
           </div>
         )}
       </DragOverlay>

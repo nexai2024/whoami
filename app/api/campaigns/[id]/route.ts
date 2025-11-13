@@ -4,9 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { logger } from '@/lib/utils/logger';
+import { getCampaign } from '@/lib/services/campaignService';
 
 interface RouteParams {
   params: Promise<{
@@ -29,21 +28,11 @@ export async function GET(
       );
     }
 
-    const { id } = await params;
+    const { id: campaignId } = await params;
 
-    const campaign = await prisma.campaign.findFirst({
-      where: {
-        id,
-        userId,
-      },
-      include: {
-        assets: {
-          orderBy: {
-            createdAt: 'asc',
-          },
-        },
-        product: true,
-      },
+    const campaign = await getCampaign({
+      userId,
+      campaignId,
     });
 
     if (!campaign) {
@@ -54,39 +43,10 @@ export async function GET(
     }
 
     return NextResponse.json({
-      campaign: {
-        id: campaign.id,
-        name: campaign.name,
-        status: campaign.status,
-        goal: campaign.goal,
-        targetAudience: campaign.targetAudience,
-        createdAt: campaign.createdAt.toISOString(),
-        product: campaign.product
-          ? {
-              id: campaign.product.id,
-              name: campaign.product.name,
-              price: campaign.product.price,
-            }
-          : null,
-        assets: campaign.assets.map((asset) => ({
-          id: asset.id,
-          type: asset.type,
-          platform: asset.platform,
-          content: asset.content,
-          mediaUrl: asset.mediaUrl,
-          status: asset.status,
-          scheduledAt: asset.scheduledAt?.toISOString() || null,
-          publishedAt: asset.publishedAt?.toISOString() || null,
-          performance: {
-            views: asset.views,
-            clicks: asset.clicks,
-            conversions: asset.conversions,
-          },
-        })),
-      },
+      campaign,
     });
   } catch (error) {
-    console.error('Error fetching campaign:', error);
+    logger.error('Error fetching campaign detail', { error });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
