@@ -53,7 +53,7 @@ export async function POST(
         const stepStartTime = new Date();
 
         // Simulate step execution based on type
-        let output: any = {
+        const output: any = {
           test: true,
           message: 'Test execution - no real action taken',
           stepType: step.type,

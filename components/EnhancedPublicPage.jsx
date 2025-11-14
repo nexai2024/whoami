@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { PageService } from '../lib/database/pages';
@@ -11,8 +12,6 @@ import SEOHead from './SEOHead';
 import EmailCaptureModal from './EmailCaptureModal';
 import BlockRenderer from './BlockRenderer';
 import toast from 'react-hot-toast';
-import DOMPurify from 'isomorphic-dompurify';
-import { isRichTextEmpty } from '@/lib/utils/richText';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo, 
@@ -259,7 +258,6 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
         data.bio ||
         user?.profile?.bio ||
         null;
-      const bioHasContent = bio && !isRichTextEmpty(bio);
 
       const location =
         data.showLocation && data.location ? data.location : null;
@@ -333,9 +331,11 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                 className={`${avatarWrapperClass} mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center`}
               >
                 {avatar ? (
-                  <img
+                  <Image
                     src={avatar}
                     alt={displayName}
+                    width={96}
+                    height={96}
                     className="w-full h-full object-cover"
                     loading="lazy"
                   />
@@ -363,13 +363,10 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                     <span>{location}</span>
                   </div>
                 )}
-                {bioHasContent && (
-                  <div
-                    className={`text-sm mb-4 max-w-xl mx-auto md:mx-0 leading-relaxed ${
-                      isGradient ? 'opacity-95' : 'opacity-90 text-gray-600 md:text-gray-700'
-                    }`}
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(bio) }}
-                  />
+                {bio && (
+                  <p className={`text-sm mb-4 max-w-xl mx-auto md:mx-0 ${isGradient ? 'opacity-95' : 'opacity-90 text-gray-600 md:text-gray-700'}`}>
+                    {bio}
+                  </p>
                 )}
                 {data.customIntroduction && (
                   <div

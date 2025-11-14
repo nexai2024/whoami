@@ -300,7 +300,7 @@ const Settings = () => {
         </label>
         <div className="flex items-center gap-4">
           {formData.avatar && (
-            <img
+            <Image 
               src={formData.avatar}
               alt="Profile"
               className="w-20 h-20 rounded-full object-cover"

@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 /**
  * Marketing Hub Dashboard Overview
  * Main landing page for the marketing hub
@@ -19,60 +19,54 @@ export default function MarketingDashboard() {
 
       {/* Feature Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <a
+        <Link
           href="/marketing/campaigns"
           className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-8 text-white hover:shadow-xl transition-shadow group"
         >
           <div className="text-5xl mb-4">⚡</div>
           <h2 className="text-2xl font-bold mb-2 group-hover:underline">Campaign Generator</h2>
-          <p className="text-blue-100">
+          
             Generate multi-channel marketing campaigns with AI. Create social posts, emails, and landing page variants in minutes.
-          </p>
-        </a>
+          
+        </Link>
 
-        <a
+        <Link
           href="/marketing/repurpose"
           className="bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl p-8 text-white hover:shadow-xl transition-shadow group"
         >
           <div className="text-5xl mb-4">🔄</div>
           <h2 className="text-2xl font-bold mb-2 group-hover:underline">Repurpose Studio</h2>
-          <p className="text-purple-100">
+          
             Transform any content into platform-specific posts. Extract key points from videos, blogs, podcasts, and more.
-          </p>
-        </a>
+          
+        </Link>
 
-        <a
+        <Link
           href="/marketing/lead-magnets"
           className="bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl p-8 text-white hover:shadow-xl transition-shadow group"
         >
           <div className="text-5xl mb-4">🎁</div>
           <h2 className="text-2xl font-bold mb-2 group-hover:underline">Lead Magnets</h2>
-          <p className="text-green-100">
             Create irresistible content upgrades. Build your email list with PDFs, ebooks, templates, and video courses.
-          </p>
-        </a>
+        </Link>
 
-        <a
+        <Link
           href="/marketing/products"
           className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-8 text-white hover:shadow-xl transition-shadow group"
         >
           <div className="text-5xl mb-4">📦</div>
           <h2 className="text-2xl font-bold mb-2 group-hover:underline">Products</h2>
-          <p className="text-indigo-100">
             Manage digital products and track sales. Create products with Stripe integration for payment processing.
-          </p>
-        </a>
+        </Link>
 
-        <a
+        <Link
           href="/marketing/schedule"
           className="bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl p-8 text-white hover:shadow-xl transition-shadow group"
         >
           <div className="text-5xl mb-4">📅</div>
           <h2 className="text-2xl font-bold mb-2 group-hover:underline">Smart Scheduler</h2>
-          <p className="text-orange-100">
             Schedule posts across all platforms. AI-powered optimal posting times for maximum engagement.
-          </p>
-        </a>
+        </Link>
       </div>
 
       {/* Quick Stats */}

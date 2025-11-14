@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from "@stackframe/stack";
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { FiBook, FiClock, FiAward, FiCheckCircle, FiLock } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -181,9 +182,11 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
         >
           {/* Cover Image */}
           {course.coverImageUrl ? (
-            <img
+            <Image 
               src={course.coverImageUrl}
               alt={course.title}
+              width={800}
+              height={256}
               className="w-full h-64 object-cover rounded-xl mb-6"
             />
           ) : (

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import * as FiIcons from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -185,9 +186,11 @@ export default function CourseMarketplacePage() {
                   {/* Course Image */}
                   {course.coverImageUrl && (
                     <div className="aspect-video w-full bg-gray-200">
-                      <img
+                      <Image 
                         src={course.coverImageUrl}
                         alt={course.title}
+                        width={400}
+                        height={225}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -220,7 +223,7 @@ export default function CourseMarketplacePage() {
                     {course.user?.profile && (
                       <div className="flex items-center gap-2 mb-4">
                         {course.user.profile.avatar && (
-                          <img
+                          <Image 
                             src={course.user.profile.avatar}
                             alt={course.user.profile.displayName || course.user.profile.username}
                             className="w-6 h-6 rounded-full"

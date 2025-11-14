@@ -266,11 +266,11 @@ export async function fetchLeadSourceDetailsAction(
 
     const resolved: Record<string, string> = {};
 
-    blocks.forEach((block) => {
+    blocks.forEach((block: { id: string; title: string }) => {
       resolved[block.id] = block.title;
     });
 
-    products.forEach((product) => {
+    products.forEach((product: { id: string; name: string }): void => {
       resolved[product.id] = product.name;
     });
 

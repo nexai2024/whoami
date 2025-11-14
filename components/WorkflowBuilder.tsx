@@ -45,6 +45,7 @@ export default function WorkflowBuilder({ workflowId, onSave }: WorkflowBuilderP
       // Initialize with trigger node
       initializeEmptyWorkflow();
     }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflowId]);
 
   const initializeEmptyWorkflow = () => {

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import BlockRenderer from './BlockRenderer';
-
+import Image from 'next/image';
 const {
   FiSearch, FiX, FiEye, FiDownload, FiGrid, FiFilter, FiStar,
   FiTrendingUp, FiZap, FiLayout, FiFileText, FiChevronDown
@@ -52,11 +52,13 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
   // Fetch templates
   useEffect(() => {
     fetchTemplates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templateType]);
 
   // Filter templates
   useEffect(() => {
     filterTemplates();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [templates, searchQuery, selectedCategory, selectedTags, templateType]);
 
   const fetchTemplates = async () => {
@@ -344,7 +346,7 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
             >
               {/* Thumbnail */}
               <div className="relative aspect-video bg-gray-100 rounded-t-lg overflow-hidden">
-                <img
+                <Image 
                   src={template.thumbnailUrl}
                   alt={template.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"

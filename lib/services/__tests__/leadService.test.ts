@@ -79,7 +79,7 @@ describe('parseLeadListFilters', () => {
   it('throws when tags are not string or array', () => {
     expect(() =>
       parseLeadListFilters({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         tags: 123 as any,
       })
     ).toThrow(LeadValidationError);

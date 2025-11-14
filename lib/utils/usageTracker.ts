@@ -107,7 +107,7 @@ export async function checkUsage(
 ): Promise<UsageCheckResult> {
   try {
     // Get feature
-    let feature = await prisma.feature.findUnique({
+    const feature = await prisma.feature.findUnique({
       where: { name: featureName },
     });
 

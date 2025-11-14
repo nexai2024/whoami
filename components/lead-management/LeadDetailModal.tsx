@@ -339,7 +339,7 @@ const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   {!isRichTextEmpty(formData.notes) ? (
                     <div
                       dangerouslySetInnerHTML={{
-                        __html: DOMPurify.sanitize(formData.notes),
+                        __html: DOMPurify.sanitize(formData.notes ?? ''),
                       }}
                     />
                   ) : (

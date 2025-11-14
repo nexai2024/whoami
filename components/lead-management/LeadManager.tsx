@@ -195,7 +195,9 @@ const LeadManager: React.FC<LeadManagerProps> = ({
           <KanbanView
             stages={stages}
             leads={filteredLeads}
-            onLeadUpdate={handleUpdateLead}
+            onLeadUpdate={async (leadId, updates) => {
+              await handleUpdateLead(leadId, updates);
+            }}
             onLeadSelect={handleLeadSelect}
             onLeadContextMenu={handleContextMenu}
             sourceLabels={sourceLabels}
@@ -271,7 +273,9 @@ const LeadManager: React.FC<LeadManagerProps> = ({
           stages={stages}
           isCreating={isCreating}
           startInEditMode={startInEditMode}
-          onUpdate={handleUpdateLead}
+          onUpdate={async (leadId, updates) => {
+            await handleUpdateLead(leadId, updates);
+          }}
           onCreate={handleCreateLead}
           onDelete={handleDeleteLead}
           onClose={handleModalClose}

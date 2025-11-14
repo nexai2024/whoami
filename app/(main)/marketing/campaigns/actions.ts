@@ -150,7 +150,7 @@ export async function generateCampaignAction(
       },
     });
 
-    revalidateTag(getCampaignCacheTag(options.userId));
+    revalidateTag(getCampaignCacheTag(options.userId), 'page');
 
     if (options.revalidate?.path) {
       revalidatePath(options.revalidate.path);
@@ -158,7 +158,7 @@ export async function generateCampaignAction(
 
     if (options.revalidate?.tags) {
       for (const tag of options.revalidate.tags) {
-        revalidateTag(tag);
+        revalidateTag(tag, 'page');
       }
     }
 
@@ -239,7 +239,7 @@ export async function fetchCampaignBlocksAction({
 
     return {
       success: true,
-      data: blocks.map((block) => ({
+      data: blocks.map((block: { id: any; type: any; data: Record<string, unknown> | null; }) => ({
         id: block.id,
         type: block.type,
         data: block.data as Record<string, unknown> | null,

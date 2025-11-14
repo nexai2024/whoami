@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
       windowEnd.setHours(winEndH, winEndM, 0, 0);
 
       // Generate slots within this window
-      let currentSlot = new Date(windowStart);
+      const currentSlot = new Date(windowStart);
 
       while (currentSlot.getTime() + duration * 60 * 1000 <= windowEnd.getTime()) {
         const slotEnd = new Date(currentSlot);

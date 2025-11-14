@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import { Platform, PostType, ScheduleStatus } from '@prisma/client';
 import toast from 'react-hot-toast';
-
+import Image from 'next/image';
 interface ScheduledPost {
   id: string;
   content: string;
@@ -523,7 +523,7 @@ export default function SchedulerDashboard() {
                               key={index}
                               className="w-16 h-16 bg-gray-100 rounded overflow-hidden"
                             >
-                              <img
+                              <Image 
                                 src={url}
                                 alt=""
                                 className="w-full h-full object-cover"

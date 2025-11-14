@@ -51,7 +51,7 @@ export async function POST(
 
     let cnameValid = false;
     let txtValid = false;
-    let errors: string[] = [];
+    const errors: string[] = [];
 
     try {
       // Check CNAME record

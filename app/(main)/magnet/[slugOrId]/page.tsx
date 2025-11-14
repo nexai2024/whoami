@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation';
 import { PrismaClient, MagnetStatus } from '@prisma/client';
 import OptInForm from '@/components/lead-magnets/OptInForm';
 import { Metadata } from 'next';
-
+import Image from 'next/image';
 const prisma = new PrismaClient();
 
 interface PageProps {
@@ -78,9 +78,11 @@ export default async function LeadMagnetOptInPage({ params }: PageProps) {
       {/* Hero Section */}
       {leadMagnet.coverImageUrl && (
         <div className="w-full h-64 md:h-96 relative overflow-hidden">
-          <img
+          <Image
             src={leadMagnet.coverImageUrl}
             alt={leadMagnet.headline}
+            width={1200}
+            height={384}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-50" />

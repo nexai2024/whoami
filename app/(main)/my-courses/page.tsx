@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from "@stackframe/stack";
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiBook, FiClock, FiCheckCircle, FiTrendingUp, FiPlay, FiAward } from 'react-icons/fi';
 import toast from 'react-hot-toast';
@@ -232,9 +233,11 @@ export default function MyCoursesPage() {
                 {/* Course Image */}
                 <div className="relative h-48 bg-gradient-to-r from-indigo-500 to-purple-600">
                   {enrollment.course.coverImageUrl ? (
-                    <img
+                    <Image 
                       src={enrollment.course.coverImageUrl}
                       alt={enrollment.course.title}
+                      width={400}
+                      height={192}
                       className="w-full h-full object-cover"
                     />
                   ) : (

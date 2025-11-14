@@ -208,7 +208,7 @@ const LandingPage = () => {
                 viewport={{ once: true }}
               >
                 <div className="flex items-center mb-6">
-                  <img
+                  <Image alt="" 
                     src={testimonial.avatar}
                     alt={testimonial.name}
                     className="w-12 h-12 rounded-full mr-4"

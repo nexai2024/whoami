@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@stackframe/stack';
 import { FiUpload, FiUsers } from 'react-icons/fi';
-
+import Image from 'next/image';
 interface LeadMagnet {
   id: string;
   name: string;
@@ -691,9 +691,11 @@ export default function LeadMagnetDashboard() {
                   {/* Cover Image */}
                   <div className="h-40 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white">
                     {magnet.coverImageUrl ? (
-                      <img
+                      <Image 
                         src={magnet.coverImageUrl}
                         alt={magnet.name}
+                        width={400}
+                        height={160}
                         className="w-full h-full object-cover"
                       />
                     ) : (
@@ -796,7 +798,7 @@ export default function LeadMagnetDashboard() {
               >
                 {/* Template Thumbnail */}
                 <div className="h-48 bg-gray-100 overflow-hidden">
-                  <img
+                  <Image 
                     src={template.thumbnailUrl}
                     alt={template.name}
                     className="w-full h-full object-cover"
@@ -1050,7 +1052,7 @@ export default function LeadMagnetDashboard() {
                                 : 'border-gray-200 hover:border-blue-300'
                             }`}
                           >
-                            <img
+                            <Image
                               src={template.thumbnailUrl}
                               alt={template.name}
                               className="w-full h-32 object-cover"

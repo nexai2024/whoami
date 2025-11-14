@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { FiPlus, FiEdit3, FiUsers, FiClock, FiEye, FiBarChart2, FiBook, FiSettings } from 'react-icons/fi';
 import SafeIcon from '@/common/SafeIcon';
 import { useAuth } from '@/lib/auth/AuthContext.jsx';
@@ -226,9 +227,11 @@ const CoursesPage = () => {
               >
                 <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 relative">
                   {course.coverImageUrl ? (
-                    <img
+                    <Image 
                       src={course.coverImageUrl}
                       alt={course.title}
+                      width={400}
+                      height={192}
                       className="w-full h-full object-cover"
                     />
                   ) : (

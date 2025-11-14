@@ -9,6 +9,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { FiCopy, FiCalendar, FiEdit2, FiDownload, FiArrowLeft } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { constrainedMemory } from 'node:process';
 
 interface RepurposedAsset {
   id: string;
@@ -30,23 +31,37 @@ interface RepurposedContent {
   assets: RepurposedAsset[];
 }
 
-export default async function RepurposeResults() {
+export default function RepurposeResults() {
   const params = useParams();
   const router = useRouter();
-  const contentId = await params?.id as string;
-
+  const [contentId, setContentId] = useState<string | null>(null);
   const [content, setContent] = useState<RepurposedContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'social' | 'email' | 'longform'>('all');
   const [polling, setPolling] = useState(false);
 
   useEffect(() => {
+    const setup = async () => {
+      setContentId(params?.id as string);
+
+      const fetchContent = async (silent = false) => {
+        try {
+          if (!silent) setLoading(true);
+        const response = await fetch(`/api/repurpose/${contentId}`);
+        const data = await response.json();
+        setContent(data.repurposed);
+      } catch (error) {
+        console.error('Error fetching repurposed content:', error);
+        toast.error('Failed to load content');
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    };
+  
     if (contentId) {
       fetchContent();
     }
-  }, [contentId]);
 
-  useEffect(() => {
     const needsPolling = content?.status && ['ANALYZING', 'EXTRACTING', 'GENERATING'].includes(content.status);
 
     if (needsPolling && !polling) {
@@ -60,21 +75,8 @@ export default async function RepurposeResults() {
         setPolling(false);
       };
     }
-  }, [content?.status, polling]);
-
-  const fetchContent = async (silent = false) => {
-    try {
-      if (!silent) setLoading(true);
-      const response = await fetch(`/api/repurpose/${contentId}`);
-      const data = await response.json();
-      setContent(data.repurposed);
-    } catch (error) {
-      console.error('Error fetching repurposed content:', error);
-      toast.error('Failed to load content');
-    } finally {
-      if (!silent) setLoading(false);
-    }
   };
+  }, [content?.status, polling, contentId]);
 
   const copyToClipboard = async (text: string) => {
     try {

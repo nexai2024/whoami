@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiShoppingBag, FiMail, FiUser, FiBook } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-
+import Image from 'next/image';
 interface CoachBioPageProps {
   params: {
     coachSlug: string;
@@ -102,7 +102,7 @@ export default function CoachBioPage({ params }: CoachBioPageProps) {
             {/* Avatar */}
             <div className="w-32 h-32 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
               {coach.avatar ? (
-                <img
+                <Image
                   src={coach.avatar}
                   alt={coach.displayName || coach.username}
                   className="w-full h-full object-cover"
@@ -207,9 +207,11 @@ export default function CoachBioPage({ params }: CoachBioPageProps) {
                   onClick={() => router.push(`/c/${course.slug}`)}
                 >
                   {course.coverImageUrl && (
-                    <img
+                    <Image
                       src={course.coverImageUrl}
                       alt={course.title}
+                      width={400}
+                      height={192}
                       className="w-full h-48 object-cover"
                     />
                   )}

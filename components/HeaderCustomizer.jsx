@@ -214,7 +214,7 @@ const HeaderCustomizer = ({ pageId, currentHeader, onSave, onPreview }) => {
           </label>
           <div className="flex items-center gap-4">
             {headerData.avatar && (
-              <img
+              <Image
                 src={headerData.avatar}
                 alt="Profile"
                 className="w-16 h-16 rounded-full object-cover"
@@ -573,7 +573,7 @@ const HeaderPreview = ({ headerData }) => {
           {/* Avatar */}
           {headerData.avatar && (
             <div className={`${headerData.headerStyle === 'split' ? 'w-20 h-20' : 'w-24 h-24 mx-auto'} mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center`}>
-              <img
+              <Image  
                 src={headerData.avatar}
                 alt={headerData.displayName}
                 className="w-full h-full object-cover"

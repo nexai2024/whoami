@@ -189,7 +189,7 @@ const PublicPage = () => {
           >
             <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center">
               {page.user.profile.avatar ? (
-                <img 
+                <Image alt=""  
                   src={page.user.profile.avatar} 
                   alt={page.user.profile.displayName}
                   className="w-full h-full object-cover"

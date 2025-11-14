@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
  * If not, redirects the user to the onboarding page.
  */
 export async function ensureOnboarded() {
-  let user = null;
+  const user = null;
   // try {
   //  // user = await stackServerApp.getUser();
   // } catch (error) {

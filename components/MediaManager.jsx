@@ -107,7 +107,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
     >
       <div className="aspect-square bg-gray-50 rounded-t-lg overflow-hidden">
         {file.mimeType.startsWith('image/') ? (
-          <img 
+          <Image alt=""  
             src={file.thumbnailUrl || file.url} 
             alt={file.originalName}
             className="w-full h-full object-cover"
@@ -175,7 +175,7 @@ const MediaManager = ({ onSelectFile, allowMultiple = false }) => {
     >
       <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mr-3">
         {file.mimeType.startsWith('image/') ? (
-          <img 
+          <Image alt=""  
             src={file.thumbnailUrl || file.url} 
             alt={file.originalName}
             className="w-full h-full object-cover rounded-lg"

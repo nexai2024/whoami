@@ -165,12 +165,12 @@ export async function listCampaigns({
     },
   });
 
-  return campaigns.map((campaign) => {
+  return campaigns.map((campaign: { assets: { map: (arg0: (asset: any) => any) => any[]; length: any; filter: (arg0: (asset: any) => boolean) => { (): any; new(): any; length: any; }; }; id: any; name: any; status: any; goal: any; productId: any; blockId: any; createdAt: { toISOString: () => any; }; product: any; }) => {
     const platforms = Array.from(
       new Set(
         campaign.assets
-          .map((asset) => asset.platform)
-          .filter((platform): platform is Platform => !!platform)
+          .map((asset: { platform: any; }) => asset.platform)
+          .filter((platform: any): platform is Platform => !!platform)
       )
     );
 
@@ -186,7 +186,7 @@ export async function listCampaigns({
       _count: {
         assets: campaign.assets.length,
         scheduledPosts: campaign.assets.filter(
-          (asset) => asset.status === AssetStatus.SCHEDULED
+          (asset: { status: string; }) => asset.status === AssetStatus.SCHEDULED
         ).length,
       },
       stats: {
@@ -236,7 +236,7 @@ export async function getCampaign({
           price: campaign.product.price,
         }
       : null,
-    assets: campaign.assets.map((asset) => ({
+    assets: campaign.assets.map((asset: { id: any; type: any; platform: any; content: any; mediaUrl: any; status: any; scheduledAt: { toISOString: () => any; }; publishedAt: { toISOString: () => any; }; views: any; clicks: any; conversions: any; }) => ({
       id: asset.id,
       type: asset.type,
       platform: asset.platform,
