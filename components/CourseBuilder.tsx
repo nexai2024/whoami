@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useAuth } from '../lib/auth/AuthContext';
 
 const {
   FiPlus, FiSave, FiEye, FiSettings, FiTrash2, FiEdit3, FiMove,
@@ -210,6 +211,7 @@ const QuizBuilder: React.FC<QuizBuilderProps> = ({ lesson, updateLesson }) => {
 };
 
 const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
+  const { currUser } = useAuth();
   const [course, setCourse] = useState<any>({
     title: '',
     description: '',
@@ -225,6 +227,7 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
   const [activeTab, setActiveTab] = useState<'details' | 'lessons'>('details');
   const [saving, setSaving] = useState(false);
   const [internalCourseId, setInternalCourseId] = useState<string | undefined>(courseId);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -235,25 +238,42 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
   );
 
   useEffect(() => {
-    if (internalCourseId) {
+    if (internalCourseId && currUser?.id) {
       loadCourse();
     }
-  }, [internalCourseId]);
+  }, [internalCourseId, currUser?.id]);
 
   useEffect(() => {
     setInternalCourseId(courseId);
   }, [courseId]);
 
   const loadCourse = async () => {
+    if (!currUser?.id) {
+      toast.error('Please sign in to edit courses');
+      return;
+    }
+
     try {
       const response = await fetch(`/api/courses/${internalCourseId}`, {
-        headers: { 'x-user-id': 'demo-user' }
+        headers: { 'x-user-id': currUser.id }
       });
 
       if (response.ok) {
         const data = await response.json();
+        // Check ownership - only allow editing if user owns the course
+        if (data.course.userId !== currUser.id) {
+          setAccessDenied(true);
+          toast.error('You do not have permission to edit this course');
+          return;
+        }
         setCourse(data.course);
         setLessons(data.course.lessons || []);
+        setAccessDenied(false);
+      } else if (response.status === 403) {
+        setAccessDenied(true);
+        toast.error('Access denied. You can only edit your own courses.');
+      } else {
+        toast.error('Failed to load course');
       }
     } catch (error) {
       console.error('Error loading course:', error);
@@ -262,6 +282,16 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
   };
 
   const handleSaveCourse = async () => {
+    if (!currUser?.id) {
+      toast.error('Please sign in to save courses');
+      return;
+    }
+
+    if (accessDenied) {
+      toast.error('You do not have permission to edit this course');
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -271,7 +301,7 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': 'demo-user'
+            'x-user-id': currUser.id
           },
           body: JSON.stringify(course)
         });
@@ -291,7 +321,7 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'x-user-id': 'demo-user'
+            'x-user-id': currUser.id
           },
           body: JSON.stringify(course)
         });
@@ -299,7 +329,8 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
         if (response.ok) {
           toast.success('Course updated!');
         } else {
-          toast.error('Failed to update course');
+          const error = await response.json();
+          toast.error(error.error || 'Failed to update course');
         }
       }
     } catch (error) {
@@ -487,10 +518,27 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'details' && (
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h2 className="text-lg font-semibold mb-6">Course Information</h2>
+      {accessDenied ? (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <div className="text-red-600 text-4xl mb-4">🔒</div>
+            <h2 className="text-xl font-semibold text-red-900 mb-2">Access Denied</h2>
+            <p className="text-red-700 mb-4">
+              You do not have permission to edit this course. You can only edit courses that you own.
+            </p>
+            <a
+              href="/courses"
+              className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              Back to My Courses
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {activeTab === 'details' && (
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-lg font-semibold mb-6">Course Information</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
@@ -820,7 +868,8 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

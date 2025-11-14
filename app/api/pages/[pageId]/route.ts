@@ -163,3 +163,61 @@ export async function POST(
     );
   }
 }
+
+// DELETE: Delete a page
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ pageId: string }> }
+) {
+  const { pageId } = await params;
+  const userId = req.headers.get('x-user-id');
+  
+  try {
+    // Require authentication
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Verify page exists and check ownership
+    const page = await prisma.page.findUnique({
+      where: { id: pageId },
+      select: { id: true, userId: true, title: true }
+    });
+    
+    if (!page) {
+      return NextResponse.json(
+        { error: 'Page not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check ownership - only the page owner can delete
+    if (page.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Forbidden - you can only delete your own pages' },
+        { status: 403 }
+      );
+    }
+
+    // Delete the page (Prisma will cascade delete related records: blocks, clicks, forms, header)
+    await prisma.page.delete({
+      where: { id: pageId }
+    });
+
+    logger.info(`Page deleted successfully: ${pageId} by user ${userId}`);
+    
+    return NextResponse.json(
+      { success: true, message: 'Page deleted successfully' },
+      { status: 200 }
+    );
+  } catch (error) {
+    logger.error(`Error deleting page ${pageId}:`, error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

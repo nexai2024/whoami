@@ -355,13 +355,15 @@ async function generateCampaignAssets({
   };
   config: GenerateCampaignConfig;
 }) {
-  try {
-    const assets: Array<{
-      type: AssetType;
-      platform: Platform | null;
-      content: string;
-    }> = [];
+  const assets: Array<{
+    type: AssetType;
+    platform: Platform | null;
+    content: string;
+  }> = [];
+  let hasErrors = false;
 
+  try {
+    // Generate social posts - continue even if some fail
     if (config.platforms.length > 0 && config.socialPostCount > 0) {
       const perPlatformCount = Math.max(
         1,
@@ -369,32 +371,53 @@ async function generateCampaignAssets({
       );
 
       for (const platform of config.platforms) {
-        const posts = await generateSocialPosts(
-          campaignId,
-          platform,
-          sourceContent,
-          config,
-          perPlatformCount
-        );
-        assets.push(...posts);
+        try {
+          const posts = await generateSocialPosts(
+            campaignId,
+            platform,
+            sourceContent,
+            config,
+            perPlatformCount
+          );
+          assets.push(...posts);
+        } catch (error) {
+          logger.error(`Error generating ${platform} posts`, { error, campaignId });
+          hasErrors = true;
+          // Continue with other platforms
+        }
       }
     }
 
+    // Generate emails - continue even if it fails
     if (config.emailCount > 0) {
-      const emails = await generateEmailSequence(campaignId, sourceContent, config, config.emailCount);
-      assets.push(...emails);
+      try {
+        const emails = await generateEmailSequence(campaignId, sourceContent, config, config.emailCount);
+        assets.push(...emails);
+      } catch (error) {
+        logger.error('Error generating email sequence', { error, campaignId });
+        hasErrors = true;
+        // Continue
+      }
     }
 
+    // Generate page variants - continue even if it fails
     if (config.pageVariants > 0) {
-      const variants = await generatePageVariants(
-        campaignId,
-        sourceContent,
-        config,
-        config.pageVariants
-      );
-      assets.push(...variants);
+      try {
+        const variants = await generatePageVariants(
+          campaignId,
+          sourceContent,
+          config,
+          config.pageVariants
+        );
+        assets.push(...variants);
+      } catch (error) {
+        logger.error('Error generating page variants', { error, campaignId });
+        hasErrors = true;
+        // Continue
+      }
     }
 
+    // Save all successfully generated assets
     if (assets.length > 0) {
       await prisma.campaignAsset.createMany({
         data: assets.map((asset) => ({
@@ -407,15 +430,47 @@ async function generateCampaignAssets({
       });
     }
 
+    // Update campaign status based on results
+    // If we have assets, mark as READY (even if some generation failed)
+    // If no assets and errors, mark as FAILED
+    // If no assets and no errors (shouldn't happen), mark as READY
+    const finalStatus = assets.length > 0 
+      ? CampaignStatus.READY 
+      : hasErrors 
+        ? CampaignStatus.FAILED 
+        : CampaignStatus.READY;
+
     await prisma.campaign.update({
       where: { id: campaignId },
-      data: { status: CampaignStatus.READY },
+      data: { status: finalStatus },
     });
+
+    // If we had errors but still saved some assets, log a warning
+    if (hasErrors && assets.length > 0) {
+      logger.warn('Campaign generation completed with partial failures', {
+        campaignId,
+        assetsSaved: assets.length,
+      });
+    }
   } catch (error) {
-    await prisma.campaign.update({
-      where: { id: campaignId },
-      data: { status: CampaignStatus.FAILED },
-    });
+    // Only mark as FAILED if we have a critical error and no assets were saved
+    if (assets.length === 0) {
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data: { status: CampaignStatus.FAILED },
+      });
+    } else {
+      // If we have some assets, mark as READY but log the error
+      await prisma.campaign.update({
+        where: { id: campaignId },
+        data: { status: CampaignStatus.READY },
+      });
+      logger.error('Campaign generation had errors but some assets were saved', {
+        error,
+        campaignId,
+        assetsSaved: assets.length,
+      });
+    }
     throw error;
   }
 }

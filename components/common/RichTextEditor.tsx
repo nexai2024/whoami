@@ -30,6 +30,7 @@ export default function RichTextEditor({
   const editor = useEditor({
     editable: !readOnly,
     content: value || '',
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },

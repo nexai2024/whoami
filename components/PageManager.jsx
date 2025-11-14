@@ -6,6 +6,7 @@ import SafeIcon from '../common/SafeIcon';
 import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
 import toast from 'react-hot-toast';
+import { useAuth } from '../lib/auth/AuthContext';
 
 const { 
   FiPlus, FiEdit3, FiEye, FiCopy, FiTrash2, FiSettings, 
@@ -14,6 +15,7 @@ const {
 } = FiIcons;
 
 const PageManager = () => {
+  const { currUser } = useAuth();
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedPages, setSelectedPages] = useState([]);
@@ -21,8 +23,10 @@ const PageManager = () => {
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive, draft
 
   useEffect(() => {
-    loadPages();
-  }, []);
+    if (currUser?.id) {
+      loadPages();
+    }
+  }, [currUser?.id]);
 
   useEffect(() => {
     setShowBulkActions(selectedPages.length > 0);
@@ -31,20 +35,26 @@ const PageManager = () => {
   const loadPages = async () => {
     try {
       setLoading(true);
-      const userPages = await PageService.getUserPages('user_1');
+      const userId = currUser?.id;
+      if (!userId) {
+        toast.error('Please sign in to view your pages');
+        return;
+      }
+      const userPages = await PageService.getUserPages(userId);
       // Add mock status and additional data
       const enhancedPages = userPages.map(page => ({
         ...page,
         status: page.isActive ? 'published' : 'draft',
         lastModified: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
         customDomain: Math.random() > 0.7 ? `${page.slug}.com` : null,
-        totalViews: page._count.clicks || 0,
-        monthlyViews: Math.floor((page._count.clicks || 0) * 0.3),
+        totalViews: page._count?.clicks || 0,
+        monthlyViews: Math.floor((page._count?.clicks || 0) * 0.3),
         conversionRate: (Math.random() * 10).toFixed(1)
       }));
       setPages(enhancedPages);
     } catch (error) {
       logger.error('Error loading pages:', error);
+      toast.error('Failed to load pages');
     } finally {
       setLoading(false);
     }
@@ -111,11 +121,43 @@ const PageManager = () => {
           break;
           
         case 'delete':
-          if (confirm(`Are you sure you want to delete ${selectedPages.length} page(s)?`)) {
-            for (const pageId of selectedPages) {
-              await PageService.deletePage(pageId);
+          if (confirm(`Are you sure you want to delete ${selectedPages.length} page(s)? This action cannot be undone.`)) {
+            const userId = currUser?.id;
+            if (!userId) {
+              toast.error('Please sign in to delete pages');
+              return;
             }
-            setPages(prev => prev.filter(page => !selectedPages.includes(page.id)));
+            
+            let successCount = 0;
+            let failCount = 0;
+            
+            for (const pageId of selectedPages) {
+              try {
+                const response = await fetch(`/api/pages/${pageId}`, {
+                  method: 'DELETE',
+                  headers: { 'x-user-id': userId }
+                });
+                
+                if (response.ok) {
+                  successCount++;
+                } else {
+                  const error = await response.json();
+                  logger.error(`Failed to delete page ${pageId}:`, error);
+                  failCount++;
+                }
+              } catch (error) {
+                logger.error(`Error deleting page ${pageId}:`, error);
+                failCount++;
+              }
+            }
+            
+            if (successCount > 0) {
+              toast.success(`Successfully deleted ${successCount} page(s)`);
+              setPages(prev => prev.filter(page => !selectedPages.includes(page.id)));
+            }
+            if (failCount > 0) {
+              toast.error(`Failed to delete ${failCount} page(s)`);
+            }
           }
           break;
       }
@@ -135,7 +177,13 @@ const PageManager = () => {
 
   const duplicatePage = async (page) => {
     try {
-      const newPage = await PageService.createPage('user_1', {
+      const userId = currUser?.id;
+      if (!userId) {
+        toast.error('Please sign in to duplicate pages');
+        return;
+      }
+      
+      const newPage = await PageService.createPage(userId, {
         title: `${page.title} (Copy)`,
         description: page.description
       });
@@ -149,9 +197,11 @@ const PageManager = () => {
         conversionRate: '0.0'
       }]);
       
+      toast.success('Page duplicated successfully');
       logger.info(`Page duplicated: ${page.id} -> ${newPage.id}`);
     } catch (error) {
       logger.error('Error duplicating page:', error);
+      toast.error('Failed to duplicate page');
     }
   };
 
@@ -251,10 +301,32 @@ const PageManager = () => {
                         {page.status === 'published' ? 'Unpublish' : 'Publish'}
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this page?')) {
-                            PageService.deletePage(page.id);
-                            setPages(prev => prev.filter(p => p.id !== page.id));
+                        onClick={async () => {
+                          if (confirm(`Are you sure you want to delete "${page.title}"? This action cannot be undone.`)) {
+                            const userId = currUser?.id;
+                            if (!userId) {
+                              toast.error('Please sign in to delete pages');
+                              setDropdownOpen(false);
+                              return;
+                            }
+                            
+                            try {
+                              const response = await fetch(`/api/pages/${page.id}`, {
+                                method: 'DELETE',
+                                headers: { 'x-user-id': userId }
+                              });
+                              
+                              if (response.ok) {
+                                toast.success('Page deleted successfully');
+                                setPages(prev => prev.filter(p => p.id !== page.id));
+                              } else {
+                                const error = await response.json();
+                                toast.error(error.error || 'Failed to delete page');
+                              }
+                            } catch (error) {
+                              logger.error('Error deleting page:', error);
+                              toast.error('Failed to delete page');
+                            }
                           }
                           setDropdownOpen(false);
                         }}

@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { FiCopy, FiCalendar, FiEdit2, FiArrowLeft } from 'react-icons/fi';
+import { FiCopy, FiCalendar, FiEdit2, FiArrowLeft, FiPlus, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useUser } from '@stackframe/stack';
 
@@ -53,6 +53,8 @@ export default function CampaignAssets() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<AssetTab>('all');
   const [polling, setPolling] = useState(false);
+  const [showAddAssetModal, setShowAddAssetModal] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<CampaignAsset | null>(null);
 
   const fetchCampaign = useCallback(
     async (silent = false) => {
@@ -390,14 +392,23 @@ export default function CampaignAssets() {
         {/* Action Buttons */}
         <div className="flex gap-3">
           <button
-            onClick={() =>
-              router.push(`/marketing/schedule?campaign=${campaign.id}`)
-            }
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            onClick={() => setShowAddAssetModal(true)}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium transition-colors"
           >
-            <FiCalendar />
-            Schedule All Assets
+            <FiPlus />
+            Add Asset Manually
           </button>
+          {campaign.assets.length > 0 && (
+            <button
+              onClick={() =>
+                router.push(`/marketing/schedule?campaign=${campaign.id}`)
+              }
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+            >
+              <FiCalendar />
+              Schedule All Assets
+            </button>
+          )}
         </div>
       </div>
 
@@ -520,6 +531,7 @@ export default function CampaignAssets() {
                   Schedule
                 </button>
                 <button
+                  onClick={() => setEditingAsset(asset)}
                   className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700 transition-colors"
                 >
                   <FiEdit2 />
@@ -529,6 +541,244 @@ export default function CampaignAssets() {
           ))}
         </div>
       )}
+
+      {/* Add/Edit Asset Modal */}
+      {(showAddAssetModal || editingAsset) && (
+        <AssetModal
+          campaignId={campaignId!}
+          asset={editingAsset}
+          onClose={() => {
+            setShowAddAssetModal(false);
+            setEditingAsset(null);
+          }}
+          onSave={async () => {
+            await fetchCampaign();
+            setShowAddAssetModal(false);
+            setEditingAsset(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// Asset Modal Component
+function AssetModal({
+  campaignId,
+  asset,
+  onClose,
+  onSave,
+}: {
+  campaignId: string;
+  asset?: CampaignAsset | null;
+  onClose: () => void;
+  onSave: () => void;
+}) {
+  const user = useUser();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    type: (asset?.type || 'SOCIAL_POST') as CampaignAsset['type'],
+    platform: asset?.platform || null,
+    content: asset?.content || '',
+    mediaUrl: asset?.mediaUrl || '',
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.id || !formData.content.trim()) {
+      toast.error('Content is required');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const url = asset
+        ? `/api/campaigns/${campaignId}/assets/${asset.id}`
+        : `/api/campaigns/${campaignId}/assets`;
+
+      const method = asset ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({
+          type: formData.type,
+          platform: formData.platform,
+          content: formData.content,
+          mediaUrl: formData.mediaUrl || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to save asset');
+      }
+
+      toast.success(asset ? 'Asset updated successfully' : 'Asset created successfully');
+      onSave();
+    } catch (error: any) {
+      console.error('Error saving asset:', error);
+      toast.error(error.message || 'Failed to save asset');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!asset || !user?.id) return;
+
+    if (!confirm('Are you sure you want to delete this asset?')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/assets/${asset.id}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': user.id,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete asset');
+      }
+
+      toast.success('Asset deleted successfully');
+      onSave();
+    } catch (error: any) {
+      console.error('Error deleting asset:', error);
+      toast.error(error.message || 'Failed to delete asset');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">
+            {asset ? 'Edit Asset' : 'Add New Asset'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <FiX size={24} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Asset Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Asset Type
+            </label>
+            <select
+              value={formData.type}
+              onChange={(e) =>
+                setFormData({ ...formData, type: e.target.value as CampaignAsset['type'] })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            >
+              <option value="SOCIAL_POST">Social Post</option>
+              <option value="EMAIL">Email</option>
+              <option value="PAGE_VARIANT">Page Variant</option>
+              <option value="IMAGE">Image</option>
+              <option value="VIDEO_CLIP">Video Clip</option>
+            </select>
+          </div>
+
+          {/* Platform (only for social posts) */}
+          {formData.type === 'SOCIAL_POST' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Platform
+              </label>
+              <select
+                value={formData.platform || ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    platform: (e.target.value || null) as CampaignAsset['platform'],
+                  })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select Platform</option>
+                <option value="TWITTER">Twitter</option>
+                <option value="INSTAGRAM">Instagram</option>
+                <option value="FACEBOOK">Facebook</option>
+                <option value="LINKEDIN">LinkedIn</option>
+                <option value="TIKTOK">TikTok</option>
+              </select>
+            </div>
+          )}
+
+          {/* Content */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Content
+            </label>
+            <textarea
+              value={formData.content}
+              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={8}
+              placeholder="Enter your content here..."
+              required
+            />
+          </div>
+
+          {/* Media URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Media URL (optional)
+            </label>
+            <input
+              type="url"
+              value={formData.mediaUrl}
+              onChange={(e) => setFormData({ ...formData, mediaUrl: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            {asset && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50"
+              >
+                Delete
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50"
+            >
+              {loading ? 'Saving...' : asset ? 'Update' : 'Create'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

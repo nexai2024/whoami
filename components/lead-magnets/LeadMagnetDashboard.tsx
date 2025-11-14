@@ -801,6 +801,8 @@ export default function LeadMagnetDashboard() {
                   <Image 
                     src={template.thumbnailUrl}
                     alt={template.name}
+                    width={400}
+                    height={192}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -1055,6 +1057,8 @@ export default function LeadMagnetDashboard() {
                             <Image
                               src={template.thumbnailUrl}
                               alt={template.name}
+                              width={400}
+                              height={128}
                               className="w-full h-32 object-cover"
                             />
                             <div className="p-2">

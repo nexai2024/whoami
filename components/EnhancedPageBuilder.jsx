@@ -146,6 +146,17 @@ const EnhancedPageBuilder = () => {
   const [pageData, setPageData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+  
+  // Client-side slug generation function
+  const generateSlugFromTitle = (title) => {
+    if (!title) return '';
+    return title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
   
   const tabs = [
     { id: 'header', label: 'Header', icon: FiUser },
@@ -205,9 +216,11 @@ const EnhancedPageBuilder = () => {
 
         if (newPage && newPage.id) {
           console.log("New page created:", newPage);
+          // Reset manual edit flag for new pages
+          setSlugManuallyEdited(false);
           setPageData({
             id: newPage.id,
-            title: newPage.title || 'New Page',
+            title: newPage.title || `${currUser?.name} New Page ${new Date().toLocaleDateString()}`,
             description: newPage.description || '',
             headerData: {
               displayName: '',
@@ -271,6 +284,8 @@ const EnhancedPageBuilder = () => {
       };
       
       setPageData(mappedData);
+      // Reset manual edit flag when loading existing page
+      setSlugManuallyEdited(false);
       console.log('Page data loaded:', mappedData);
     } catch (error) {
       console.error('Error loading page data:', error);
@@ -1000,7 +1015,18 @@ const EnhancedPageBuilder = () => {
           <input
             type="text"
             value={pageData?.title || ''}
-            onChange={(e) => setPageData(prev => ({ ...prev, title: e.target.value }))}
+            onChange={(e) => {
+              const newTitle = e.target.value;
+              setPageData(prev => {
+                const updated = { ...prev, title: newTitle };
+                // Auto-generate slug if it hasn't been manually edited
+                if (!slugManuallyEdited) {
+                  const generatedSlug = generateSlugFromTitle(newTitle);
+                  updated.slug = generatedSlug;
+                }
+                return updated;
+              });
+            }}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             data-tour-id="page-title-input"
           />
@@ -1015,6 +1041,8 @@ const EnhancedPageBuilder = () => {
               onChange={(e) => {
                 const slug = e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                 setPageData(prev => ({ ...prev, slug }));
+                // Mark slug as manually edited when user types in it
+                setSlugManuallyEdited(true);
               }}
               className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="my-page-url"
@@ -1036,6 +1064,51 @@ const EnhancedPageBuilder = () => {
             data-tour-id="page-description-input"
           />
         </div>
+        
+        {/* Danger Zone */}
+        {pageData?.id && (
+          <div className="md:col-span-2 pt-6 border-t border-gray-200">
+            <h3 className="text-sm font-semibold text-red-600 mb-3">Danger Zone</h3>
+            <button
+              onClick={async () => {
+                if (!confirm(`Are you sure you want to delete "${pageData?.title || 'this page'}"? This action cannot be undone and will permanently delete all blocks, content, and settings.`)) {
+                  return;
+                }
+                
+                const userId = user?.id || currUser?.id;
+                if (!userId) {
+                  toast.error('Please sign in to delete pages');
+                  return;
+                }
+                
+                try {
+                  const response = await fetch(`/api/pages/${pageData.id}`, {
+                    method: 'DELETE',
+                    headers: { 'x-user-id': userId }
+                  });
+                  
+                  if (response.ok) {
+                    toast.success('Page deleted successfully');
+                    router.push('/pages');
+                  } else {
+                    const error = await response.json();
+                    toast.error(error.error || 'Failed to delete page');
+                  }
+                } catch (error) {
+                  logger.error('Error deleting page:', error);
+                  toast.error('Failed to delete page');
+                }
+              }}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            >
+              <SafeIcon name={undefined} icon={FiTrash2} />
+              Delete Page
+            </button>
+            <p className="text-xs text-gray-500 mt-2">
+              Once you delete a page, there is no going back. Please be certain.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

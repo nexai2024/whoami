@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { FiPlus, FiCalendar, FiBarChart2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useUser } from '@stackframe/stack';
@@ -29,10 +30,12 @@ interface Campaign {
 }
 
 export default function CampaignDashboard() {
+  const router = useRouter();
   const user = useUser();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [polling, setPolling] = useState(false);
+  const [creatingManual, setCreatingManual] = useState(false);
 
   const fetchCampaigns = useCallback(
     async (silent = false) => {
@@ -118,6 +121,49 @@ export default function CampaignDashboard() {
     return icons[platform] || '📱';
   };
 
+  const handleCreateManualCampaign = async () => {
+    if (!user?.id) {
+      toast.error('You must be signed in to create a campaign');
+      return;
+    }
+
+    const name = prompt('Enter campaign name:');
+    if (!name || name.trim().length < 3) {
+      if (name !== null) {
+        toast.error('Campaign name must be at least 3 characters');
+      }
+      return;
+    }
+
+    setCreatingManual(true);
+    try {
+      const response = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id,
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create campaign');
+      }
+
+      const data = await response.json();
+      toast.success('Campaign created! You can now add assets manually.');
+      router.push(`/marketing/campaigns/${data.campaignId}`);
+    } catch (error: any) {
+      console.error('Error creating manual campaign:', error);
+      toast.error(error.message || 'Failed to create campaign');
+    } finally {
+      setCreatingManual(false);
+    }
+  };
+
   const totalAssets = campaigns.reduce((sum, c) => sum + c._count.assets, 0);
   const totalEngagement = campaigns.reduce((sum, c) => sum + (c.stats?.totalEngagement || 0), 0);
   const activeCampaigns = campaigns.filter(c => c.status === 'READY').length;
@@ -190,13 +236,23 @@ export default function CampaignDashboard() {
             {campaigns.length} campaigns created
           </p>
         </div>
-        <Link
-          href="/marketing/campaigns/new"
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
-        >
-          <FiPlus />
-          Generate Campaign
-        </Link>
+        <div className="flex gap-3">
+          <button
+            onClick={handleCreateManualCampaign}
+            disabled={creatingManual}
+            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 font-medium transition-colors disabled:opacity-50"
+          >
+            <FiPlus />
+            {creatingManual ? 'Creating...' : 'Create Manually'}
+          </button>
+          <Link
+            href="/marketing/campaigns/new"
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+          >
+            <FiPlus />
+            Generate with AI
+          </Link>
+        </div>
       </div>
 
       {/* Campaign List */}

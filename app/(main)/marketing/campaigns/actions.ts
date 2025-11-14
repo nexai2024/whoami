@@ -150,7 +150,7 @@ export async function generateCampaignAction(
       },
     });
 
-    revalidateTag(getCampaignCacheTag(options.userId), 'page');
+    revalidateTag(getCampaignCacheTag(options.userId), 'max');
 
     if (options.revalidate?.path) {
       revalidatePath(options.revalidate.path);
@@ -158,7 +158,7 @@ export async function generateCampaignAction(
 
     if (options.revalidate?.tags) {
       for (const tag of options.revalidate.tags) {
-        revalidateTag(tag, 'page');
+        revalidateTag(tag, 'max');
       }
     }
 

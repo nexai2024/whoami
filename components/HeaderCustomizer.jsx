@@ -8,6 +8,8 @@ import { logger } from '../lib/utils/logger';
 import toast from 'react-hot-toast';
 import TemplateBrowser from './TemplateBrowser';
 import RichTextEditor from '@/components/common/RichTextEditor';
+import { isRichTextEmpty } from '@/lib/utils/richText';
+import DOMPurify from 'isomorphic-dompurify';
 
 const { 
   FiUser, FiEdit3, FiMail, FiPhone, FiGlobe, FiMapPin, 

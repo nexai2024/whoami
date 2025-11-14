@@ -349,6 +349,8 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                 <Image 
                   src={template.thumbnailUrl}
                   alt={template.name}
+                  width={1200}
+                  height={675}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 {template.featured && (

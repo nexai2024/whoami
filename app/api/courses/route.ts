@@ -17,17 +17,17 @@ export async function GET(request: NextRequest) {
 
     const where: any = {};
 
-    // Filter by user (can view own courses or published public courses)
+    // For authenticated users in admin/management area, only show their own courses
+    // Public marketplace should use /api/courses/public endpoint
     if (userId) {
-      where.OR = [
-        { userId },
-        { status: 'PUBLISHED' }
-      ];
+      where.userId = userId; // Only show courses owned by the user
     } else {
+      // If no userId, only show published courses (for public access)
       where.status = 'PUBLISHED';
     }
 
-    if (status) {
+    // Apply status filter if provided (only applies to user's own courses)
+    if (status && userId) {
       where.status = status;
     }
 
