@@ -132,6 +132,43 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
       // Log error but don't fail the sale recording
       logger.error('Error sending purchase confirmation email:', emailError);
     }
+
+    // If this was a Connect destination charge, record creator earning
+    const { connectMode, connectedAccountId, sellerUserId, applicationFeeAmount, feePercent } =
+      (paymentIntent.metadata || {}) as any;
+
+    if (connectMode === 'destination_charge' && connectedAccountId && sellerUserId) {
+      const grossCents = paymentIntent.amount || 0;
+      const appFeeCents = Number(applicationFeeAmount || 0);
+      // Stripe fee unknown at this point without fetching balance transaction; store 0 and update later if needed
+      const stripeFeeCents = 0;
+      const netCents = Math.max(0, grossCents - appFeeCents - stripeFeeCents);
+
+      await prisma.creatorEarning.create({
+        data: {
+          userId: String(sellerUserId),
+          productId: sale.productId,
+          saleId: sale.id,
+          grossAmount: new prisma.Prisma.Decimal(grossCents / 100),
+          stripeFees: new prisma.Prisma.Decimal(stripeFeeCents / 100),
+          applicationFees: new prisma.Prisma.Decimal(appFeeCents / 100),
+          netAmount: new prisma.Prisma.Decimal(netCents / 100),
+          currency: paymentIntent.currency.toUpperCase(),
+          chargeId: (paymentIntent.latest_charge as string) || undefined,
+          connectedAccountId: String(connectedAccountId),
+          status: 'pending',
+        },
+      });
+
+      logger.info('Creator earning recorded (connect)', {
+        sellerUserId,
+        connectedAccountId,
+        grossCents,
+        appFeeCents,
+        feePercent,
+        netCents,
+      });
+    }
   } catch (err) {
     logger.error('Error creating sale record:', err);
     throw err;

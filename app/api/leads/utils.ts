@@ -1,4 +1,4 @@
-import type { EmailSubscriber } from '@prisma/client';
+import type { EmailSubscriber, LeadStage } from '@prisma/client';
 
 export interface LeadResponse {
   id: string;
@@ -12,13 +12,13 @@ export interface LeadResponse {
   company?: string | null;
   notes?: string | null;
   estimatedValue?: number | null;
-  pageId: string;
-  pageType: string;
+  pageId: string;  pageType: string;
   createdAt: string;
   lastActivity: string;
 }
 
-export type LeadStage = EmailSubscriber['pipelineStage'];
+// Re-export LeadStage for convenience
+export type { LeadStage };
 
 export const LEAD_STAGE_VALUES: LeadStage[] = [
   'NEW',

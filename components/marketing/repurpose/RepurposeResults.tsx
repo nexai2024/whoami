@@ -300,7 +300,13 @@ export default function RepurposeResults() {
                     <FiCopy />
                   </button>
                   <button
-                    onClick={() => router.push(`/marketing/schedule?asset=${asset.id}`)}
+                    onClick={() =>
+                      router.push(
+                        `/marketing/schedule?asset=${asset.id}${
+                          asset.platform ? `&platform=${asset.platform}` : ''
+                        }`
+                      )
+                    }
                     className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
                     title="Schedule"
                   >

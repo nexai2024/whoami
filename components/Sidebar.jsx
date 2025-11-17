@@ -13,7 +13,7 @@ import {
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@stackframe/stack';
-
+import Logo from './Logo';
 export default function Sidebar() {
   const { currUser } = useAuth();
   const stackUser = useUser();
@@ -173,7 +173,8 @@ export default function Sidebar() {
         {!collapsed && (
           <Link href="/dashboard" className="flex items-center">
             <span className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-              whoami
+              {/* whoami */}
+              <Logo />
             </span>
           </Link>
         )}

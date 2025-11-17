@@ -21,6 +21,7 @@ const PageManager = () => {
   const [selectedPages, setSelectedPages] = useState([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive, draft
+  const [pageLimitInfo, setPageLimitInfo] = useState({ reached: false, limit: null, remaining: null });
 
   useEffect(() => {
     if (currUser?.id) {
@@ -52,6 +53,28 @@ const PageManager = () => {
         conversionRate: (Math.random() * 10).toFixed(1)
       }));
       setPages(enhancedPages);
+      // Check pages limit to show CTA if needed
+      try {
+        const resp = await fetch('/api/features/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ featureName: 'pages', incrementUsage: false })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (!data.allowed) {
+            setPageLimitInfo({
+              reached: true,
+              limit: data.limit ?? null,
+              remaining: data.remaining ?? 0
+            });
+          } else {
+            setPageLimitInfo({ reached: false, limit: data.limit ?? null, remaining: data.remaining ?? null });
+          }
+        }
+      } catch (e) {
+        // ignore feature check errors for UI
+      }
     } catch (error) {
       logger.error('Error loading pages:', error);
       toast.error('Failed to load pages');
@@ -201,7 +224,11 @@ const PageManager = () => {
       logger.info(`Page duplicated: ${page.id} -> ${newPage.id}`);
     } catch (error) {
       logger.error('Error duplicating page:', error);
-      toast.error('Failed to duplicate page');
+      if (error?.code === 'PAGE_LIMIT') {
+        toast.error('You have reached your page limit. Upgrade to create more pages.');
+      } else {
+        toast.error('Failed to duplicate page');
+      }
     }
   };
 
@@ -448,15 +475,30 @@ const PageManager = () => {
               <h1 className="text-2xl font-bold text-gray-900">My Pages</h1>
               <p className="text-gray-600">{pages.length} pages total</p>
             </div>
-            <Link
-              to="/builder?new=true"
-              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-              data-tour-id="create-page-button"
-            >
-              <SafeIcon name={undefined}  icon={FiPlus} />
-              Create New Page
-            </Link>
+            {pageLimitInfo.reached ? (
+              <a
+                href="/settings/billing"
+                className="flex items-center gap-2 bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors"
+              >
+                <SafeIcon name={undefined}  icon={FiPlus} />
+                Upgrade to Add More Pages
+              </a>
+            ) : (
+              <Link
+                to="/builder?new=true"
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+                data-tour-id="create-page-button"
+              >
+                <SafeIcon name={undefined}  icon={FiPlus} />
+                Create New Page
+              </Link>
+            )}
           </div>
+          {pageLimitInfo.reached && (
+            <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              You have reached your page limit{typeof pageLimitInfo.limit === 'number' ? ` (${pageLimitInfo.limit} pages)` : ''}. Upgrade your plan to create more pages.
+            </div>
+          )}
         </div>
       </header>
 

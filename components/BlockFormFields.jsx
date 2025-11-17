@@ -215,6 +215,50 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
     );
   }
 
+  // DEEP_LINK Block
+  if (blockType === 'deep_link' || blockType === 'deeplink') {
+    return (
+      <div className="space-y-4 max-h-[600px] overflow-y-auto">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+          <p className="text-sm text-blue-800">
+            <strong>Deep Links</strong> open your mobile app directly, with automatic fallback to web if the app isn't installed.
+          </p>
+        </div>
+        
+        {renderTextField('iOS Universal Link', 'iosUrl', 'https://app.com/path', 'url')}
+        <p className="text-xs text-gray-500 -mt-2">Universal Link (https://) - opens app if installed, otherwise web</p>
+        
+        {renderTextField('Android App Link', 'androidUrl', 'https://app.com/path', 'url')}
+        <p className="text-xs text-gray-500 -mt-2">App Link (https://) - opens app if installed, otherwise web</p>
+        
+        {renderTextField('Custom URL Scheme (iOS)', 'iosScheme', 'myapp://path', 'text')}
+        <p className="text-xs text-gray-500 -mt-2">Custom scheme (myapp://) - always tries app first</p>
+        
+        {renderTextField('Custom URL Scheme (Android)', 'androidScheme', 'myapp://path', 'text')}
+        <p className="text-xs text-gray-500 -mt-2">Custom scheme (myapp://) - always tries app first</p>
+        
+        {renderTextField('Web Fallback URL', 'webUrl', 'https://app.com/web-path', 'url')}
+        <p className="text-xs text-gray-500 -mt-2">Opens if app is not installed or on desktop</p>
+        
+        {renderSelect('Link Behavior', 'linkBehavior', [
+          { value: 'smart', label: 'Smart (try app, fallback to web)' },
+          { value: 'app_only', label: 'App only (no fallback)' },
+          { value: 'web_only', label: 'Web only (ignore app links)' }
+        ])}
+        
+        {renderSelect('Open In', 'openIn', [
+          { value: 'same_tab', label: 'Same Tab' },
+          { value: 'new_tab', label: 'New Tab' }
+        ])}
+        
+        {renderTextField('Thumbnail URL', 'thumbnail', 'https://example.com/thumb.jpg', 'url')}
+        {renderTextField('Badge', 'badge', 'App')}
+        {renderCheckbox('Track clicks', 'trackClicks')}
+        {renderCheckbox('Show app icon', 'showAppIcon')}
+      </div>
+    );
+  }
+
   // EMAIL_CAPTURE / NEWSLETTER / WAITLIST Blocks
   if (['email', 'email_capture', 'newsletter', 'waitlist'].includes(blockType)) {
     return (

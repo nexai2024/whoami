@@ -3,10 +3,12 @@ import React from 'react';
 import Image from 'next/image';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
+import { logger } from '../lib/utils/logger';
+import DOMPurify from 'isomorphic-dompurify';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo,
-  FiCalendar, FiLink, FiDollarSign, FiShare2, FiStar, FiHeart
+  FiCalendar, FiLink, FiDollarSign, FiShare2, FiStar, FiHeart, FiSettings
 } = FiIcons;
 
 /**
@@ -14,29 +16,36 @@ const {
  * Renders blocks on the public page with proper styling and interactivity
  */
 const BlockRenderer = ({ block, onBlockClick }) => {
-  const baseStyles = "w-full p-6 rounded-xl border border-gray-200 transition-all duration-200 hover:scale-[1.02] cursor-pointer bg-white shadow-md hover:shadow-lg";
-  
-  // Debug: Add inline styles to test if Tailwind is working
-  const debugStyles = {
-    width: '100%',
-    padding: '24px',
-    borderRadius: '12px',
-    border: '1px solid #e5e7eb',
-    backgroundColor: 'white',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-    transition: 'all 0.2s ease-in-out',
-    cursor: 'pointer'
-  };
-  
-  // Debug log
-  console.log('BlockRenderer rendering block:', block.type, 'with styles:', baseStyles);
+  // Error boundary - catch any rendering errors
+  try {
+    if (!block || !block.type) {
+      logger.error('BlockRenderer: Invalid block data', block);
+      return (
+        <div className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <p className="text-sm text-yellow-800">Block data is invalid or missing</p>
+        </div>
+      );
+    }
+
+    const baseStyles = "w-full p-6 rounded-xl border border-gray-200 transition-all duration-200 hover:scale-[1.02] cursor-pointer bg-white shadow-md hover:shadow-lg";
   // LINK Block
   if (block.type === 'LINK') {
+    const url = block.data?.url || block.url;
     return (
-      <div className={`${baseStyles} text-center`} style={debugStyles} onClick={() => onBlockClick(block)}>
+      <div className={`${baseStyles} text-center`} onClick={() => onBlockClick(block)}>
         <div className="flex flex-col items-center gap-3">
           {block.data?.thumbnail && (
-            <Image src={block.data.thumbnail} alt={block.title} width={48} height={48} className="w-12 h-12 rounded-lg object-cover" />
+            <Image 
+              src={block.data.thumbnail} 
+              alt={block.title || 'Link'} 
+              width={48} 
+              height={48} 
+              className="w-12 h-12 rounded-lg object-cover"
+              onError={(e) => {
+                logger.error('Image load error:', block.data.thumbnail);
+                e.target.style.display = 'none';
+              }}
+            />
           )}
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2">
@@ -49,7 +58,53 @@ const BlockRenderer = ({ block, onBlockClick }) => {
               <p className="text-sm text-gray-600">{block.data.description}</p>
             )}
           </div>
-          <SafeIcon name={undefined}  icon={FiExternalLink} className="text-gray-400" />
+          <SafeIcon name={undefined} icon={FiExternalLink} className="text-gray-400" />
+        </div>
+      </div>
+    );
+  }
+
+  // DEEP_LINK Block (normalize to handle both 'DEEP_LINK' and 'deep_link')
+  const normalizedBlockType = block.type?.toUpperCase();
+  if (normalizedBlockType === 'DEEP_LINK') {
+    const showAppIcon = block.data?.showAppIcon !== false;
+
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-center`} onClick={() => onBlockClick(block)}>
+        <div className="flex flex-col items-center gap-3">
+          {block.data?.thumbnail && (
+            <Image 
+              src={block.data.thumbnail} 
+              alt={block.title || 'Deep Link'} 
+              width={64} 
+              height={64} 
+              className="w-16 h-16 rounded-lg object-cover"
+              onError={(e) => {
+                logger.error('Deep link image load error:', block.data.thumbnail);
+                e.target.style.display = 'none';
+              }}
+            />
+          )}
+          {showAppIcon && !block.data?.thumbnail && (
+            <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              <SafeIcon name={undefined} icon={FiExternalLink} className="text-white text-2xl" />
+            </div>
+          )}
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-gray-900">{block.title}</h3>
+              {block.data?.badge && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">{block.data.badge}</span>
+              )}
+            </div>
+            {block.data?.description && (
+              <p className="text-sm text-gray-600">{block.data.description}</p>
+            )}
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <SafeIcon name={undefined} icon={FiExternalLink} className="text-gray-400" />
+              <span>Opens in app or browser</span>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -61,7 +116,17 @@ const BlockRenderer = ({ block, onBlockClick }) => {
       <div className={`${baseStyles} bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-center`} onClick={() => onBlockClick(block)}>
         <div className="flex flex-col items-center gap-4">
           {block.data?.images?.[0] && (
-            <Image src={block.data.images[0]} alt={block.title} width={80} height={80} className="w-20 h-20 rounded-lg object-cover" />
+            <Image 
+              src={block.data.images[0]} 
+              alt={block.title || 'Product'} 
+              width={80} 
+              height={80} 
+              className="w-20 h-20 rounded-lg object-cover"
+              onError={(e) => {
+                logger.error('Product image load error:', block.data.images[0]);
+                e.target.style.display = 'none';
+              }}
+            />
           )}
           <div className="flex flex-col items-center">
             <h3 className="font-bold text-gray-900 mb-1">{block.title}</h3>
@@ -121,43 +186,185 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // IMAGE_GALLERY Block
   if (block.type === 'IMAGE_GALLERY') {
     const images = block.data?.images || [];
+    const layout = block.data?.layout || 'grid';
+    const maxImages = block.data?.maxImages || 6;
+    const clickBehavior = block.data?.clickBehavior || 'lightbox';
+    
+    const handleImageClick = (img, idx) => {
+      if (clickBehavior === 'lightbox') {
+        // Simple lightbox - could be enhanced with a proper modal
+        window.open(typeof img === 'string' ? img : img.url, '_blank');
+      } else if (clickBehavior === 'link' && typeof img === 'object' && img.link) {
+        window.open(img.link, '_blank', 'noopener,noreferrer');
+      }
+      onBlockClick(block);
+    };
+    
+    const gridCols = {
+      grid: 'grid-cols-3',
+      masonry: 'grid-cols-2',
+      carousel: 'grid-cols-1',
+      slider: 'grid-cols-1'
+    }[layout] || 'grid-cols-3';
+    
     return (
       <div className={`${baseStyles} text-center`}>
         <h3 className="font-bold text-gray-900 mb-3">{block.title}</h3>
-        <div className={`grid ${block.data?.layout === 'grid' ? 'grid-cols-3' : 'grid-cols-2'} gap-2`}>
-          {images.slice(0, block.data?.maxImages || 6).map((img, idx) => (
-            <Image
-              key={idx}
-              src={typeof img === 'string' ? img : img.url}
-              alt={typeof img === 'object' ? img.altText || '' : ''}
-              width={200}
-              height={200}
-              className="w-full aspect-square object-cover rounded-lg"
-            />
-          ))}
+        <div className={`grid ${gridCols} gap-2`}>
+          {images.slice(0, maxImages).map((img, idx) => {
+            const imgUrl = typeof img === 'string' ? img : img.url;
+            const imgAlt = typeof img === 'object' ? img.altText || block.title : block.title;
+            return (
+              <div
+                key={idx}
+                onClick={() => handleImageClick(img, idx)}
+                className={clickBehavior !== 'none' ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
+              >
+                <Image
+                  src={imgUrl}
+                  alt={imgAlt}
+                  width={200}
+                  height={200}
+                  className="w-full aspect-square object-cover rounded-lg"
+                />
+              </div>
+            );
+          })}
         </div>
+        {block.data?.showLoadMore && images.length > maxImages && (
+          <button
+            onClick={() => onBlockClick(block)}
+            className="mt-4 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+          >
+            Load More ({images.length - maxImages} more)
+          </button>
+        )}
       </div>
     );
   }
 
   // MUSIC_PLAYER Block
   if (block.type === 'MUSIC_PLAYER') {
+    const [isPlaying, setIsPlaying] = React.useState(false);
+    const [currentTime, setCurrentTime] = React.useState(0);
+    const [duration, setDuration] = React.useState(0);
+    const audioRef = React.useRef(null);
+
+    React.useEffect(() => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      const updateTime = () => setCurrentTime(audio.currentTime);
+      const updateDuration = () => setDuration(audio.duration);
+      const handleEnded = () => setIsPlaying(false);
+
+      audio.addEventListener('timeupdate', updateTime);
+      audio.addEventListener('loadedmetadata', updateDuration);
+      audio.addEventListener('ended', handleEnded);
+
+      return () => {
+        audio.removeEventListener('timeupdate', updateTime);
+        audio.removeEventListener('loadedmetadata', updateDuration);
+        audio.removeEventListener('ended', handleEnded);
+      };
+    }, []);
+
+    const togglePlay = () => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      if (isPlaying) {
+        audio.pause();
+      } else {
+        audio.play();
+      }
+      setIsPlaying(!isPlaying);
+    };
+
+    const formatTime = (seconds) => {
+      if (!seconds || isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    const handleSeek = (e) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = x / rect.width;
+      audio.currentTime = percentage * duration;
+    };
+
     return (
       <div className={`${baseStyles} bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 text-center`}>
         <div className="flex flex-col items-center gap-4">
           {block.data?.albumArtwork && (
-            <Image src={block.data.albumArtwork} alt={block.data?.trackTitle || 'Album artwork'} width={64} height={64} className="w-16 h-16 rounded-lg" />
+            <Image src={block.data.albumArtwork} alt={block.data?.trackTitle || 'Album artwork'} width={128} height={128} className="w-32 h-32 rounded-lg object-cover" />
           )}
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center w-full">
             <h3 className="font-bold text-gray-900">{block.data?.trackTitle || block.title}</h3>
             {block.data?.artistName && (
               <p className="text-sm text-gray-600">{block.data.artistName}</p>
             )}
-            {block.data?.duration && (
-              <p className="text-xs text-gray-500 mt-1">{block.data.duration}</p>
+            
+            {block.data?.audioUrl && (
+              <>
+                <audio ref={audioRef} src={block.data.audioUrl} preload="metadata" />
+                
+                {/* Progress Bar */}
+                <div 
+                  className="w-full h-2 bg-gray-200 rounded-full mt-4 cursor-pointer relative"
+                  onClick={handleSeek}
+                >
+                  <div 
+                    className="h-full bg-orange-500 rounded-full transition-all"
+                    style={{ width: duration ? `${(currentTime / duration) * 100}%` : '0%' }}
+                  />
+                </div>
+
+                {/* Controls */}
+                <div className="flex items-center justify-center gap-4 mt-3 w-full">
+                  <span className="text-xs text-gray-500">{formatTime(currentTime)}</span>
+                  <button
+                    onClick={togglePlay}
+                    className="w-12 h-12 bg-orange-600 text-white rounded-full flex items-center justify-center hover:bg-orange-700 transition-colors"
+                  >
+                    {isPlaying ? (
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    ) : (
+                      <svg className="w-6 h-6 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                      </svg>
+                    )}
+                  </button>
+                  <span className="text-xs text-gray-500">{formatTime(duration)}</span>
+                </div>
+
+                {/* Links */}
+                <div className="flex gap-3 mt-3">
+                  {block.data?.spotifyUrl && (
+                    <a href={block.data.spotifyUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-600 hover:text-orange-600">
+                      Spotify
+                    </a>
+                  )}
+                  {block.data?.appleMusicUrl && (
+                    <a href={block.data.appleMusicUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-600 hover:text-orange-600">
+                      Apple Music
+                    </a>
+                  )}
+                  {block.data?.downloadUrl && (
+                    <a href={block.data.downloadUrl} download className="text-xs text-gray-600 hover:text-orange-600">
+                      Download
+                    </a>
+                  )}
+                </div>
+              </>
             )}
           </div>
-          <SafeIcon name={undefined}  icon={FiMusic} className="text-orange-500 text-2xl" />
         </div>
       </div>
     );
@@ -165,13 +372,47 @@ const BlockRenderer = ({ block, onBlockClick }) => {
 
   // VIDEO_EMBED Block
   if (block.type === 'VIDEO_EMBED') {
+    const videoUrl = block.data?.videoUrl || '';
+    const platform = block.data?.platform || 'youtube';
+    
+    // Extract video ID from common platforms
+    const getEmbedUrl = (url, platform) => {
+      if (!url) return null;
+      
+      if (platform === 'youtube') {
+        const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+        const match = url.match(youtubeRegex);
+        if (match) {
+          return `https://www.youtube.com/embed/${match[1]}`;
+        }
+      } else if (platform === 'vimeo') {
+        const vimeoRegex = /(?:vimeo\.com\/)(\d+)/;
+        const match = url.match(vimeoRegex);
+        if (match) {
+          return `https://player.vimeo.com/video/${match[1]}`;
+        }
+      }
+      
+      return url; // Return as-is for custom embeds
+    };
+    
+    const embedUrl = getEmbedUrl(videoUrl, platform);
+    
     return (
       <div className={`${baseStyles} text-center`}>
         <h3 className="font-bold text-gray-900 mb-3">{block.title}</h3>
         <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
-          {block.data?.videoUrl && (
+          {embedUrl ? (
+            <iframe
+              src={embedUrl}
+              className="absolute inset-0 w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              title={block.title || 'Video'}
+            />
+          ) : (
             <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-              <SafeIcon name={undefined}  icon={FiVideo} className="text-white text-4xl" />
+              <SafeIcon name={undefined} icon={FiVideo} className="text-white text-4xl" />
             </div>
           )}
         </div>
@@ -281,6 +522,15 @@ const BlockRenderer = ({ block, onBlockClick }) => {
       xl: 'text-xl'
     }[block.data?.fontSize || 'medium'];
 
+    // Sanitize HTML content for TEXT_BLOCK
+    const content = block.data?.content || block.title || '';
+    const sanitizedContent = typeof content === 'string' && content.includes('<') 
+      ? DOMPurify.sanitize(content, { 
+          ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'a', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+          ALLOWED_ATTR: ['href', 'target', 'rel']
+        })
+      : content;
+
     return (
       <div
         className={`${baseStyles} ${alignmentClass}`}
@@ -291,7 +541,11 @@ const BlockRenderer = ({ block, onBlockClick }) => {
         }}
       >
         <div className={sizeClass}>
-          {block.data?.content || block.title}
+          {typeof sanitizedContent === 'string' && sanitizedContent.includes('<') ? (
+            <div dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
+          ) : (
+            sanitizedContent
+          )}
         </div>
       </div>
     );
@@ -343,25 +597,475 @@ const BlockRenderer = ({ block, onBlockClick }) => {
 
   // CONTACT_FORM Block
   if (block.type === 'CONTACT_FORM') {
+    const fields = block.data?.fields || [
+      { name: 'name', label: 'Name', type: 'text' },
+      { name: 'email', label: 'Email', type: 'email' },
+      { name: 'message', label: 'Message', type: 'textarea' }
+    ];
+    
     return (
       <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-center`} onClick={() => onBlockClick(block)}>
-        <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+        <h3 className="font-bold text-gray-900 mb-2">{block.title || 'Contact Us'}</h3>
         {block.description && (
           <p className="text-sm text-gray-600 mb-4">{block.description}</p>
         )}
         <div className="space-y-3">
-          {block.data?.fields && block.data.fields.slice(0, 3).map((field, idx) => (
+          {fields.slice(0, 3).map((field, idx) => (
             <div key={idx} className="bg-white rounded-lg p-3 border border-gray-200">
-              <p className="text-sm text-gray-500">{field.placeholder || field.name}</p>
+              <p className="text-sm text-gray-500">{field.placeholder || field.label || field.name}</p>
             </div>
           ))}
-          {block.data?.fields && block.data.fields.length > 3 && (
-            <p className="text-xs text-gray-500 text-center">+ {block.data.fields.length - 3} more fields</p>
+          {fields.length > 3 && (
+            <p className="text-xs text-gray-500 text-center">+ {fields.length - 3} more fields</p>
           )}
-          <div className="bg-indigo-600 text-white rounded-lg p-3 text-center mt-4">
-            <p className="text-sm font-medium">{block.data?.submitButtonText || 'Submit'}</p>
+          <div className="bg-indigo-600 text-white rounded-lg p-3 text-center mt-4 cursor-pointer hover:bg-indigo-700 transition-colors">
+            <p className="text-sm font-medium">{block.data?.submitButtonText || 'Send Message'}</p>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // COURSE Block
+  if (block.type === 'COURSE') {
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-center`} onClick={() => onBlockClick(block)}>
+        <div className="flex flex-col items-center gap-4">
+          {block.data?.coverImageUrl && (
+            <Image src={block.data.coverImageUrl} alt={block.title} width={200} height={120} className="w-full h-32 object-cover rounded-lg" />
+          )}
+          <div className="flex flex-col items-center">
+            <h3 className="font-bold text-gray-900 mb-1">{block.data?.headline || block.title}</h3>
+            {block.data?.subheadline && (
+              <p className="text-sm text-gray-600 mb-2">{block.data.subheadline}</p>
+            )}
+            {block.data?.description && (
+              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{block.data.description}</p>
+            )}
+            {block.data?.features && block.data.features.length > 0 && (
+              <ul className="text-xs text-gray-600 mb-3 space-y-1">
+                {block.data.features.slice(0, 3).map((feature, idx) => (
+                  <li key={idx}>✓ {feature}</li>
+                ))}
+              </ul>
+            )}
+            <div className="bg-blue-600 text-white rounded-lg px-6 py-2 mt-2">
+              <p className="text-sm font-medium">{block.data?.buttonText || 'Enroll Now'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // DISCOUNT Block
+  if (block.type === 'DISCOUNT') {
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-red-50 to-pink-50 border-red-300`}>
+        <div className="text-center">
+          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          {block.data?.description && (
+            <p className="text-sm text-gray-600 mb-3">{block.data.description}</p>
+          )}
+          <div className="bg-white border-2 border-dashed border-red-400 rounded-lg p-4 mb-2">
+            {(block.data?.discountPercentage || block.data?.discountAmount) && (
+              <p className="text-3xl font-bold text-red-600 mb-1">
+                {block.data.discountPercentage ? `${block.data.discountPercentage}% OFF` : `$${block.data.discountAmount} OFF`}
+              </p>
+            )}
+            {block.data?.code && (
+              <p className="text-lg font-mono font-semibold text-gray-900">{block.data.code}</p>
+            )}
+          </div>
+          {block.data?.showCountdown && (
+            <p className="text-xs text-gray-500">Limited time offer</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // SOCIAL_FEED Block
+  if (block.type === 'SOCIAL_FEED') {
+    const [feedItems, setFeedItems] = React.useState([]);
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState(null);
+
+    React.useEffect(() => {
+      const loadFeed = async () => {
+        if (!block.data?.platform || !block.data?.username) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+          const response = await fetch(
+            `/api/social-feed?platform=${encodeURIComponent(block.data.platform)}&username=${encodeURIComponent(block.data.username)}&itemCount=${block.data?.itemCount || 10}`
+          );
+          const data = await response.json();
+
+          if (data.success) {
+            setFeedItems(data.items || []);
+          } else {
+            setError(data.error || 'Failed to load feed');
+          }
+        } catch (err) {
+          setError('Failed to load social feed');
+          logger.error('Social feed error:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadFeed();
+
+      // Refresh feed periodically if refreshInterval is set
+      let interval;
+      if (block.data?.refreshInterval) {
+        interval = setInterval(loadFeed, block.data.refreshInterval * 60 * 1000);
+      }
+
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }, [block.data?.platform, block.data?.username, block.data?.itemCount, block.data?.refreshInterval]);
+
+    const layout = block.data?.layout || 'grid';
+    const feedType = block.data?.feedType || 'posts';
+
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-pink-50 to-rose-50 border-pink-200`}>
+        <div className="text-center">
+          <SafeIcon name={undefined} icon={FiShare2} className="text-3xl text-pink-600 mx-auto mb-3" />
+          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          {block.data?.username && (
+            <p className="text-sm text-gray-600 mb-1">@{block.data.username}</p>
+          )}
+          {block.data?.platform && (
+            <p className="text-xs text-gray-500 mb-3 capitalize">{block.data.platform} {feedType}</p>
+          )}
+
+          {loading && (
+            <div className="bg-white rounded-lg p-4">
+              <p className="text-sm text-gray-500">Loading feed...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && feedItems.length === 0 && (
+            <div className="bg-white rounded-lg p-4">
+              <p className="text-sm text-gray-500">No posts found</p>
+            </div>
+          )}
+
+          {!loading && !error && feedItems.length > 0 && (
+            <div className={`${layout === 'grid' ? 'grid grid-cols-3 gap-2' : layout === 'carousel' ? 'flex gap-2 overflow-x-auto' : 'space-y-2'}`}>
+              {feedItems.map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="bg-white rounded-lg p-2 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => {
+                    if (item.url) {
+                      window.open(item.url, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                >
+                  {item.image && (
+                    <Image src={item.image} alt={item.text || 'Post'} width={100} height={100} className="w-full h-24 object-cover rounded mb-1" />
+                  )}
+                  {item.text && (
+                    <p className="text-xs text-gray-700 line-clamp-2 mb-1">{item.text}</p>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-gray-400">
+                    {item.likes !== undefined && <span>❤️ {item.likes}</span>}
+                    {item.comments !== undefined && <span>💬 {item.comments}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // AMA_BLOCK
+  if (block.type === 'AMA_BLOCK') {
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200`} onClick={() => onBlockClick(block)}>
+        <div className="text-center">
+          <SafeIcon name={undefined} icon={FiMail} className="text-3xl text-purple-600 mx-auto mb-3" />
+          <h3 className="font-bold text-gray-900 mb-2">{block.data?.questionFormTitle || block.title || 'Ask Me Anything'}</h3>
+          {block.data?.introMessage && (
+            <div 
+              className="text-sm text-gray-600 mb-4 prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: block.data.introMessage }}
+            />
+          )}
+          <div className="bg-white rounded-lg p-4">
+            <input
+              type="text"
+              placeholder={block.data?.questionPlaceholder || 'Your question...'}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm"
+              readOnly
+            />
+            <button className="w-full mt-3 bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-purple-700 transition-colors">
+              Submit Question
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // RSS_FEED Block
+  if (block.type === 'RSS_FEED') {
+    const [feedItems, setFeedItems] = React.useState([]);
+    const [loading, setLoading] = React.useState(false);
+    const [error, setError] = React.useState(null);
+
+    React.useEffect(() => {
+      const loadFeed = async () => {
+        if (!block.data?.feedUrl) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+          const response = await fetch(`/api/rss-feed?url=${encodeURIComponent(block.data.feedUrl)}&itemCount=${block.data?.itemCount || 10}`);
+          const data = await response.json();
+
+          if (data.success) {
+            setFeedItems(data.items || []);
+          } else {
+            setError(data.error || 'Failed to load feed');
+          }
+        } catch (err) {
+          setError('Failed to load RSS feed');
+          logger.error('RSS feed error:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadFeed();
+
+      // Refresh feed periodically if refreshInterval is set
+      let interval;
+      if (block.data?.refreshInterval) {
+        interval = setInterval(loadFeed, block.data.refreshInterval * 60 * 1000);
+      }
+
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }, [block.data?.feedUrl, block.data?.itemCount, block.data?.refreshInterval]);
+
+    const layout = block.data?.layout || 'list';
+    const showImages = block.data?.showImages !== false;
+    const showDates = block.data?.showDates !== false;
+    const showExcerpts = block.data?.showExcerpts !== false;
+    const excerptLength = block.data?.excerptLength || 150;
+
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200`}>
+        <div className="text-center">
+          <SafeIcon name={undefined} icon={FiLink} className="text-3xl text-orange-600 mx-auto mb-3" />
+          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          
+          {loading && (
+            <div className="bg-white rounded-lg p-4">
+              <p className="text-sm text-gray-500">Loading feed...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {!loading && !error && feedItems.length === 0 && (
+            <div className="bg-white rounded-lg p-4">
+              <p className="text-sm text-gray-500">No items found in feed</p>
+            </div>
+          )}
+
+          {!loading && !error && feedItems.length > 0 && (
+            <div className={`${layout === 'grid' ? 'grid grid-cols-2 gap-3' : layout === 'cards' ? 'grid grid-cols-1 gap-3' : 'space-y-3'}`}>
+              {feedItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white rounded-lg p-3 border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => {
+                    if (block.data?.linkBehavior === 'new_tab') {
+                      window.open(item.link, '_blank', 'noopener,noreferrer');
+                    } else if (block.data?.linkBehavior === 'same_tab') {
+                      window.location.href = item.link;
+                    } else {
+                      onBlockClick(block);
+                    }
+                  }}
+                >
+                  {showImages && item.image && (
+                    <Image src={item.image} alt={item.title} width={200} height={120} className="w-full h-24 object-cover rounded mb-2" />
+                  )}
+                  <h4 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{item.title}</h4>
+                  {showExcerpts && item.description && (
+                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                      {item.description.substring(0, excerptLength)}
+                      {item.description.length > excerptLength ? '...' : ''}
+                    </p>
+                  )}
+                  {showDates && item.pubDate && (
+                    <p className="text-xs text-gray-400">{new Date(item.pubDate).toLocaleDateString()}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ANALYTICS Block (should be invisible on public page)
+  if (block.type === 'ANALYTICS') {
+    return null; // Analytics blocks should not render on public pages
+  }
+
+  // CUSTOM Block
+  if (block.type === 'CUSTOM') {
+    const htmlContent = block.data?.htmlContent || '';
+    const cssStyles = block.data?.cssStyles || '';
+    const jsCode = block.data?.jsCode || '';
+    const embedCode = block.data?.embedCode || '';
+    const allowScripts = block.data?.allowScripts || false;
+    
+    // Sanitize HTML content (but allow scripts if explicitly enabled)
+    const sanitizeOptions = allowScripts 
+      ? { ALLOWED_TAGS: ['*'], ALLOWED_ATTR: ['*'] } // Allow everything if scripts enabled
+      : {}; // Default sanitization (strips scripts)
+    
+    const sanitizedHtml = htmlContent ? DOMPurify.sanitize(htmlContent, sanitizeOptions) : '';
+    const sanitizedEmbed = embedCode ? DOMPurify.sanitize(embedCode, sanitizeOptions) : '';
+    const sanitizedCss = cssStyles ? DOMPurify.sanitize(cssStyles, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }) : '';
+    
+    return (
+      <div className="w-full">
+        {sanitizedCss && (
+          <style dangerouslySetInnerHTML={{ __html: sanitizedCss }} />
+        )}
+        {sanitizedHtml && (
+          <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
+        )}
+        {sanitizedEmbed && (
+          <div dangerouslySetInnerHTML={{ __html: sanitizedEmbed }} />
+        )}
+        {jsCode && allowScripts && (
+          <script dangerouslySetInnerHTML={{ __html: jsCode }} />
+        )}
+      </div>
+    );
+  }
+
+  // GATED_CONTENT Block
+  if (block.type === 'GATED_CONTENT') {
+    const isUnlocked = block.data?.isUnlocked || false;
+    const accessRequirement = block.data?.accessRequirement || 'email';
+    const previewContent = block.data?.previewContent || block.description || 'This content is locked. Click to unlock.';
+    const unlockMethod = block.data?.unlockMethod || 'Click to unlock this content';
+    const price = block.data?.price || 0;
+    const currency = block.data?.currency || '$';
+    
+    return (
+      <div className={`${baseStyles} bg-gradient-to-r from-fuchsia-50 to-pink-50 border-fuchsia-200 text-center`}>
+        {!isUnlocked ? (
+          <>
+            <div className="mb-4">
+              <SafeIcon name={undefined} icon={FiSettings} className="text-3xl text-fuchsia-600 mx-auto mb-3" />
+              <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+              {previewContent && (
+                <div 
+                  className="text-sm text-gray-600 mb-4 prose prose-sm max-w-none"
+                  dangerouslySetInnerHTML={{ __html: previewContent }}
+                />
+              )}
+            </div>
+            <div className="bg-white rounded-lg p-4 mb-3">
+              <p className="text-sm text-gray-700 mb-3">{unlockMethod}</p>
+              {accessRequirement === 'payment' && price > 0 && (
+                <p className="text-lg font-bold text-fuchsia-600 mb-2">
+                  {currency}{price}
+                </p>
+              )}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBlockClick(block);
+                }}
+                className="w-full bg-fuchsia-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-fuchsia-700 transition-colors"
+              >
+                {accessRequirement === 'payment' && price > 0 
+                  ? `Unlock for ${currency}${price}`
+                  : accessRequirement === 'password'
+                  ? 'Enter Password'
+                  : accessRequirement === 'membership'
+                  ? 'Check Membership'
+                  : 'Unlock Content'}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div>
+            <h3 className="font-bold text-gray-900 mb-3">{block.title}</h3>
+            {block.data?.contentUrl ? (
+              <div className="space-y-3">
+                {block.data?.contentType === 'video' && (
+                  <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                    <iframe
+                      src={block.data.contentUrl}
+                      className="absolute inset-0 w-full h-full"
+                      allowFullScreen
+                    />
+                  </div>
+                )}
+                {block.data?.contentType === 'external_link' && (
+                  <a
+                    href={block.data.contentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-fuchsia-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-fuchsia-700 transition-colors"
+                  >
+                    View Content <SafeIcon name={undefined} icon={FiExternalLink} className="inline ml-2" />
+                  </a>
+                )}
+                {block.data?.contentType === 'file' && (
+                  <a
+                    href={block.data.contentUrl}
+                    download
+                    className="inline-block bg-fuchsia-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-fuchsia-700 transition-colors"
+                  >
+                    Download File <SafeIcon name={undefined} icon={FiExternalLink} className="inline ml-2" />
+                  </a>
+                )}
+                {block.data?.contentType === 'text' && (
+                  <div 
+                    className="text-sm text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(block.data.contentUrl) }}
+                  />
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">Content unlocked! Content URL not configured.</p>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -371,7 +1075,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     <div className={`${baseStyles} text-center`} onClick={() => onBlockClick(block)}>
       <div className="flex flex-col items-center gap-3">
         <div className="flex flex-col items-center">
-          <h3 className="font-semibold text-gray-900">{block.title}</h3>
+          <h3 className="font-semibold text-gray-900">{block.title || 'Block'}</h3>
           {block.description && (
             <p className="text-sm text-gray-600">{block.description}</p>
           )}
@@ -380,6 +1084,18 @@ const BlockRenderer = ({ block, onBlockClick }) => {
       </div>
     </div>
   );
+  } catch (error) {
+    // Catch any rendering errors and display a fallback
+    logger.error('BlockRenderer error:', error, { blockType: block?.type, blockId: block?.id });
+    return (
+      <div className="w-full p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-sm text-red-800 font-medium">Error rendering block</p>
+        <p className="text-xs text-red-600 mt-1">
+          {block?.title ? `Block: ${block.title}` : 'Unknown block type'}
+        </p>
+      </div>
+    );
+  }
 };
 
 export default BlockRenderer;

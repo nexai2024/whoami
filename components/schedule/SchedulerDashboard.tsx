@@ -9,6 +9,8 @@ import { useState, useEffect } from 'react';
 import { Platform, PostType, ScheduleStatus } from '@prisma/client';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
+import { useAuth } from '../../lib/auth/AuthContext.jsx';
 interface ScheduledPost {
   id: string;
   content: string;
@@ -49,6 +51,8 @@ export default function SchedulerDashboard() {
   const [showAnalyzeModal, setShowAnalyzeModal] = useState(false);
   const [showBulkScheduleModal, setShowBulkScheduleModal] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const searchParams = useSearchParams();
+  const { currUser } = useAuth();
 
   // Form state for schedule modal
   const [formData, setFormData] = useState({
@@ -81,6 +85,92 @@ export default function SchedulerDashboard() {
     fetchOptimalTimes();
   }, []);
 
+  // Prefill from campaign asset or campaign bulk context
+  useEffect(() => {
+    const assetId = searchParams?.get('asset');
+    const campaignId = searchParams?.get('campaign');
+    const overridePlatform = searchParams?.get('platform');
+    const overridePostType = searchParams?.get('postType');
+    if (!currUser?.id) {
+      return;
+    }
+
+    // Single asset -> open new post modal prefilled
+    if (assetId) {
+      (async () => {
+        try {
+          const res = await fetch(`/api/campaign-assets/${assetId}`, {
+            headers: { 'x-user-id': currUser.id },
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            toast.error(err.error || 'Failed to load asset');
+            return;
+          }
+          const { asset } = await res.json();
+          const platform: string = (overridePlatform as string) || asset.platform || '';
+          const media = asset.mediaUrl ? asset.mediaUrl : '';
+          setFormData((prev) => ({
+            ...prev,
+            content: asset.content || '',
+            platform: platform,
+            postType:
+              (overridePostType as string) ||
+              (defaultPostTypeForPlatform(platform as Platform) as string),
+            mediaUrls: media,
+          }));
+          setShowNewPostModal(true);
+        } catch (e) {
+          console.error('Error loading campaign asset:', e);
+          toast.error('Failed to load asset');
+        }
+      })();
+    }
+
+    // Campaign id -> open bulk modal with all social assets
+    if (campaignId) {
+      (async () => {
+        try {
+          const res = await fetch(`/api/campaigns/${campaignId}`, {
+            headers: { 'x-user-id': currUser.id },
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            toast.error(err.error || 'Failed to load campaign');
+            return;
+          }
+          const data = await res.json();
+          const assets = (data?.campaign?.assets || []) as Array<{
+            type: string;
+            platform?: Platform | null;
+            content: string;
+          }>;
+          const socialAssets = assets.filter((a) => a.type === 'SOCIAL_POST' && a.content?.trim()?.length >= 1);
+          if (socialAssets.length === 0) {
+            toast.error('No social assets to schedule in this campaign');
+            return;
+          }
+          const defaultPlatform =
+            (overridePlatform as string) || (socialAssets[0]?.platform as string) || 'TWITTER';
+          const text = socialAssets.map((a) => a.content.trim()).join('\n');
+          setBulkFormData((prev) => ({
+            ...prev,
+            postText: text,
+            platform: (defaultPlatform as string) || 'TWITTER',
+            postType:
+              (overridePostType as string) ||
+              (defaultPostTypeForPlatform((defaultPlatform as Platform) || 'TWITTER') as string),
+          }));
+          setShowBulkScheduleModal(true);
+        } catch (e) {
+          console.error('Error loading campaign:', e);
+          toast.error('Failed to load campaign');
+        }
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, currUser?.id]);
+
   const fetchScheduledPosts = async () => {
     try {
       const response = await fetch('/api/schedule/posts?status=PENDING&status=PROCESSING');
@@ -102,6 +192,21 @@ export default function SchedulerDashboard() {
       console.error('Error fetching optimal times:', error);
     }
   };
+
+  function defaultPostTypeForPlatform(platform: Platform | string | null | undefined): PostType | string {
+    switch (platform) {
+      case 'TWITTER':
+        return 'TWEET';
+      case 'INSTAGRAM':
+        return 'FEED_POST';
+      case 'LINKEDIN':
+        return 'LINKEDIN_POST';
+      case 'FACEBOOK':
+        return 'FACEBOOK_POST';
+      default:
+        return 'FEED_POST';
+    }
+  }
 
   const handleSchedulePost = async (postData: any) => {
     try {

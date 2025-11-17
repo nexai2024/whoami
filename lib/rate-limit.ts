@@ -1,5 +1,6 @@
 // lib/rate-limit.ts
 import prisma from './prisma'
+import { getLimitForFeature, getPlanKeyFromStrings, type PlanKey } from './billing/planConfig'
 
 export type RateLimitResult = {
   allowed: boolean
@@ -17,56 +18,74 @@ export class RateLimitService {
     userId: string,
     featureName: string
   ): Promise<RateLimitResult> {
-    // Get user's subscription and plan features
+    // Try DB-backed subscription/plan features first
+    const dbResult = await this.checkDbPlanFeature(userId, featureName)
+    if (dbResult) {
+      return dbResult
+    }
+
+    // Fallback to config-based limits using Profile.plan or default to FREE
+    const profile = await prisma.profile.findUnique({
+      where: { userId },
+      select: { plan: true },
+    })
+    const planKey: PlanKey = getPlanKeyFromStrings(profile?.plan)
+    const limit = getLimitForFeature(planKey, featureName)
+
+    if (limit === 'unlimited') {
+      return { allowed: true }
+    }
+
+    // Ensure a Feature exists to track usage; upsert by name
+    const feature = await prisma.feature.upsert({
+      where: { name: featureName },
+      update: {},
+      create: {
+        name: featureName,
+        type: 'quota',
+        description: `${featureName} usage`,
+        isActive: true,
+      },
+    })
+
+    // For Free/Basic/Pro fallback, use calendar month window
+    const { periodStart, periodEnd } = this.getCalendarMonthBounds(new Date())
+    return await this.checkQuota(userId, feature.id, Number(limit || 0), periodStart, periodEnd)
+  }
+
+  private static async checkDbPlanFeature(userId: string, featureName: string): Promise<RateLimitResult | null> {
     const subscription = await prisma.subscription.findUnique({
       where: { userId },
       include: {
         plan: {
           include: {
             features: {
-              include: {
-                feature: true,
-              },
-              where: {
-                feature: {
-                  name: featureName,
-                },
-              },
+              include: { feature: true },
+              where: { feature: { name: featureName } },
             },
           },
         },
       },
     })
-    console.log('Subscription', subscription, featureName);
     if (!subscription || subscription.status !== 'active') {
-      return {
-        allowed: false,
-        message: 'No active subscription found',
-      }
+      return null
     }
-
     const planFeature = subscription.plan.features[0]
-
     if (!planFeature) {
       return {
         allowed: false,
         message: 'Feature not available in your plan',
       }
     }
-
     if (!planFeature.enabled) {
       return {
         allowed: false,
         message: 'Feature is disabled',
       }
     }
-
-    // For boolean features, just return enabled status
     if (planFeature.feature.type === 'boolean') {
       return { allowed: true }
     }
-
-    // Check rate limits
     if (planFeature.rateLimit && planFeature.ratePeriod) {
       return await this.checkRateLimit(
         userId,
@@ -75,8 +94,6 @@ export class RateLimitService {
         planFeature.ratePeriod
       )
     }
-
-    // Check quotas
     if (planFeature.limit !== null) {
       return await this.checkQuota(
         userId,
@@ -86,7 +103,6 @@ export class RateLimitService {
         subscription.currentPeriodEnd
       )
     }
-
     return { allowed: true }
   }
 
@@ -279,6 +295,12 @@ export class RateLimitService {
     }
 
     return { periodStart, periodEnd }
+  }
+
+  private static getCalendarMonthBounds(now: Date): { periodStart: Date; periodEnd: Date } {
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0, 0))
+    const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0, 23, 59, 59, 999))
+    return { periodStart: start, periodEnd: end }
   }
 
   /**

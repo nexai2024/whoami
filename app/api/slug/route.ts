@@ -45,6 +45,17 @@ export async function POST(request: NextRequest) {
       ? page.blocks
       : page.blocks.filter((block: { isActive: boolean }) => block.isActive);
 
+    // Get actual click count from database (with error handling)
+    let clickCount = 0;
+    try {
+      clickCount = await prisma.click.count({
+        where: { pageId: page.id }
+      });
+    } catch (countError) {
+      logger.error('Error counting clicks:', countError);
+      // Continue with 0 if count fails
+    }
+
     const responsePayload = {
       id: page.id,
       userId: page.userId,
@@ -64,7 +75,7 @@ export async function POST(request: NextRequest) {
       blocks,
       user: page.user,
       pageHeader: page.header,
-      _count: { clicks: 0 },
+      _count: { clicks: clickCount },
     };
 
     return NextResponse.json(responsePayload);

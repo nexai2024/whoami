@@ -15,6 +15,7 @@ import Header from '@/components/Header';
 import ContentWrapper from '@/components/ContentWrapper';
 import { useUser } from "@stackframe/stack";
 import { usePathname } from 'next/navigation';
+import { checkUserFeature } from "@/lib/features/checkFeature";
 
 keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
@@ -32,9 +33,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   ];
 
   const isPublicRoute = pathname
-    ? publicRoutePatterns.some((pattern) => pattern.test(pathname))
+    ? publicRoutePatterns.some((pattern) => pattern.test(pathname ?? ""))
     : false;
-
+  const isAdmin = checkUserFeature(user?.id ?? '', 'error_console_admin');
+  
   const showNavigation = !isPublicRoute;
 
   return (

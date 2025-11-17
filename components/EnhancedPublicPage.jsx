@@ -10,6 +10,10 @@ import { AnalyticsService } from '../lib/services/analyticsService';
 import { logger } from '../lib/utils/logger';
 import SEOHead from './SEOHead';
 import EmailCaptureModal from './EmailCaptureModal';
+import PasswordModal from './PasswordModal';
+import ContactFormModal from './ContactFormModal';
+import AMAModal from './AMAModal';
+import QRCodeShare from './QRCodeShare';
 import BlockRenderer from './BlockRenderer';
 import toast from 'react-hot-toast';
 
@@ -34,6 +38,10 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [selectedBlock, setSelectedBlock] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showAMAModal, setShowAMAModal] = useState(false);
+  const [unlockedBlocks, setUnlockedBlocks] = useState(new Set());
 
   const getVisitorIP = useCallback(async () => {
     try {
@@ -141,6 +149,163 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
     }
   }, [pageSlug, loadPage]);
 
+  // Load unlocked blocks from localStorage on mount
+  useEffect(() => {
+    if (page?.id) {
+      const stored = localStorage.getItem(`unlocked_blocks_${page.id}`);
+      if (stored) {
+        try {
+          setUnlockedBlocks(new Set(JSON.parse(stored)));
+        } catch (e) {
+          logger.error('Error loading unlocked blocks:', e);
+        }
+      }
+    }
+  }, [page?.id]);
+
+  // Save unlocked blocks to localStorage
+  const saveUnlockedBlock = useCallback((blockId) => {
+    if (!page?.id) return;
+    const newUnlocked = new Set(unlockedBlocks);
+    newUnlocked.add(blockId);
+    setUnlockedBlocks(newUnlocked);
+    localStorage.setItem(`unlocked_blocks_${page.id}`, JSON.stringify(Array.from(newUnlocked)));
+  }, [page?.id, unlockedBlocks]);
+
+  // Define handlers before handleBlockClick to avoid initialization errors
+  const handleProductPurchase = useCallback((block) => {
+    window.open(`/checkout/${block.id}`, '_blank', 'noopener,noreferrer');
+  }, []);
+
+  const handleEmailCapture = useCallback((block) => {
+    setSelectedBlock(block);
+    setShowEmailModal(true);
+  }, []);
+
+  const handleGatedContent = useCallback((block) => {
+    // Check if already unlocked
+    if (unlockedBlocks.has(block.id)) {
+      return;
+    }
+
+    const accessRequirement = block.data?.accessRequirement || 'email';
+    
+    if (accessRequirement === 'email') {
+      // Use email capture modal
+      setSelectedBlock(block);
+      setShowEmailModal(true);
+    } else if (accessRequirement === 'password') {
+      // Show password input modal
+      setSelectedBlock(block);
+      setShowPasswordModal(true);
+    } else if (accessRequirement === 'payment') {
+      // Redirect to checkout
+      const price = block.data?.price || 0;
+      if (price > 0) {
+        window.open(`/checkout/gated/${block.id}`, '_blank', 'noopener,noreferrer');
+      } else {
+        toast.error('Payment amount not configured');
+      }
+    } else if (accessRequirement === 'membership') {
+      // Check membership (would need API call)
+      toast.error('Membership check not yet implemented');
+    }
+  }, [unlockedBlocks]);
+
+  const handleDeepLink = useCallback((block) => {
+    try {
+      const iosUrl = block.data?.iosUrl;
+      const androidUrl = block.data?.androidUrl;
+      const iosScheme = block.data?.iosScheme;
+      const androidScheme = block.data?.androidScheme;
+      const webUrl = block.data?.webUrl;
+      const linkBehavior = block.data?.linkBehavior || 'smart';
+      const openIn = block.data?.openIn || 'same_tab';
+
+      // Detect platform
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isIOS = /iphone|ipad|ipod/.test(userAgent);
+      const isAndroid = /android/.test(userAgent);
+      const isMobile = isIOS || isAndroid;
+
+      // Determine target URL based on behavior
+      let targetUrl = null;
+      let schemeUrl = null;
+
+      if (linkBehavior === 'web_only') {
+        // Web only - ignore app links
+        targetUrl = webUrl || iosUrl || androidUrl;
+      } else if (linkBehavior === 'app_only') {
+        // App only - use custom schemes
+        if (isIOS && iosScheme) {
+          schemeUrl = iosScheme;
+        } else if (isAndroid && androidScheme) {
+          schemeUrl = androidScheme;
+        } else {
+          // Fallback to universal/app links
+          targetUrl = isIOS ? iosUrl : (isAndroid ? androidUrl : null);
+        }
+      } else {
+        // Smart behavior - try app first, fallback to web
+        if (isIOS) {
+          // iOS: Try custom scheme first, then universal link, then web
+          if (iosScheme) {
+            schemeUrl = iosScheme;
+          } else if (iosUrl) {
+            targetUrl = iosUrl;
+          } else {
+            targetUrl = webUrl;
+          }
+        } else if (isAndroid) {
+          // Android: Try custom scheme first, then app link, then web
+          if (androidScheme) {
+            schemeUrl = androidScheme;
+          } else if (androidUrl) {
+            targetUrl = androidUrl;
+          } else {
+            targetUrl = webUrl;
+          }
+        } else {
+          // Desktop: Use web URL
+          targetUrl = webUrl || iosUrl || androidUrl;
+        }
+      }
+
+      // Open the link
+      if (schemeUrl) {
+        // Custom URL scheme - try to open app
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = schemeUrl;
+        document.body.appendChild(iframe);
+        
+        // Fallback to web after timeout if app doesn't open
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          if (targetUrl && linkBehavior === 'smart') {
+            if (openIn === 'new_tab') {
+              window.open(targetUrl, '_blank', 'noopener,noreferrer');
+            } else {
+              window.location.href = targetUrl;
+            }
+          }
+        }, 2500);
+      } else if (targetUrl) {
+        // Regular URL - universal link, app link, or web
+        if (openIn === 'new_tab') {
+          window.open(targetUrl, '_blank', 'noopener,noreferrer');
+        } else {
+          window.location.href = targetUrl;
+        }
+      } else {
+        toast.error('Deep link not configured');
+      }
+    } catch (err) {
+      logger.error('Error handling deep link:', err);
+      toast.error('Failed to open link');
+    }
+  }, []);
+
   const handleBlockClick = useCallback(async (block) => {
     try {
       const clickData = {
@@ -155,8 +320,18 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
       };
       await AnalyticsService.recordClick(clickData);
 
-      if (block.type === 'LINK' && block.url) {
-        window.open(block.url, '_blank', 'noopener,noreferrer');
+      if (block.type === 'LINK') {
+        const url = block.data?.url || block.url;
+        if (url) {
+          const openInNewTab = block.data?.openInNewTab !== false;
+          if (openInNewTab) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          } else {
+            window.location.href = url;
+          }
+        }
+      } else if (block.type === 'DEEP_LINK') {
+        handleDeepLink(block);
       } else if (block.type === 'PRODUCT') {
         handleProductPurchase(block);
       } else if (block.type === 'COURSE') {
@@ -169,20 +344,51 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
         }
       } else if (block.type === 'EMAIL_CAPTURE' || block.type === 'NEWSLETTER' || block.type === 'WAITLIST') {
         handleEmailCapture(block);
+      } else if (block.type === 'GATED_CONTENT') {
+        handleGatedContent(block);
+      } else if (block.type === 'AMA_BLOCK') {
+        setSelectedBlock(block);
+        setShowAMAModal(true);
+      } else if (block.type === 'BOOKING_CALENDAR') {
+        const calendarUrl = block.data?.calendarUrl;
+        if (calendarUrl) {
+          window.open(calendarUrl, '_blank', 'noopener,noreferrer');
+        } else {
+          toast.error('Calendar URL not configured');
+        }
+      } else if (block.type === 'TIP_JAR') {
+        window.open(`/checkout/tip/${block.id}`, '_blank', 'noopener,noreferrer');
+      } else if (block.type === 'CONTACT_FORM') {
+        setSelectedBlock(block);
+        setShowContactModal(true);
+      } else if (block.type === 'PORTFOLIO') {
+        const liveUrl = block.data?.liveUrl || block.data?.caseStudyUrl;
+        if (liveUrl) {
+          window.open(liveUrl, '_blank', 'noopener,noreferrer');
+        }
+      } else if (block.type === 'SOCIAL_SHARE') {
+        // Handle social sharing
+        const shareUrl = block.data?.shareUrl || window.location.href;
+        const shareText = block.data?.shareText || block.title || 'Check this out!';
+        if (navigator.share) {
+          navigator.share({
+            title: block.title,
+            text: shareText,
+            url: shareUrl
+          }).catch(() => {
+            // Fallback to copying URL
+            navigator.clipboard.writeText(shareUrl);
+            toast.success('Link copied to clipboard!');
+          });
+        } else {
+          navigator.clipboard.writeText(shareUrl);
+          toast.success('Link copied to clipboard!');
+        }
       }
     } catch (err) {
       logger.error('Error handling block click:', err);
     }
-  }, [page?.id, getVisitorIP, getDeviceType, getBrowserName, getOSName]);
-
-  const handleProductPurchase = useCallback((block) => {
-    window.open(`/checkout/${block.id}`, '_blank', 'noopener,noreferrer');
-  }, []);
-
-  const handleEmailCapture = useCallback((block) => {
-    setSelectedBlock(block);
-    setShowEmailModal(true);
-  }, []);
+  }, [page?.id, getVisitorIP, getDeviceType, getBrowserName, getOSName, handleProductPurchase, handleEmailCapture, handleGatedContent, handleDeepLink]);
 
   const shareUrl = useCallback(async () => {
     try {
@@ -559,18 +765,33 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
               {/* Blocks */}
               <div className="space-y-4 text-center" role="main" aria-label="Page content">
                 {page.blocks && page.blocks.length > 0 ? (
-                  page.blocks.map((block, index) => (
-                    <motion.div
-                      key={block.id}
-                      initial={{ y: 20, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: index * 0.1, duration: 0.6 }}
-                      role="article"
-                      aria-label={`Block: ${block.title || block.type}`}
-                    >
-                      <BlockRenderer block={block} onBlockClick={handleBlockClick} />
-                    </motion.div>
-                  ))
+                  page.blocks.map((block, index) => {
+                    try {
+                      // Add unlocked state to gated content blocks
+                      const blockWithUnlock = block.type === 'GATED_CONTENT' 
+                        ? { ...block, data: { ...block.data, isUnlocked: unlockedBlocks.has(block.id) } }
+                        : block;
+                      return (
+                        <motion.div
+                          key={block.id || `block-${index}`}
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: index * 0.1, duration: 0.6 }}
+                          role="article"
+                          aria-label={`Block: ${block.title || block.type || 'Unknown'}`}
+                        >
+                          <BlockRenderer block={blockWithUnlock} onBlockClick={handleBlockClick} />
+                        </motion.div>
+                      );
+                    } catch (blockError) {
+                      logger.error('Error rendering block:', blockError, { blockId: block?.id, blockType: block?.type });
+                      return (
+                        <div key={block?.id || `error-${index}`} className="w-full p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-yellow-800">Error loading block</p>
+                        </div>
+                      );
+                    }
+                  })
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <p>No content blocks available</p>
@@ -593,6 +814,62 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                 setShowEmailModal(false);
                 setSelectedBlock(null);
               }}
+              onSuccess={(blockId) => {
+                // If this is a gated content block, unlock it
+                if (selectedBlock?.type === 'GATED_CONTENT') {
+                  saveUnlockedBlock(blockId || selectedBlock.id);
+                  toast.success('Content unlocked!');
+                }
+              }}
+            />
+          )}
+
+          {/* Password Modal */}
+          {showPasswordModal && selectedBlock && (
+            <PasswordModal
+              block={selectedBlock}
+              onClose={() => {
+                setShowPasswordModal(false);
+                setSelectedBlock(null);
+              }}
+              onUnlock={(blockId) => {
+                saveUnlockedBlock(blockId);
+                toast.success('Content unlocked!');
+              }}
+            />
+          )}
+
+          {/* Contact Form Modal */}
+          {showContactModal && selectedBlock && page && (
+            <ContactFormModal
+              block={selectedBlock}
+              pageId={page.id}
+              onClose={() => {
+                setShowContactModal(false);
+                setSelectedBlock(null);
+              }}
+            />
+          )}
+
+          {/* AMA Modal */}
+          {showAMAModal && selectedBlock && page && (
+            <AMAModal
+              block={selectedBlock}
+              pageId={page.id}
+              ownerId={page.user?.id || page.userId}
+              onClose={() => {
+                setShowAMAModal(false);
+                setSelectedBlock(null);
+              }}
+            />
+          )}
+
+          {/* Magical QR Code Share - Auto-generated for every page */}
+          {page && (
+            <QRCodeShare
+              pageUrl={typeof window !== 'undefined' ? window.location.href : ''}
+              pageTitle={page.title || page.metaTitle || resolvedDisplayName || 'My Page'}
+              pageId={page.id}
             />
           )}
         </>

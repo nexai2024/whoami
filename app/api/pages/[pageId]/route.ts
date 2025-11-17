@@ -86,12 +86,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ page
         
         logger.info(`Page loaded successfully: ${pageId} (public: ${page.isActive}, owner: ${page.userId === userId})`);
         
+        // Get actual click count from database (with error handling)
+        let clickCount = 0;
+        try {
+          clickCount = await prisma.click.count({
+            where: { pageId: pageId }
+          });
+        } catch (countError) {
+          logger.error('Error counting clicks:', countError);
+          // Continue with 0 if count fails
+        }
+        
         return NextResponse.json({
           ...page,
           pageHeader,
           blocks,
           user,
-          _count: { clicks: Math.floor(Math.random() * 1000) }
+          _count: { clicks: clickCount }
         });
       } catch (error) {
         logger.error(`Error fetching page ${pageId}:`, error);

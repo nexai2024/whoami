@@ -523,7 +523,11 @@ export default function CampaignAssets() {
                 </button>
                 <button
                   onClick={() =>
-                    router.push(`/marketing/schedule?asset=${asset.id}`)
+                    router.push(
+                      `/marketing/schedule?asset=${asset.id}${
+                        asset.platform ? `&platform=${asset.platform}` : ''
+                      }`
+                    )
                   }
                   className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium text-gray-700 transition-colors"
                 >

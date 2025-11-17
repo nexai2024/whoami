@@ -23,25 +23,27 @@ model User {
   forms         Form[]
 
   // New feature relations
-  campaigns          Campaign[]
-  repurposedContents RepurposedContent[]
-  scheduledPosts     ScheduledPost[]
-  optimalTimeSlots   OptimalTimeSlot[]
-  schedulingPrefs    SchedulingPreferences?
-  leadMagnets        LeadMagnet[]
-  productTemplates    ProductTemplate[]
-  postTemplates       PostTemplate[]
-  campaignTemplates   CampaignTemplate[]
-  onboarding          UserOnboarding?
-  pageTemplates       PageTemplate[] 
-  courses             Course[]
-  workflows           Workflow[]
-  funnels             Funnel[]
-  leads               EmailSubscriber[]
+  campaigns              Campaign[]
+  repurposedContents     RepurposedContent[]
+  scheduledPosts         ScheduledPost[]
+  optimalTimeSlots       OptimalTimeSlot[]
+  schedulingPrefs        SchedulingPreferences?
+  leadMagnets            LeadMagnet[]
+  productTemplates       ProductTemplate[]
+  postTemplates          PostTemplate[]
+  campaignTemplates      CampaignTemplate[]
+  onboarding             UserOnboarding?
+  pageTemplates          PageTemplate[]
+  courses                Course[]
+  workflows              Workflow[]
+  funnels                Funnel[]
+  leads                  EmailSubscriber[]
   // Coach platform relations
-  availabilityWindows AvailabilityWindow[]
-  blackoutDates       BlackoutDate[]
-  bookings            Booking[]
+  availabilityWindows    AvailabilityWindow[]
+  blackoutDates          BlackoutDate[]
+  bookings               Booking[]
+  stripeConnectedAccount StripeConnectedAccount?
+  creatorEarnings        CreatorEarning[]
 
   @@map("users")
 }
@@ -63,9 +65,9 @@ model Profile {
   subscriptionStatus String?
 
   // Coach features
-  isCoach        Boolean @default(false)
-  coachSlug      String? @unique
-  bookingEnabled Boolean @default(false)
+  isCoach         Boolean @default(false)
+  coachSlug       String? @unique
+  bookingEnabled  Boolean @default(false)
   productsEnabled Boolean @default(false)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -82,11 +84,11 @@ model Page {
   isActive    Boolean @default(true)
 
   // Domain configuration
-  customDomain            String?
-  customDomainStatus      DomainStatus? @default(PENDING)
-  customDomainVerifiedAt  DateTime?
+  customDomain                  String?
+  customDomainStatus            DomainStatus? @default(PENDING)
+  customDomainVerifiedAt        DateTime?
   customDomainVerificationToken String?
-  subdomain               String?  @unique
+  subdomain                     String?       @unique
 
   // SEO and metadata
   metaTitle       String?
@@ -277,9 +279,10 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sales     Sale[]
-  blocks    Block[]
-  campaigns Campaign[]
+  sales           Sale[]
+  blocks          Block[]
+  campaigns       Campaign[]
+  creatorEarnings CreatorEarning[]
 
   @@map("products")
 }
@@ -297,35 +300,37 @@ model Sale {
 
   createdAt DateTime @default(now())
 
-  product Product @relation(fields: [productId], references: [id])
+  product         Product          @relation(fields: [productId], references: [id])
+  creatorEarnings CreatorEarning[]
 
   @@map("sales")
 }
 
 model EmailSubscriber {
-  id     String  @id @default(cuid())
-  pageId String
-  pageType String
-  userId String
-  email  String
-  name   String?
-  source String? // Which block they subscribed from
-  phone  String?
-  company String?
-  notes   String?
-  tags String[] // For segmentation
-  pipelineStage LeadStage @default(NEW)
+  id              String    @id @default(cuid())
+  pageId          String
+  pageType        String
+  userId          String
+  email           String
+  name            String?
+  source          String? // Which block they subscribed from
+  phone           String?
+  company         String?
+  notes           String?
+  tags            String[] // For segmentation
+  pipelineStage   LeadStage @default(NEW)
   lastContactedAt DateTime?
-  lastActivityAt DateTime?
-  estimatedValue Int?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  user      User @relation(fields: [userId], references: [id])
+  lastActivityAt  DateTime?
+  estimatedValue  Int?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@unique([pageId, email])
   @@index([userId])
   @@index([userId, pipelineStage])
   @@index([pipelineStage])
   @@index([pageId, pageType])
-  @@unique([pageId, email])
   @@map("email_subscribers")
 }
 
@@ -408,7 +413,7 @@ model ErrorLog {
   userId String?
 
   // Error details
-  message   String @db.Text
+  message   String  @db.Text
   stack     String? @db.Text
   errorType String? // "runtime", "boundary", "api", "validation"
 
@@ -446,15 +451,15 @@ model ErrorLog {
 // ============================================
 
 model AvailabilityWindow {
-  id          String   @id @default(cuid())
-  userId      String
-  dayOfWeek   Int      // 0-6 (Sunday-Saturday)
-  startTime   String   // "09:00" format
-  endTime     String   // "17:00" format
-  timezone    String   @default("UTC")
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  dayOfWeek Int // 0-6 (Sunday-Saturday)
+  startTime String // "09:00" format
+  endTime   String // "17:00" format
+  timezone  String   @default("UTC")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -479,12 +484,12 @@ model BlackoutDate {
 
 model Booking {
   id              String        @id @default(cuid())
-  userId          String        // Coach
+  userId          String // Coach
   customerEmail   String
   customerName    String?
   startTime       DateTime
   endTime         DateTime
-  duration        Int           // minutes
+  duration        Int // minutes
   price           Decimal?      @db.Decimal(10, 2)
   currency        String        @default("USD")
   status          BookingStatus @default(PENDING)
@@ -587,6 +592,76 @@ model Subscription {
   @@index([status])
 }
 
+// ============================================
+// STRIPE CONNECT: CREATOR ACCOUNTS & EARNINGS
+// ============================================
+
+model StripeConnectedAccount {
+  id        String @id @default(cuid())
+  userId    String @unique
+  // Stripe account ID, e.g., acct_123
+  accountId String @unique
+
+  // Capability status mirrors Stripe capabilities
+  chargesEnabled   Boolean @default(false)
+  payoutsEnabled   Boolean @default(false)
+  detailsSubmitted Boolean @default(false)
+
+  // Account information
+  country         String?
+  defaultCurrency String? @default("USD")
+  businessType    String?
+
+  // Platform fee defaults (% as decimal, e.g. 10 = 10%)
+  applicationFeePercent Int? // If null, use platform default
+
+  // Onboarding state
+  requirements Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stripe_connected_accounts")
+}
+
+model CreatorEarning {
+  id        String  @id @default(cuid())
+  userId    String
+  // Foreign keys
+  productId String?
+  saleId    String?
+  bookingId String?
+
+  // Amounts
+  grossAmount     Decimal @db.Decimal(10, 2)
+  stripeFees      Decimal @default(0) @db.Decimal(10, 2)
+  applicationFees Decimal @default(0) @db.Decimal(10, 2)
+  netAmount       Decimal @db.Decimal(10, 2)
+  currency        String  @default("USD")
+
+  // Stripe references
+  chargeId           String?
+  transferId         String?
+  payoutId           String?
+  connectedAccountId String? // acct_...
+
+  // Status
+  status      String    @default("pending") // pending | available | paid | reversed
+  availableAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+  sale    Sale?    @relation(fields: [saleId], references: [id])
+
+  @@index([userId, status])
+  @@index([connectedAccountId, status])
+  @@map("creator_earnings")
+}
+
 // Track feature usage for rate limiting and quotas
 model UsageRecord {
   id        String @id @default(cuid())
@@ -631,6 +706,7 @@ enum BookingStatus {
 
 enum BlockType {
   LINK
+  DEEP_LINK
   PRODUCT
   EMAIL_CAPTURE
   IMAGE_GALLERY
@@ -1253,18 +1329,18 @@ model ProductTemplate {
   userId    String?
 
   // Template details
-  name        String
-  description String?
-  price       Float
-  currency    String @default("USD")
+  name          String
+  description   String?
+  price         Float
+  currency      String  @default("USD")
   downloadLimit Int?
-  
+
   // Category
   category String // "Course", "Ebook", "Template", "Digital Art", etc.
-  
+
   // Preview
   thumbnailUrl String?
-  
+
   // Popularity
   useCount Int     @default(0)
   featured Boolean @default(false)
@@ -1285,14 +1361,14 @@ model PostTemplate {
   // Template details
   name        String
   description String?
-  content     String @db.Text
+  content     String   @db.Text
   platform    Platform
   postType    PostType
   mediaUrls   String[]
-  
+
   // Category
   category String // "Promotional", "Educational", "Engagement", etc.
-  
+
   // Popularity
   useCount Int     @default(0)
   featured Boolean @default(false)
@@ -1317,10 +1393,10 @@ model CampaignTemplate {
   targetAudience String?
   platforms      Platform[]
   tone           String?
-  
+
   // Category
   category String // "Product Launch", "Lead Generation", "Awareness", etc.
-  
+
   // Popularity
   useCount Int     @default(0)
   featured Boolean @default(false)
@@ -1349,8 +1425,8 @@ model PageTemplate {
   templateType TemplateType
 
   // Template data storage
-  headerData  Json
-  blocksData  Json
+  headerData Json
+  blocksData Json
 
   // Preview assets
   thumbnailUrl String
@@ -1382,39 +1458,39 @@ model Course {
 
   // Course details
   title       String
-  description String?      @db.Text
-  slug        String       @unique
+  description String?  @db.Text
+  slug        String   @unique
   category    String?
   tags        String[]
 
   // Course metadata
-  level          CourseLevel    @default(BEGINNER)
-  estimatedTime  Int?           // in minutes
-  language       String         @default("en")
-  
+  level         CourseLevel @default(BEGINNER)
+  estimatedTime Int? // in minutes
+  language      String      @default("en")
+
   // Media
-  coverImageUrl  String?
-  promoVideoUrl  String?
+  coverImageUrl String?
+  promoVideoUrl String?
 
   // Access control
-  accessType     CourseAccessType @default(FREE)
-  price          Decimal?        @db.Decimal(10, 2)
-  currency       String          @default("USD")
+  accessType CourseAccessType @default(FREE)
+  price      Decimal?         @db.Decimal(10, 2)
+  currency   String           @default("USD")
 
   // Lead magnet settings
-  leadMagnetId   String?
-  isLeadMagnet   Boolean         @default(false)
-  requiresEmail  Boolean         @default(false)
+  leadMagnetId  String?
+  isLeadMagnet  Boolean @default(false)
+  requiresEmail Boolean @default(false)
 
   // Publishing
-  status         CourseStatus    @default(DRAFT)
-  publishedAt    DateTime?
+  status      CourseStatus @default(DRAFT)
+  publishedAt DateTime?
 
   // Analytics
-  enrollmentCount Int            @default(0)
-  completionRate  Decimal?       @db.Decimal(5, 2)
-  averageRating   Decimal?       @db.Decimal(3, 2)
-  
+  enrollmentCount Int      @default(0)
+  completionRate  Decimal? @db.Decimal(5, 2)
+  averageRating   Decimal? @db.Decimal(3, 2)
+
   // SEO
   metaTitle       String?
   metaDescription String?
@@ -1459,39 +1535,39 @@ model CourseLesson {
 
   // Lesson details
   title       String
-  description String?      @db.Text
+  description String? @db.Text
   order       Int
-  
+
   // Content
   contentType LessonContentType
-  content     String?      @db.Text  // For text/markdown
-  videoUrl    String?                // For video
-  videoLength Int?                   // in seconds
-  audioUrl    String?                // For audio
-  
+  content     String?           @db.Text // For text/markdown
+  videoUrl    String? // For video
+  videoLength Int? // in seconds
+  audioUrl    String? // For audio
+
   // Additional resources
-  resources   LessonResource[]
-  
+  resources LessonResource[]
+
   // Quiz/Assessment
-  hasQuiz     Boolean      @default(false)
-  quizData    Json?
-  
+  hasQuiz  Boolean @default(false)
+  quizData Json?
+
   // Drip settings
-  dripDay     Int?                   // Release after N days of enrollment
-  dripAfterLesson String?            // Release after completing specific lesson
-  
+  dripDay         Int? // Release after N days of enrollment
+  dripAfterLesson String? // Release after completing specific lesson
+
   // Analytics
-  viewCount      Int       @default(0)
-  completionRate Decimal?  @db.Decimal(5, 2)
-  avgTimeSpent   Int?      // in seconds
-  
+  viewCount      Int      @default(0)
+  completionRate Decimal? @db.Decimal(5, 2)
+  avgTimeSpent   Int? // in seconds
+
   // Publishing
-  isPublished Boolean      @default(true)
-  isFree      Boolean      @default(false) // Preview lesson
+  isPublished Boolean @default(true)
+  isFree      Boolean @default(false) // Preview lesson
 
   // Relations
-  course    Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  progress  CourseLessonProgress[]
+  course   Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress CourseLessonProgress[]
 
   @@index([courseId, order])
   @@map("course_lessons")
@@ -1517,7 +1593,7 @@ model LessonResource {
   type        ResourceType
   url         String
   fileSize    Int?
-  
+
   // Download tracking
   downloadCount Int @default(0)
 
@@ -1548,38 +1624,38 @@ model CourseEnrollment {
   userId    String?
 
   // Enrollment details
-  email              String
-  name               String?
-  enrollmentSource   String?            // Where they enrolled from
-  
+  email            String
+  name             String?
+  enrollmentSource String? // Where they enrolled from
+
   // Payment (for paid courses)
-  paymentStatus      String?            // "pending", "completed", "failed"
-  paymentAmount      Decimal?           @db.Decimal(10, 2)
-  stripePaymentId    String?
-  
+  paymentStatus   String? // "pending", "completed", "failed"
+  paymentAmount   Decimal? @db.Decimal(10, 2)
+  stripePaymentId String?
+
   // Progress tracking
   currentLessonId    String?
-  progressPercentage Int                @default(0)
+  progressPercentage Int       @default(0)
   completedAt        DateTime?
-  
+
   // Certificate
-  certificateIssued  Boolean            @default(false)
-  certificateUrl     String?
+  certificateIssued   Boolean   @default(false)
+  certificateUrl      String?
   certificateIssuedAt DateTime?
-  
+
   // Access
-  expiresAt          DateTime?
-  accessRevoked      Boolean            @default(false)
-  accessToken        String?            @unique
+  expiresAt            DateTime?
+  accessRevoked        Boolean   @default(false)
+  accessToken          String?   @unique
   accessTokenExpiresAt DateTime?
-  
+
   // Engagement
-  lastAccessedAt     DateTime?
-  totalTimeSpent     Int                @default(0) // in seconds
-  
+  lastAccessedAt DateTime?
+  totalTimeSpent Int       @default(0) // in seconds
+
   // Relations
-  course          Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessonProgress  CourseLessonProgress[]
+  course         Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonProgress CourseLessonProgress[]
 
   @@unique([courseId, email])
   @@index([courseId, progressPercentage])
@@ -1596,22 +1672,22 @@ model CourseLessonProgress {
   lessonId     String
 
   // Progress
-  status         LessonProgressStatus @default(NOT_STARTED)
-  progressPercent Int                 @default(0)
-  completedAt    DateTime?
-  
+  status          LessonProgressStatus @default(NOT_STARTED)
+  progressPercent Int                  @default(0)
+  completedAt     DateTime?
+
   // Engagement
-  timeSpent      Int                  @default(0) // in seconds
-  lastPosition   Int?                 // Video/audio position in seconds
-  viewCount      Int                  @default(0)
-  
+  timeSpent    Int  @default(0) // in seconds
+  lastPosition Int? // Video/audio position in seconds
+  viewCount    Int  @default(0)
+
   // Quiz results
-  quizAttempts   Int                  @default(0)
-  quizScore      Decimal?             @db.Decimal(5, 2)
-  quizPassedAt   DateTime?
-  
+  quizAttempts Int       @default(0)
+  quizScore    Decimal?  @db.Decimal(5, 2)
+  quizPassedAt DateTime?
+
   // Notes
-  notes          String?              @db.Text
+  notes String? @db.Text
 
   // Relations
   enrollment CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
@@ -1635,16 +1711,16 @@ model CourseReview {
   courseId  String
 
   // Reviewer
-  email     String
-  name      String?
-  
+  email String
+  name  String?
+
   // Review
-  rating    Int      // 1-5
-  comment   String?  @db.Text
-  
+  rating  Int // 1-5
+  comment String? @db.Text
+
   // Moderation
-  approved  Boolean  @default(false)
-  featured  Boolean  @default(false)
+  approved Boolean @default(false)
+  featured Boolean @default(false)
 
   // Relations
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -1665,25 +1741,25 @@ model Workflow {
 
   // Workflow details
   name        String
-  description String?      @db.Text
-  
+  description String? @db.Text
+
   // Visual canvas data (node positions, connections)
-  canvasData  Json?
-  
+  canvasData Json?
+
   // Status
-  status      WorkflowStatus @default(DRAFT)
-  lastRunAt   DateTime?
-  
+  status    WorkflowStatus @default(DRAFT)
+  lastRunAt DateTime?
+
   // Performance
-  totalRuns      Int         @default(0)
-  successfulRuns Int         @default(0)
-  failedRuns     Int         @default(0)
-  
+  totalRuns      Int @default(0)
+  successfulRuns Int @default(0)
+  failedRuns     Int @default(0)
+
   // Settings
-  enabled     Boolean      @default(true)
-  
+  enabled Boolean @default(true)
+
   // Relations
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   trigger    WorkflowTrigger?
   steps      WorkflowStep[]
   executions WorkflowExecution[]
@@ -1708,11 +1784,11 @@ model WorkflowTrigger {
 
   // Trigger configuration
   triggerType TriggerType
-  config      Json        // Stores type-specific configuration
-  
+  config      Json // Stores type-specific configuration
+
   // Filter conditions
-  filters     Json?
-  
+  filters Json?
+
   // Relations
   workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
 
@@ -1721,19 +1797,19 @@ model WorkflowTrigger {
 }
 
 enum TriggerType {
-  NEW_SUBSCRIBER          // When someone subscribes to email list
-  NEW_COURSE_ENROLLMENT   // When someone enrolls in course
-  LESSON_COMPLETED        // When lesson is completed
-  COURSE_COMPLETED        // When entire course is completed
-  FORM_SUBMITTED          // When a form is submitted
-  PRODUCT_PURCHASED       // When product is purchased
-  PAGE_VIEWED             // When page is viewed
-  BLOCK_CLICKED           // When specific block is clicked
-  TAG_ADDED               // When tag is added to subscriber
-  TAG_REMOVED             // When tag is removed
-  SCHEDULE                // Time-based trigger
-  WEBHOOK                 // External webhook trigger
-  MANUAL                  // Manually triggered
+  NEW_SUBSCRIBER // When someone subscribes to email list
+  NEW_COURSE_ENROLLMENT // When someone enrolls in course
+  LESSON_COMPLETED // When lesson is completed
+  COURSE_COMPLETED // When entire course is completed
+  FORM_SUBMITTED // When a form is submitted
+  PRODUCT_PURCHASED // When product is purchased
+  PAGE_VIEWED // When page is viewed
+  BLOCK_CLICKED // When specific block is clicked
+  TAG_ADDED // When tag is added to subscriber
+  TAG_REMOVED // When tag is removed
+  SCHEDULE // Time-based trigger
+  WEBHOOK // External webhook trigger
+  MANUAL // Manually triggered
 }
 
 model WorkflowStep {
@@ -1743,24 +1819,24 @@ model WorkflowStep {
   workflowId String
 
   // Step details
-  name        String
-  type        StepType
-  order       Int
-  
+  name  String
+  type  StepType
+  order Int
+
   // Action/Condition configuration
-  config      Json
-  
+  config Json
+
   // Conditional branching
-  parentStepId String?  // For conditional branches
-  condition    Json?    // If this is a conditional branch
-  
+  parentStepId String? // For conditional branches
+  condition    Json? // If this is a conditional branch
+
   // Delay settings
-  delayAmount  Int?     // Amount of time
-  delayUnit    DelayUnit?
-  
+  delayAmount Int? // Amount of time
+  delayUnit   DelayUnit?
+
   // Relations
-  workflow   Workflow       @relation(fields: [workflowId], references: [id], onDelete: Cascade)
-  logs       WorkflowStepLog[]
+  workflow Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  logs     WorkflowStepLog[]
 
   @@index([workflowId, order])
   @@map("workflow_steps")
@@ -1781,14 +1857,14 @@ enum StepType {
   CREATE_TASK
   UPDATE_SUBSCRIBER
   SEND_NOTIFICATION
-  
+
   // Control flow
   WAIT
   DELAY
   CONDITION
   BRANCH
   SPLIT_TEST
-  
+
   // Integrations
   ZAPIER_WEBHOOK
   MAILCHIMP_ACTION
@@ -1810,19 +1886,19 @@ model WorkflowExecution {
   workflowId String
 
   // Execution details
-  status        ExecutionStatus @default(RUNNING)
-  startedAt     DateTime        @default(now())
-  completedAt   DateTime?
-  
+  status      ExecutionStatus @default(RUNNING)
+  startedAt   DateTime        @default(now())
+  completedAt DateTime?
+
   // Trigger context
-  triggerData   Json            // Data that triggered the workflow
-  subscriberEmail String?       // If triggered by subscriber action
-  
+  triggerData     Json // Data that triggered the workflow
+  subscriberEmail String? // If triggered by subscriber action
+
   // Error handling
-  error         String?         @db.Text
-  errorStep     String?         // Which step failed
-  retryCount    Int             @default(0)
-  
+  error      String? @db.Text
+  errorStep  String? // Which step failed
+  retryCount Int     @default(0)
+
   // Relations
   workflow Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
   stepLogs WorkflowStepLog[]
@@ -1836,7 +1912,7 @@ model WorkflowExecution {
 enum ExecutionStatus {
   PENDING
   RUNNING
-  WAITING       // Waiting for delay/schedule
+  WAITING // Waiting for delay/schedule
   COMPLETED
   FAILED
   CANCELLED
@@ -1852,14 +1928,14 @@ model WorkflowStepLog {
   status      StepExecutionStatus @default(PENDING)
   startedAt   DateTime?
   completedAt DateTime?
-  
+
   // Step data
-  input       Json?
-  output      Json?
-  
+  input  Json?
+  output Json?
+
   // Error details
-  error       String?  @db.Text
-  
+  error String? @db.Text
+
   // Relations
   execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
   step      WorkflowStep      @relation(fields: [stepId], references: [id], onDelete: Cascade)
@@ -1887,12 +1963,12 @@ model UserOnboarding {
   updatedAt DateTime @updatedAt
 
   // Progress tracking
-  completedSteps   String[]
-  currentStep      String?
-  skipped          Boolean  @default(false)
-  completedAt      DateTime?
-  tourCompleted    Boolean  @default(false)
-  checklistProgress Json    @default("{}")
+  completedSteps    String[]
+  currentStep       String?
+  skipped           Boolean   @default(false)
+  completedAt       DateTime?
+  tourCompleted     Boolean   @default(false)
+  checklistProgress Json      @default("{}")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -1915,14 +1991,14 @@ model Funnel {
   slug        String  @unique
 
   // Goal tracking
-  goalType        FunnelGoalType
-  goalValue       String?         // e.g., product ID, course ID, etc.
-  conversionGoal  String          // "purchase", "signup", "download", etc.
+  goalType       FunnelGoalType
+  goalValue      String? // e.g., product ID, course ID, etc.
+  conversionGoal String // "purchase", "signup", "download", etc.
 
   // Styling and branding
-  theme           Json?
-  brandColors     Json?
-  customCss       String?         @db.Text
+  theme       Json?
+  brandColors Json?
+  customCss   String? @db.Text
 
   // SEO
   metaTitle       String?
@@ -1934,16 +2010,16 @@ model Funnel {
   exitRedirect    String? // Where to redirect after completion
 
   // Analytics
-  totalVisits     Int     @default(0)
-  totalConversions Int    @default(0)
-  conversionRate  Decimal? @db.Decimal(5, 2)
+  totalVisits      Int      @default(0)
+  totalConversions Int      @default(0)
+  conversionRate   Decimal? @db.Decimal(5, 2)
 
   // Status
-  status          FunnelStatus @default(DRAFT)
-  publishedAt     DateTime?
+  status      FunnelStatus @default(DRAFT)
+  publishedAt DateTime?
 
   // Relations
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   steps       FunnelStep[]
   visits      FunnelVisit[]
   conversions FunnelConversion[]
@@ -1975,43 +2051,43 @@ model FunnelStep {
   funnelId  String
 
   // Step details
-  name        String
-  slug        String          // URL path segment
-  type        FunnelStepType
-  order       Int
+  name  String
+  slug  String // URL path segment
+  type  FunnelStepType
+  order Int
 
   // Page content
   headline    String?
   subheadline String?
-  content     String?         @db.Text
+  content     String? @db.Text
 
   // Page-specific data
-  pageData    Json?          // Flexible storage for different step types
+  pageData Json? // Flexible storage for different step types
 
   // Media
   backgroundImage String?
   videoUrl        String?
 
   // Form/CTA configuration
-  ctaText         String?
-  ctaUrl          String?
-  formConfig      Json?      // For lead capture forms
+  ctaText    String?
+  ctaUrl     String?
+  formConfig Json? // For lead capture forms
 
   // Split testing
-  isVariant       Boolean    @default(false)
-  variantOf       String?    // ID of parent step
-  trafficSplit    Int        @default(50)
+  isVariant    Boolean @default(false)
+  variantOf    String? // ID of parent step
+  trafficSplit Int     @default(50)
 
   // Analytics
-  views           Int        @default(0)
-  completions     Int        @default(0)
-  dropoffRate     Decimal?   @db.Decimal(5, 2)
+  views       Int      @default(0)
+  completions Int      @default(0)
+  dropoffRate Decimal? @db.Decimal(5, 2)
 
   // Conditional logic
-  rules           Json?      // For conditional branching
+  rules Json? // For conditional branching
 
   // Relations
-  funnel         Funnel            @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  funnel         Funnel               @relation(fields: [funnelId], references: [id], onDelete: Cascade)
   stepProgresses FunnelStepProgress[]
 
   @@unique([funnelId, slug])
@@ -2020,17 +2096,17 @@ model FunnelStep {
 }
 
 enum FunnelStepType {
-  LANDING_PAGE      // Initial landing page
-  LEAD_CAPTURE      // Email/info capture
-  SALES_PAGE        // Product/service presentation
-  ORDER_FORM        // Checkout/payment
-  UPSELL            // Additional offer
-  DOWNSELL          // Alternative offer
-  THANK_YOU         // Confirmation/success
-  VIDEO_SALES       // Video-based sales page
-  WEBINAR_REG       // Webinar registration
-  SURVEY            // Information gathering
-  CUSTOM            // Custom step type
+  LANDING_PAGE // Initial landing page
+  LEAD_CAPTURE // Email/info capture
+  SALES_PAGE // Product/service presentation
+  ORDER_FORM // Checkout/payment
+  UPSELL // Additional offer
+  DOWNSELL // Alternative offer
+  THANK_YOU // Confirmation/success
+  VIDEO_SALES // Video-based sales page
+  WEBINAR_REG // Webinar registration
+  SURVEY // Information gathering
+  CUSTOM // Custom step type
 }
 
 model FunnelVisit {
@@ -2040,48 +2116,48 @@ model FunnelVisit {
   funnelId  String
 
   // Visitor tracking
-  visitorId       String          // Unique ID for this visitor session
-  email           String?         // Captured email if available
-  name            String?
+  visitorId String // Unique ID for this visitor session
+  email     String? // Captured email if available
+  name      String?
 
   // Entry point
-  entryStepId     String
-  entryUrl        String?
-  referrer        String?
+  entryStepId String
+  entryUrl    String?
+  referrer    String?
 
   // Current progress
-  currentStepId   String?
-  lastStepId      String?
-  completedSteps  String[]
+  currentStepId  String?
+  lastStepId     String?
+  completedSteps String[]
 
   // Session details
-  ipAddress       String?
-  userAgent       String?
-  device          String?
-  browser         String?
-  os              String?
-  country         String?
-  city            String?
+  ipAddress String?
+  userAgent String?
+  device    String?
+  browser   String?
+  os        String?
+  country   String?
+  city      String?
 
   // UTM tracking
-  utmSource       String?
-  utmMedium       String?
-  utmCampaign     String?
-  utmTerm         String?
-  utmContent      String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmTerm     String?
+  utmContent  String?
 
   // Engagement
-  totalTimeSpent  Int             @default(0) // in seconds
-  lastActivityAt  DateTime        @default(now())
+  totalTimeSpent Int      @default(0) // in seconds
+  lastActivityAt DateTime @default(now())
 
   // Conversion
-  converted       Boolean         @default(false)
+  converted       Boolean   @default(false)
   convertedAt     DateTime?
-  conversionValue Decimal?        @db.Decimal(10, 2)
+  conversionValue Decimal?  @db.Decimal(10, 2)
 
   // Relations
-  funnel          Funnel                @relation(fields: [funnelId], references: [id], onDelete: Cascade)
-  stepProgress    FunnelStepProgress[]
+  funnel       Funnel               @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  stepProgress FunnelStepProgress[]
 
   @@index([funnelId, visitorId])
   @@index([funnelId, converted])
@@ -2097,19 +2173,19 @@ model FunnelStepProgress {
   stepId    String
 
   // Progress tracking
-  status          FunnelStepStatus @default(VIEWED)
-  enteredAt       DateTime         @default(now())
-  completedAt     DateTime?
-  timeSpent       Int              @default(0) // in seconds
+  status      FunnelStepStatus @default(VIEWED)
+  enteredAt   DateTime         @default(now())
+  completedAt DateTime?
+  timeSpent   Int              @default(0) // in seconds
 
   // Form data (if applicable)
-  formData        Json?
+  formData Json?
 
   // Interaction tracking
-  scrollDepth     Int?             // Percentage
-  ctaClicked      Boolean          @default(false)
-  videoWatched    Int?             // Percentage
-  interactions    Json?            // Other tracked interactions
+  scrollDepth  Int? // Percentage
+  ctaClicked   Boolean @default(false)
+  videoWatched Int? // Percentage
+  interactions Json? // Other tracked interactions
 
   // Relations
   visit FunnelVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
@@ -2121,11 +2197,11 @@ model FunnelStepProgress {
 }
 
 enum FunnelStepStatus {
-  VIEWED          // User viewed the step
-  ENGAGED         // User interacted (scroll, video, etc.)
-  COMPLETED       // User completed step action
-  ABANDONED       // User left without completing
-  CONVERTED       // Led to goal completion
+  VIEWED // User viewed the step
+  ENGAGED // User interacted (scroll, video, etc.)
+  COMPLETED // User completed step action
+  ABANDONED // User left without completing
+  CONVERTED // Led to goal completion
 }
 
 model FunnelConversion {
@@ -2135,24 +2211,24 @@ model FunnelConversion {
   visitId   String
 
   // Conversion details
-  conversionType  String          // Type of conversion achieved
-  conversionValue Decimal?        @db.Decimal(10, 2)
-  currency        String          @default("USD")
+  conversionType  String // Type of conversion achieved
+  conversionValue Decimal? @db.Decimal(10, 2)
+  currency        String   @default("USD")
 
   // Attribution
-  entrySource     String?
-  entryMedium     String?
-  entryCampaign   String?
+  entrySource   String?
+  entryMedium   String?
+  entryCampaign String?
 
   // Customer info
-  email           String
-  name            String?
-  metadata        Json?
+  email    String
+  name     String?
+  metadata Json?
 
   // External references
-  orderId         String?
-  productId       String?
-  courseId        String?
+  orderId   String?
+  productId String?
+  courseId  String?
 
   // Relations
   funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)

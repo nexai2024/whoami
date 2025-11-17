@@ -3,6 +3,7 @@ import prisma from '../../../lib/prisma';
 import { logger } from '@/lib/utils/logger';
 import { generateSlug } from '@/lib/utils/slug';
 import { stackServerApp } from "@/stack/server";
+import { RateLimitService } from '@/lib/rate-limit';
 // Dummy in-memory data store
 const pages: { id: number; title: string; content: string }[] = [
     { id: 1, title: 'Home', content: 'Welcome to the homepage.' },
@@ -12,9 +13,16 @@ const pages: { id: number; title: string; content: string }[] = [
 // GET: Return all pages
 export async function GET(req: NextRequest) {
       const user = await stackServerApp.getUser();  // or: stackServerApp.getUser({ or: "redirect" })
-    const pages = await prisma.Page.findMany({
+    const pages = await prisma.page.findMany({
         where: { userId: user?.id },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        include: {
+          _count: {
+            select: {
+              clicks: true
+            }
+          }
+        }
       });
       console.log("Fetched pages for user:", user?.id, pages);
 
@@ -33,6 +41,21 @@ export async function POST(req: NextRequest) {
        try {
           logger.info("Creating page with data: userId", user?.id);
 
+          // Enforce plan-based page limit
+          const limitCheck = await RateLimitService.checkFeatureAccess(user.id, 'pages');
+          if (!limitCheck.allowed) {
+            const msg = limitCheck.message || 'Page limit reached for your plan';
+            return NextResponse.json(
+              {
+                error: msg,
+                limit: limitCheck.limit ?? undefined,
+                remaining: limitCheck.remaining ?? 0,
+                resetAt: limitCheck.resetAt?.toISOString() ?? undefined
+              },
+              { status: 403 }
+            );
+          }
+
           // Read metadata from request body if provided, fallback to defaults
           const body = await req.json().catch(() => ({}));
           const title = body.title || 'New Page';
@@ -42,26 +65,15 @@ export async function POST(req: NextRequest) {
           logger.info("Creating page with slug:", slug);
 
           // Wrap page + header creation in transaction for atomicity
-          const result = await prisma.$transaction(async (tx: {
-              Page: {
-                create: (arg0: {
-                  data: {
-                    userId: string; slug: any; title: any; description: any; isActive: boolean; // Start as draft
-                    createdAt: Date; updatedAt: Date;
-                  };
-                }) => any;
-              }; pageHeader: { create: (arg0: { data: { pageId: any; data: { logoUrl: null; displayName: string; bio: string; location: string; contactEmail: string; phoneNumber: null; socialLinks: {}; headerStyle: string; showContactInfo: boolean; showSocialLinks: boolean; showLocation: boolean; customIntroduction: string; }; }; }) => any; };
-            }) => {
+          const result = await prisma.$transaction(async (tx: any) => {
             // Create page
-            const newPage = await tx.Page.create({
+            const newPage = await tx.page.create({
               data: {
                 userId: user?.id,
                 slug,
                 title,
                 description,
                 isActive: false, // Start as draft
-                createdAt: new Date(),
-                updatedAt: new Date()
               }
             });
 
@@ -103,6 +115,9 @@ export async function POST(req: NextRequest) {
           logger.info("New page header created:", result.newPageHeader);
 
           logger.info(`Page created successfully: ${result.newPage.id}`);
+
+          // Record usage for 'pages'
+          await RateLimitService.incrementUsage(user.id, 'pages');
 
           // Return complete response structure
           return NextResponse.json({

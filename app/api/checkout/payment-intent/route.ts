@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { stripe } from '@/lib/stripe';
+import { createFeatureFlaggedPaymentIntent, centsFromAmount } from '@/lib/payments';
 import { logger } from '@/lib/utils/logger';
 
 // POST: Create payment intent for product purchase
@@ -75,21 +75,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Convert price to cents for Stripe (e.g., $49.00 -> 4900)
-    const amountInCents = Math.round(productPrice * 100);
+    const amountInCents = centsFromAmount(productPrice);
 
-    // Create Stripe PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
+    // Seller user (page owner)
+    const sellerUserId = block.page?.userId || null;
+
+    // Create PaymentIntent using feature-flagged helper (supports Connect)
+    const paymentIntent = await createFeatureFlaggedPaymentIntent({
+      amountInCents,
       currency: 'usd',
-      metadata: {
-        blockId,
-        pageId: block.pageId,
-        email,
-        productTitle,
-      },
-      automatic_payment_methods: {
-        enabled: true,
-      },
+      blockId,
+      pageId: block.pageId,
+      email,
+      productTitle,
+      sellerUserId,
     });
 
     logger.info('Payment intent created:', {

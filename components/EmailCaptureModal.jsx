@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiMail, FiCheck } from 'react-icons/fi';
 
-const EmailCaptureModal = ({ block, pageId, pageType = 'PAGE', ownerId, onClose }) => {
+const EmailCaptureModal = ({ block, pageId, pageType = 'PAGE', ownerId, onClose, onSuccess }) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -94,6 +94,11 @@ const EmailCaptureModal = ({ block, pageId, pageType = 'PAGE', ownerId, onClose 
         // Show success state
         setSuccess(true);
 
+        // Call onSuccess callback if provided (for gated content unlocking)
+        if (onSuccess) {
+          onSuccess(block.id);
+        }
+
         // Auto-close after 3 seconds
         setTimeout(() => {
           onClose();
@@ -102,6 +107,10 @@ const EmailCaptureModal = ({ block, pageId, pageType = 'PAGE', ownerId, onClose 
         // Handle specific error cases
         if (data.message === 'Already subscribed') {
           setSuccess(true);
+          // Call onSuccess callback even for already subscribed (for gated content)
+          if (onSuccess) {
+            onSuccess(block.id);
+          }
           setTimeout(() => {
             onClose();
           }, 3000);

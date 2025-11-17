@@ -1,14 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useSearchParams, useRouter } from 'next/navigation';
-import * as FiIcons from 'react-icons/fi';
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { PageService } from '../lib/database/pages';
-import { AnalyticsService } from '../lib/services/analyticsService';
-import { logger } from '../lib/utils/logger';
+
 import SEOHead from './SEOHead';
 import SafeIcon from '../common/SafeIcon';
 import HeaderCustomizer from './HeaderCustomizer';
@@ -16,6 +7,17 @@ import { useAuth } from '../lib/auth/AuthContext.jsx';
 import BlockFormFields from './BlockFormFields';
 import toast from 'react-hot-toast';
 import TemplateBrowser from './TemplateBrowser';
+import * as FiIcons from 'react-icons/fi';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { PageService } from '../lib/database/pages';
+import { AnalyticsService } from '../lib/services/analyticsService';
+import { logger } from '../lib/utils/logger';
+import { useEffect, useState } from 'react';
+import { useSensors, useSensor, PointerSensor, DndContext, closestCenter } from '@dnd-kit/core';
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { motion } from 'framer-motion';
+
 
 const {
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage,
@@ -167,6 +169,7 @@ const EnhancedPageBuilder = () => {
 
   const blockTypes = [
     { type: 'link', label: 'Link', icon: FiLink, color: 'blue' },
+    { type: 'deep_link', label: 'Deep Link', icon: FiLink, color: 'indigo' },
     { type: 'product', label: 'Product', icon: FiShoppingBag, color: 'green' },
     { type: 'email', label: 'Email Capture', icon: FiMail, color: 'purple' },
     { type: 'image', label: 'Image Gallery', icon: FiImage, color: 'pink' },
@@ -328,6 +331,17 @@ const EnhancedPageBuilder = () => {
         break;
       case 'link':
         newBlock.data = { url: '', openInNewTab: true };
+        break;
+      case 'deep_link':
+        newBlock.data = { 
+          iosUrl: '', 
+          androidUrl: '', 
+          iosScheme: '', 
+          androidScheme: '', 
+          webUrl: '', 
+          linkBehavior: 'smart',
+          openIn: 'same_tab'
+        };
         break;
       case 'email':
       case 'newsletter':
@@ -659,6 +673,8 @@ const EnhancedPageBuilder = () => {
     
     const iconMap = {
       link: FiLink,
+      deep_link: FiLink,
+      deeplink: FiLink,
       product: FiShoppingBag,
       email: FiMail,
       email_capture: FiMail,
@@ -724,6 +740,20 @@ const EnhancedPageBuilder = () => {
         return <p className="text-sm text-green-600 font-medium">${block.data?.price || '0'}</p>;
       case 'link':
         return <p className="text-sm text-blue-600 truncate">{block.data?.url || 'No URL'}</p>;
+      case 'deep_link':
+      case 'deeplink':
+        const hasIos = block.data?.iosUrl || block.data?.iosScheme;
+        const hasAndroid = block.data?.androidUrl || block.data?.androidScheme;
+        const hasWeb = block.data?.webUrl;
+        const platforms = [];
+        if (hasIos) platforms.push('iOS');
+        if (hasAndroid) platforms.push('Android');
+        if (hasWeb) platforms.push('Web');
+        return (
+          <p className="text-sm text-indigo-600">
+            {platforms.length > 0 ? platforms.join(', ') : 'Not configured'}
+          </p>
+        );
       case 'email':
       case 'email_capture':
       case 'newsletter':
@@ -1089,7 +1119,7 @@ const EnhancedPageBuilder = () => {
                   
                   if (response.ok) {
                     toast.success('Page deleted successfully');
-                    router.push('/pages');
+                    router.push('/dashboard');
                   } else {
                     const error = await response.json();
                     toast.error(error.error || 'Failed to delete page');
