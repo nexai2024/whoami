@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import classNames from 'classnames';
 import { Geist, Geist_Mono } from 'next/font/google';
 import AppProviders from '../components/AppProviders';
-
+import { Analytics } from "@vercel/analytics/next"
 export const metadata: Metadata = {
   title: "WhoAmI",
   description: "Ultimate link in bio and personal brand marketing solution.",
@@ -30,6 +30,7 @@ export default function RootLayout({
             <AppProviders>
               {children}
             </AppProviders>
+            <Analytics />
           </body>
         </html>
     );
