@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import FileUpload from './FileUpload';
@@ -216,11 +217,14 @@ const HeaderCustomizer = ({ pageId, currentHeader, onSave, onPreview }) => {
           </label>
           <div className="flex items-center gap-4">
             {headerData.avatar && (
-              <Image
-                src={headerData.avatar}
-                alt="Profile"
-                className="w-16 h-16 rounded-full object-cover"
-              />
+              <div className="relative w-16 h-16 rounded-full overflow-hidden">
+                <Image
+                  src={headerData.avatar}
+                  alt="Profile"
+                  fill
+                  className="object-cover"
+                />
+              </div>
             )}
             <FileUpload
               onUploadComplete={handleAvatarUpload}
@@ -574,11 +578,12 @@ const HeaderPreview = ({ headerData }) => {
         <div className={headerData.headerStyle === 'split' ? 'flex items-center gap-6' : 'text-center'}>
           {/* Avatar */}
           {headerData.avatar && (
-            <div className={`${headerData.headerStyle === 'split' ? 'w-20 h-20' : 'w-24 h-24 mx-auto'} mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center`}>
+            <div className={`${headerData.headerStyle === 'split' ? 'w-20 h-20' : 'w-24 h-24 mx-auto'} mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center relative`}>
               <Image  
                 src={headerData.avatar}
                 alt={headerData.displayName}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
             </div>
           )}
