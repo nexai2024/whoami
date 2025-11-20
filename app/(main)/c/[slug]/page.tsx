@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { FiBook, FiClock, FiAward, FiCheckCircle, FiLock } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import CourseReviews from '@/components/courses/CourseReviews';
 
 interface CourseLandingPageProps {
   params: {
@@ -347,6 +348,25 @@ export default function CourseLandingPage({ params }: CourseLandingPageProps) {
                 </p>
               )}
             </div>
+          </motion.div>
+        )}
+
+        {/* Reviews Section */}
+        {course.id && (
+          <motion.div
+            className="bg-white rounded-2xl shadow-sm border p-8 mt-8"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <CourseReviews
+              courseId={course.id}
+              initialReviews={course.reviews || []}
+              averageRating={course.averageRating ? Number(course.averageRating) : 0}
+              totalReviews={course._count?.reviews || 0}
+              userEmail={user?.primaryEmail || ''}
+              userName={user?.displayName || ''}
+            />
           </motion.div>
         )}
       </div>

@@ -22,7 +22,7 @@ import { motion } from 'framer-motion';
 const {
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage,
   FiLink, FiShoppingBag, FiMail, FiMusic, FiVideo, FiCalendar,
-  FiUser, FiSettings, FiTag, FiShare2, FiLayout, FiUpload, FiBook
+  FiUser, FiSettings, FiTag, FiShare2, FiLayout, FiUpload, FiBook, FiTrendingUp
 } = FiIcons;
 
 // SortableBlock component for drag-and-drop functionality
@@ -177,6 +177,7 @@ const EnhancedPageBuilder = () => {
     { type: 'video', label: 'Video Embed', icon: FiVideo, color: 'red' },
     { type: 'booking', label: 'Booking', icon: FiCalendar, color: 'indigo' },
     { type: 'course', label: 'Course', icon: FiBook, color: 'purple' },
+    { type: 'funnel', label: 'Funnel', icon: FiTrendingUp, color: 'indigo' },
     { type: 'analytics', label: 'Analytics', icon: FiEye, color: 'teal' },
     { type: 'promo', label: 'Promo', icon: FiTag, color: 'yellow' },
     { type: 'discount', label: 'Discount', icon: FiTag, color: 'amber' },
@@ -395,6 +396,15 @@ const EnhancedPageBuilder = () => {
         break;
       case 'divider':
         newBlock.data = { style: 'solid', thickness: 1, width: 100, color: '#E5E7EB' };
+        break;
+      case 'funnel':
+        newBlock.data = {
+          funnelId: '',
+          funnelSlug: '',
+          buttonText: 'Start Funnel',
+          description: '',
+          showProgress: true
+        };
         break;
       case 'portfolio':
         newBlock.data = { projectTitle: '', images: [], featured: false };
@@ -702,6 +712,7 @@ const EnhancedPageBuilder = () => {
       gated_content: FiSettings,
       course: FiBook,
       course_block: FiBook,
+      funnel: FiTrendingUp,
       rss: FiLink,
       rss_feed: FiLink,
       portfolio: FiImage,
@@ -827,6 +838,16 @@ const EnhancedPageBuilder = () => {
             {summarizeText(
               block.data?.headline || block.data?.description,
               'Course block',
+              60
+            )}
+          </p>
+        );
+      case 'funnel':
+        return (
+          <p className="text-sm text-indigo-600">
+            {summarizeText(
+              block.data?.headline || block.data?.description || block.data?.funnelSlug,
+              'Funnel block',
               60
             )}
           </p>

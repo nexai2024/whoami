@@ -1,15 +1,15 @@
 "use client";
 import React from 'react';
 import { useUser } from "@stackframe/stack";
-import Sidebar from './Sidebar';
+import CommandPaletteNav from './CommandPaletteNav';
 import UnauthenticatedHeader from './UnauthenticatedHeader';
 
 const Header = () => {
   const user = useUser();
 
-  // Show sidebar for authenticated users, unauthenticated header for others
+  // Show command palette nav for authenticated users, unauthenticated header for others
   if (user) {
-    return <Sidebar />;
+    return <CommandPaletteNav />;
   }
 
   return <UnauthenticatedHeader />;

@@ -50,6 +50,30 @@ export async function POST(req: NextRequest) {
         await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
         break;
 
+      case 'customer.subscription.created':
+        await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+        break;
+
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        break;
+
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+
+      case 'invoice.paid':
+        await handleInvoicePaid(event.data.object as Stripe.Invoice);
+        break;
+
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+        break;
+
+      case 'customer.created':
+        await handleCustomerCreated(event.data.object as Stripe.Customer);
+        break;
+
       default:
         logger.info(`Unhandled event type: ${event.type}`);
     }

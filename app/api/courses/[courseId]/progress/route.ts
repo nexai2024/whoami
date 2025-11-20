@@ -198,6 +198,39 @@ export async function POST(
       }
     });
 
+    // Trigger workflows for lesson completion
+    if (status === 'COMPLETED') {
+      try {
+        const { WorkflowExecutionService } = await import('@/lib/services/workflowExecutionService');
+        await WorkflowExecutionService.triggerWorkflows('LESSON_COMPLETED', {
+          email: enrollment.email,
+          name: enrollment.name || null,
+          courseId: courseId,
+          lessonId: lessonId,
+          enrollmentId: enrollment.id,
+          userId: enrollment.userId || null,
+        });
+      } catch (error) {
+        console.error('Error triggering workflows for lesson completion:', error);
+      }
+    }
+
+    // Trigger workflows for course completion
+    if (isCompleted && !enrollment.completedAt) {
+      try {
+        const { WorkflowExecutionService } = await import('@/lib/services/workflowExecutionService');
+        await WorkflowExecutionService.triggerWorkflows('COURSE_COMPLETED', {
+          email: enrollment.email,
+          name: enrollment.name || null,
+          courseId: courseId,
+          enrollmentId: enrollment.id,
+          userId: enrollment.userId || null,
+        });
+      } catch (error) {
+        console.error('Error triggering workflows for course completion:', error);
+      }
+    }
+
     return NextResponse.json({
       progress,
       overallProgress,

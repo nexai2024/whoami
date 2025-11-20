@@ -267,6 +267,12 @@ model Product {
   price       Float
   currency    String  @default("USD")
 
+  // Product type (PRODUCT or PACKAGE)
+  type ProductType @default(PRODUCT)
+
+  // Package fields (only used if type is PACKAGE)
+  packageProducts String[] // Array of product IDs included in this package
+
   // Digital product files
   fileUrl       String?
   downloadLimit Int?
@@ -285,6 +291,11 @@ model Product {
   creatorEarnings CreatorEarning[]
 
   @@map("products")
+}
+
+enum ProductType {
+  PRODUCT
+  PACKAGE
 }
 
 model Sale {
@@ -730,6 +741,7 @@ enum BlockType {
   NEWSLETTER
   CUSTOM
   COURSE
+  FUNNEL
 }
 
 enum LeadStage {

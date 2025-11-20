@@ -219,6 +219,23 @@ export async function POST(
       // Don't fail enrollment if email fails
     }
 
+    // Trigger workflows for new course enrollment
+    try {
+      const { WorkflowExecutionService } = await import('@/lib/services/workflowExecutionService');
+      await WorkflowExecutionService.triggerWorkflows('NEW_COURSE_ENROLLMENT', {
+        email: normalizedEmail,
+        name: name || null,
+        courseId: course.id,
+        courseTitle: course.title,
+        enrollmentId: enrollment.id,
+        userId: userId || null,
+        accessToken: accessToken || null,
+      });
+    } catch (error) {
+      // Log but don't fail the enrollment
+      console.error('Error triggering workflows for course enrollment:', error);
+    }
+
     return NextResponse.json({
       enrollment: {
         ...enrollment,

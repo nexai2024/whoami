@@ -82,6 +82,7 @@ export default function BillingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // Modal states
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -112,9 +113,33 @@ export default function BillingPage() {
       fetchSubscription(),
       fetchPlans(),
       fetchUsage(),
-      fetchInvoices()
+      fetchInvoices(),
+      checkSuperAdminStatus()
     ]);
     setLoading(false);
+  };
+
+  const checkSuperAdminStatus = async () => {
+    if (!userId) return;
+    try {
+      // Check if user has super admin subscription
+      const response = await fetch(`/api/subscriptions?userId=${userId}`, {
+        headers: { 'x-user-id': userId } as HeadersInit
+      });
+      if (response.ok) {
+        const sub = await response.json();
+        // Check if plan name or planEnum indicates super admin
+        const planName = sub.plan?.name?.toLowerCase() || '';
+        const planEnum = sub.plan?.planEnum || '';
+        setIsSuperAdmin(
+          planEnum === 'SUPER_ADMIN' || 
+          planName.includes('super admin')
+        );
+      }
+    } catch (error) {
+      console.error('Error checking super admin status:', error);
+      setIsSuperAdmin(false);
+    }
   };
 
   const fetchSubscription = async () => {
@@ -482,12 +507,27 @@ export default function BillingPage() {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Plans</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan) => {
+          {plans
+            .filter((plan) => {
+              // Client-side filtering: Hide super admin plans from non-super admins (defense in depth)
+              const planName = plan.name?.toLowerCase() || '';
+              const planEnum = plan.planEnum || '';
+              const isSuperAdminPlan = planEnum === 'SUPER_ADMIN' || planName.includes('super admin');
+              
+              // Show plan if: (1) it's not a super admin plan, OR (2) user is a super admin
+              return !isSuperAdminPlan || isSuperAdmin;
+            })
+            .map((plan) => {
             const isCurrentPlan = subscription?.planId === plan.id;
             const currentTier = subscription ? getPlanTier(subscription.planId) : -1;
             const planTier = getPlanTier(plan.id);
             const isHigherTier = planTier > currentTier;
             const isLowerTier = planTier < currentTier;
+
+            // Check if this is a super admin plan (for UI display)
+            const planName = plan.name?.toLowerCase() || '';
+            const planEnum = plan.planEnum || '';
+            const isSuperAdminPlan = planEnum === 'SUPER_ADMIN' || planName.includes('super admin');
 
             return (
               <div
@@ -522,19 +562,27 @@ export default function BillingPage() {
                 <button
                   onClick={() => {
                     if (isCurrentPlan) return;
+                    // Prevent action buttons for super admin plans (they can't be purchased)
+                    if (isSuperAdminPlan && !isSuperAdmin) {
+                      toast.error('This plan must be assigned by a super admin');
+                      return;
+                    }
                     if (isHigherTier) handleUpgradeClick(plan);
                     else if (isLowerTier) handleDowngradeClick(plan);
                   }}
-                  disabled={isCurrentPlan}
+                  disabled={isCurrentPlan || (isSuperAdminPlan && !isSuperAdmin)}
                   className={`w-full py-3 rounded-lg font-medium transition ${
                     isCurrentPlan
+                      ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                      : isSuperAdminPlan && !isSuperAdmin
                       ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
                       : isHigherTier
                       ? 'bg-blue-600 text-white hover:bg-blue-700'
                       : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
+                  title={isSuperAdminPlan && !isSuperAdmin ? 'This plan must be assigned by a super admin' : undefined}
                 >
-                  {isCurrentPlan ? 'Current Plan' : isHigherTier ? 'Upgrade' : 'Downgrade'}
+                  {isCurrentPlan ? 'Current Plan' : isSuperAdminPlan && !isSuperAdmin ? 'Not Available' : isHigherTier ? 'Upgrade' : 'Downgrade'}
                 </button>
               </div>
             );

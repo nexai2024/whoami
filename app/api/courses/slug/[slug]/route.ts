@@ -24,6 +24,21 @@ export async function GET(
             videoLength: true
           },
           orderBy: { order: 'asc' }
+        },
+        reviews: {
+          where: { approved: true },
+          orderBy: [
+            { featured: 'desc' },
+            { createdAt: 'desc' }
+          ],
+          take: 10
+        },
+        _count: {
+          select: {
+            reviews: {
+              where: { approved: true }
+            }
+          }
         }
       }
     });

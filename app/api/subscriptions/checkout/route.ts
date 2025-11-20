@@ -46,6 +46,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Prevent checkout for super admin plans - they must be assigned, not purchased
+    const { isSuperAdminPlan } = await import('@/lib/utils/adminUtils');
+    if (isSuperAdminPlan(plan)) {
+      return NextResponse.json(
+        { error: 'This plan cannot be purchased. It must be assigned by a super admin.' },
+        { status: 403 }
+      );
+    }
+
     // Get or create user profile
     let profile = await prisma.profile.findUnique({
       where: { userId },

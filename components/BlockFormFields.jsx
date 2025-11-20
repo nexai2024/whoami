@@ -196,6 +196,21 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
     );
   }
 
+  // FUNNEL Block
+  if (blockType === 'funnel') {
+    return (
+      <div className="space-y-4 max-h-[600px] overflow-y-auto">
+        {renderTextField('Funnel ID', 'funnelId', 'Optional funnel ID')}
+        {renderTextField('Funnel Slug', 'funnelSlug', 'funnel-slug')}
+        {renderTextField('Headline', 'headline', 'Start Your Journey')}
+        {renderTextArea('Description', 'description', 'Join our conversion funnel and transform your results', 3)}
+        {renderTextField('Button Text', 'buttonText', 'Start Funnel')}
+        {renderTextField('Cover Image URL', 'coverImageUrl', 'https://example.com/funnel-cover.jpg', 'url')}
+        {renderCheckbox('Show Progress', 'showProgress')}
+      </div>
+    );
+  }
+
   // LINK Block
   if (blockType === 'link') {
     return (

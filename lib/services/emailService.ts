@@ -718,6 +718,205 @@ Booking ID: ${data.bookingId}
 }
 
 /**
+ * Booking cancellation email
+ */
+export async function sendBookingCancellation(
+  to: string,
+  data: {
+    customerName?: string;
+    coachName: string;
+    startTime: Date;
+    duration: number;
+    reason?: string;
+    cancelledBy: 'coach' | 'customer';
+  }
+): Promise<SendResult> {
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  const cancelledByText = data.cancelledBy === 'coach' 
+    ? `${data.coachName} has cancelled`
+    : 'You have cancelled';
+
+  const subject = `Booking Cancelled: ${formatDate(data.startTime)} at ${formatTime(data.startTime)}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }
+    .info-box { background-color: #fef2f2; padding: 20px; border-left: 4px solid #ef4444; margin: 20px 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Booking Cancelled</h1>
+    </div>
+
+    ${data.customerName ? `<p>Hi ${data.customerName},</p>` : '<p>Hi there,</p>'}
+
+    <p>We wanted to let you know that ${cancelledByText} your booking.</p>
+
+    <div class="info-box">
+      <p><strong>Date:</strong> ${formatDate(data.startTime)}</p>
+      <p><strong>Time:</strong> ${formatTime(data.startTime)}</p>
+      <p><strong>Duration:</strong> ${data.duration} minutes</p>
+      <p><strong>Coach:</strong> ${data.coachName}</p>
+      ${data.reason ? `<p><strong>Reason:</strong> ${data.reason}</p>` : ''}
+    </div>
+
+    <p>If you have any questions or would like to reschedule, please contact ${data.coachName}.</p>
+
+    <div class="footer">
+      <p>If you have any questions, please reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const text = `
+Booking Cancelled
+
+${data.customerName ? `Hi ${data.customerName},` : 'Hi there,'}
+
+We wanted to let you know that ${cancelledByText} your booking.
+
+Date: ${formatDate(data.startTime)}
+Time: ${formatTime(data.startTime)}
+Duration: ${data.duration} minutes
+Coach: ${data.coachName}
+${data.reason ? `Reason: ${data.reason}` : ''}
+
+If you have any questions or would like to reschedule, please contact ${data.coachName}.
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  });
+}
+
+/**
+ * Booking reminder email (24 hours before)
+ */
+export async function sendBookingReminder(
+  to: string,
+  data: {
+    customerName?: string;
+    coachName: string;
+    bookingDate: Date;
+    bookingTime: string;
+    duration: number;
+    bookingId: string;
+    isCoach?: boolean;
+  }
+): Promise<SendResult> {
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const subject = data.isCoach
+    ? `Reminder: Booking Tomorrow - ${formatDate(data.bookingDate)} at ${data.bookingTime}`
+    : `Reminder: Your Booking Tomorrow - ${formatDate(data.bookingDate)} at ${data.bookingTime}`;
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 30px; border-radius: 8px; margin-bottom: 30px; text-align: center; }
+    .info-box { background-color: #eff6ff; padding: 20px; border-left: 4px solid #3b82f6; margin: 20px 0; }
+    .button { display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📅 Booking Reminder</h1>
+    </div>
+
+    ${data.customerName ? `<p>Hi ${data.customerName},</p>` : '<p>Hi there,</p>'}
+
+    <p>This is a friendly reminder that you have a booking scheduled for tomorrow.</p>
+
+    <div class="info-box">
+      <p><strong>Date:</strong> ${formatDate(data.bookingDate)}</p>
+      <p><strong>Time:</strong> ${data.bookingTime}</p>
+      <p><strong>Duration:</strong> ${data.duration} minutes</p>
+      <p><strong>${data.isCoach ? 'Customer' : 'Coach'}:</strong> ${data.isCoach ? data.customerName || 'Customer' : data.coachName}</p>
+    </div>
+
+    <p>We look forward to seeing you!</p>
+
+    ${data.isCoach ? '' : `<p>If you need to reschedule or cancel, please contact ${data.coachName} as soon as possible.</p>`}
+
+    <div class="footer">
+      <p>Booking ID: ${data.bookingId}</p>
+      <p>If you have any questions, please reply to this email.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  const text = `
+Booking Reminder
+
+${data.customerName ? `Hi ${data.customerName},` : 'Hi there,'}
+
+This is a friendly reminder that you have a booking scheduled for tomorrow.
+
+Date: ${formatDate(data.bookingDate)}
+Time: ${data.bookingTime}
+Duration: ${data.duration} minutes
+${data.isCoach ? 'Customer' : 'Coach'}: ${data.isCoach ? data.customerName || 'Customer' : data.coachName}
+
+We look forward to seeing you!
+
+${data.isCoach ? '' : `If you need to reschedule or cancel, please contact ${data.coachName} as soon as possible.`}
+
+Booking ID: ${data.bookingId}
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    text,
+  });
+}
+
+/**
  * Purchase confirmation email
  */
 export async function sendPurchaseConfirmation(

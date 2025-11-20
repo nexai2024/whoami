@@ -33,6 +33,7 @@ export function mapBlockType(frontendType: string): BlockType {
     'course': BlockType.COURSE,
     'deep_link': BlockType.DEEP_LINK,
     'deeplink': BlockType.DEEP_LINK,
+    'funnel': BlockType.FUNNEL,
   };
 
   // Check for special mappings first
@@ -82,6 +83,7 @@ export function mapBlockTypeToFrontend(backendType: BlockType | string): string 
     [BlockType.TEXT_BLOCK]: 'text',
     [BlockType.COURSE]: 'course',
     [BlockType.DEEP_LINK]: 'deep_link',
+    [BlockType.FUNNEL]: 'funnel',
   };
 
   // Check for reverse mappings first

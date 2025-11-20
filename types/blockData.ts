@@ -326,6 +326,16 @@ export interface CustomBlockData {
   allowScripts?: boolean;
 }
 
+export interface FunnelBlockData {
+  funnelId?: string;
+  funnelSlug?: string;
+  buttonText?: string;
+  description?: string;
+  showProgress?: boolean;
+  headline?: string;
+  coverImageUrl?: string;
+}
+
 // Union type for all block data types
 export type BlockData =
   | ProductBlockData
@@ -351,4 +361,5 @@ export type BlockData =
   | BookingCalendarBlockData
   | GatedContentBlockData
   | AnalyticsBlockData
-  | CustomBlockData;
+  | CustomBlockData
+  | FunnelBlockData;

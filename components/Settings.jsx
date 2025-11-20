@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
 import * as FiIcons from 'react-icons/fi';
 const { FiUser: FiUserIcon } = FiIcons;
 import SafeIcon from '../common/SafeIcon';
@@ -184,7 +185,30 @@ const Settings = () => {
       logger.info('User settings saved successfully');
       toast.success('Settings saved successfully!');
       
-      // Reload user data to reflect changes
+      // Update form data immediately with the response from API
+      setFormData(prev => ({
+        ...prev,
+        displayName: updatedProfile.displayName || prev.displayName,
+        bio: updatedProfile.bio || prev.bio,
+        avatar: updatedProfile.avatar || prev.avatar,
+        phone: updatedProfile.phone || prev.phone,
+        website: updatedProfile.website || prev.website,
+        location: updatedProfile.location || prev.location,
+        timezone: updatedProfile.timezone || prev.timezone,
+      }));
+      
+      // Also update the user state if needed
+      if (user) {
+        setUser({
+          ...user,
+          profile: {
+            ...user.profile,
+            ...updatedProfile,
+          },
+        });
+      }
+      
+      // Reload user data to sync with Stack Auth (may take a moment to sync)
       loadUserData();
     } catch (error) {
       logger.error('Error saving settings:', error);

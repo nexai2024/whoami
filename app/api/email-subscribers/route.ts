@@ -83,6 +83,23 @@ export async function POST(req: NextRequest) {
 
     logger.info('Email subscriber created:', { email, pageId, blockId });
 
+    // Trigger workflows for new subscriber
+    try {
+      const { WorkflowExecutionService } = await import('@/lib/services/workflowExecutionService');
+      await WorkflowExecutionService.triggerWorkflows('NEW_SUBSCRIBER', {
+        email: normalizedEmail,
+        name: name || null,
+        pageId,
+        pageType,
+        userId,
+        subscriberId: subscriber.id,
+        tags: subscriber.tags,
+      });
+    } catch (error) {
+      // Log but don't fail the subscription
+      logger.error('Error triggering workflows for new subscriber:', error);
+    }
+
     return NextResponse.json(
       {
         success: true,

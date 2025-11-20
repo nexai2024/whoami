@@ -61,6 +61,18 @@ export async function PATCH(
           );
         }
 
+        // Prevent non-super admins from upgrading to super admin plans
+        const { isSuperAdminPlan, isSuperAdmin } = await import('@/lib/utils/adminUtils');
+        if (isSuperAdminPlan(newPlan)) {
+          const userIsSuperAdmin = await isSuperAdmin(userId);
+          if (!userIsSuperAdmin) {
+            return NextResponse.json(
+              { error: 'This plan cannot be purchased. It must be assigned by a super admin.' },
+              { status: 403 }
+            );
+          }
+        }
+
         // Get current Stripe subscription
         const stripeSubscription = await stripe.subscriptions.retrieve(
           existingSubscription.stripeSubscriptionId
