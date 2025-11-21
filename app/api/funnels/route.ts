@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { checkFeatureGate, checkQuotaGate } from '@/lib/gating/contentGate';
 
 // GET /api/funnels - List all funnels for user
 export async function GET(request: NextRequest) {
@@ -59,6 +60,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check feature access
+    const featureGate = await checkFeatureGate(userId, 'funnels', false);
+    if (!featureGate.allowed) {
+      return featureGate.response || NextResponse.json(
+        { error: 'Funnels are not available in your plan' },
+        { status: 403 }
+      );
+    }
+
+    // Check current funnel count and quota
+    const currentFunnelCount = await prisma.funnel.count({
+      where: { userId },
+    });
+
+    const quotaGate = await checkQuotaGate(userId, 'funnels', currentFunnelCount);
+    if (!quotaGate.allowed) {
+      return quotaGate.response || NextResponse.json(
+        { error: 'You have reached your funnel limit' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const {
       name,
@@ -105,6 +128,15 @@ export async function POST(request: NextRequest) {
         status: 'DRAFT',
       },
     });
+
+    // Record usage after successful creation
+    try {
+      const { recordUsage } = await import('@/lib/utils/usageTracker');
+      await recordUsage(userId, 'funnels', 1);
+    } catch (error) {
+      console.error('Error recording funnel usage:', error);
+      // Don't fail the request if usage tracking fails
+    }
 
     return NextResponse.json({ funnel }, { status: 201 });
   } catch (error) {

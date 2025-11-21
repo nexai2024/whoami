@@ -5,6 +5,20 @@ import { useUser } from '@stackframe/stack';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
+// Icon Components
+const CheckIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500 shrink-0">
+    <polyline points="20 6 9 17 4 12"></polyline>
+  </svg>
+);
+
+const XIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-400 shrink-0">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
 /**
  * Billing & Subscription Management Page
  * Integrates all subscription-related endpoints
@@ -39,7 +53,8 @@ interface Plan {
   price: number;
   interval: string;
   isActive: boolean;
-  planEnum?: string; // FREE, CREATOR, PRO, BUSINESS
+  planEnum?: string; // FREE, CREATOR, PRO, BUSINESS, SUPER_ADMIN
+  description?: string;
   features: Array<{
     feature: {
       name: string;
@@ -377,7 +392,8 @@ export default function BillingPage() {
       'FREE': 0,
       'CREATOR': 1,
       'PRO': 2,
-      'BUSINESS': 3
+      'BUSINESS': 3,
+      'SUPER_ADMIN': 4
     };
     
     // Use planEnum if available (preferred method)
@@ -396,7 +412,7 @@ export default function BillingPage() {
   };
 
   const scrollToPlans = () => {
-    document.getElementById('plans-section')?.scrollIntoView({ behavior: 'smooth' });
+    router.push('/pricing');
   };
 
   if (loading) {
@@ -458,10 +474,10 @@ export default function BillingPage() {
 
             <div className="flex gap-3 pt-4">
               <button
-                onClick={scrollToPlans}
+                onClick={() => router.push('/pricing')}
                 className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-medium transition"
               >
-                Upgrade Plan
+                View Plans
               </button>
               <button
                 onClick={async () => {
@@ -500,94 +516,6 @@ export default function BillingPage() {
             </button>
           </div>
         )}
-      </div>
-
-      {/* Available Plans Grid */}
-      <div id="plans-section" className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Plans</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans
-            .filter((plan) => {
-              // Client-side filtering: Hide super admin plans from non-super admins (defense in depth)
-              const planName = plan.name?.toLowerCase() || '';
-              const planEnum = plan.planEnum || '';
-              const isSuperAdminPlan = planEnum === 'SUPER_ADMIN' || planName.includes('super admin');
-              
-              // Show plan if: (1) it's not a super admin plan, OR (2) user is a super admin
-              return !isSuperAdminPlan || isSuperAdmin;
-            })
-            .map((plan) => {
-            const isCurrentPlan = subscription?.planId === plan.id;
-            const currentTier = subscription ? getPlanTier(subscription.planId) : -1;
-            const planTier = getPlanTier(plan.id);
-            const isHigherTier = planTier > currentTier;
-            const isLowerTier = planTier < currentTier;
-
-            // Check if this is a super admin plan (for UI display)
-            const planName = plan.name?.toLowerCase() || '';
-            const planEnum = plan.planEnum || '';
-            const isSuperAdminPlan = planEnum === 'SUPER_ADMIN' || planName.includes('super admin');
-
-            return (
-              <div
-                key={plan.id}
-                className={`bg-white rounded-2xl p-6 ${
-                  isCurrentPlan
-                    ? 'border-3 border-blue-500'
-                    : 'border-2 border-gray-200'
-                } hover:shadow-lg transition`}
-              >
-                <h3 className="text-2xl font-bold text-gray-900 text-center mb-4">
-                  {plan.name}
-                </h3>
-                <div className="text-center mb-6">
-                  <div className="text-4xl font-bold text-gray-900">
-                    {plan.price === 0 ? '$0' : formatCurrency(plan.price)}
-                  </div>
-                  <div className="text-gray-600 text-sm mt-1">per {plan.interval}</div>
-                </div>
-
-                <div className="space-y-2 mb-6">
-                  {plan.features.slice(0, 5).map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-xs">
-                      <span className="text-green-600 mt-0.5">✓</span>
-                      <span className="text-gray-700">
-                        {feature.feature.displayName}: {feature.limit ? feature.limit : 'Unlimited'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => {
-                    if (isCurrentPlan) return;
-                    // Prevent action buttons for super admin plans (they can't be purchased)
-                    if (isSuperAdminPlan && !isSuperAdmin) {
-                      toast.error('This plan must be assigned by a super admin');
-                      return;
-                    }
-                    if (isHigherTier) handleUpgradeClick(plan);
-                    else if (isLowerTier) handleDowngradeClick(plan);
-                  }}
-                  disabled={isCurrentPlan || (isSuperAdminPlan && !isSuperAdmin)}
-                  className={`w-full py-3 rounded-lg font-medium transition ${
-                    isCurrentPlan
-                      ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                      : isSuperAdminPlan && !isSuperAdmin
-                      ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                      : isHigherTier
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                  }`}
-                  title={isSuperAdminPlan && !isSuperAdmin ? 'This plan must be assigned by a super admin' : undefined}
-                >
-                  {isCurrentPlan ? 'Current Plan' : isSuperAdminPlan && !isSuperAdmin ? 'Not Available' : isHigherTier ? 'Upgrade' : 'Downgrade'}
-                </button>
-              </div>
-            );
-          })}
-        </div>
       </div>
 
       {/* Usage Meter Section */}

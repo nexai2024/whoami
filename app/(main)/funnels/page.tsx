@@ -7,6 +7,7 @@ import { FiPlus, FiEdit3, FiTrash2, FiEye, FiTrendingUp, FiBarChart2 } from 'rea
 import SafeIcon from '@/common/SafeIcon';
 import { useAuth } from '@/lib/auth/AuthContext.jsx';
 import toast from 'react-hot-toast';
+import { ContentGate, useFeatureGate } from '@/components/gating/ContentGate';
 
 interface Funnel {
   id: string;
@@ -40,6 +41,7 @@ const FunnelsPage = () => {
     goalType: 'LEAD_CAPTURE',
     conversionGoal: 'email_signup',
   });
+  const funnelAccess = useFeatureGate('funnels');
 
   useEffect(() => {
     if (currUser) {
@@ -78,8 +80,38 @@ const FunnelsPage = () => {
   const handleCreateFunnel = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Check access before creating
+    if (!funnelAccess.allowed) {
+      toast.error('Funnels are not available in your plan. Please upgrade to create funnels.');
+      return;
+    }
+
+    // Check quota
+    const response = await fetch('/api/features/check', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        featureName: 'funnels',
+        incrementUsage: false 
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (!data.allowed) {
+        toast.error(data.message || 'You have reached your funnel limit. Please upgrade your plan.');
+        return;
+      }
+      if (data.remaining !== undefined && data.remaining <= 0) {
+        toast.error('You have reached your funnel limit. Please upgrade your plan.');
+        return;
+      }
+    }
+
     try {
-      const response = await fetch('/api/funnels', {
+      const createResponse = await fetch('/api/funnels', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +120,7 @@ const FunnelsPage = () => {
         body: JSON.stringify(newFunnel),
       });
 
-      if (response.ok) {
+      if (createResponse.ok) {
         toast.success('Funnel created successfully');
         setShowCreateModal(false);
         setNewFunnel({
@@ -100,7 +132,7 @@ const FunnelsPage = () => {
         });
         loadFunnels();
       } else {
-        const error = await response.json();
+        const error = await createResponse.json();
         toast.error(error.error || 'Failed to create funnel');
       }
     } catch (error) {
@@ -177,36 +209,53 @@ const FunnelsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <motion.div
-          className="bg-white rounded-2xl shadow-sm border p-6 mb-8"
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-3 bg-indigo-100 rounded-xl">
-                  <SafeIcon name={undefined} icon={FiTrendingUp} className="text-indigo-600 text-2xl" />
+    <ContentGate
+      featureName="funnels"
+      requiredPlan="Basic"
+      showUpgradePrompt={true}
+    >
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <motion.div
+            className="bg-white rounded-2xl shadow-sm border p-6 mb-8"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-3 bg-indigo-100 rounded-xl">
+                    <SafeIcon name={undefined} icon={FiTrendingUp} className="text-indigo-600 text-2xl" />
+                  </div>
+                  <h1 className="text-3xl font-bold text-gray-900">Conversion Funnels</h1>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900">Conversion Funnels</h1>
+                <p className="text-gray-600">
+                  Create multi-step funnels to guide visitors to conversion
+                </p>
+                {funnelAccess.remaining !== undefined && (
+                  <p className="text-sm text-gray-500 mt-2">
+                    {funnelAccess.remaining} of {funnelAccess.limit} funnels remaining
+                  </p>
+                )}
               </div>
-              <p className="text-gray-600">
-                Create multi-step funnels to guide visitors to conversion
-              </p>
+              <button
+                onClick={() => {
+                  if (!funnelAccess.allowed) {
+                    toast.error('Funnels are not available in your plan. Please upgrade.');
+                    return;
+                  }
+                  setShowCreateModal(true);
+                }}
+                disabled={!funnelAccess.allowed || (funnelAccess.remaining !== undefined && funnelAccess.remaining <= 0)}
+                className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <SafeIcon name={undefined} icon={FiPlus} />
+                Create Funnel
+              </button>
             </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <SafeIcon name={undefined} icon={FiPlus} />
-              Create Funnel
-            </button>
-          </div>
-        </motion.div>
+          </motion.div>
 
         {/* Filter Tabs */}
         <div className="mb-6 flex gap-2">
@@ -438,7 +487,8 @@ const FunnelsPage = () => {
           </motion.div>
         </div>
       )}
-    </div>
+      </div>
+    </ContentGate>
   );
 };
 

@@ -699,6 +699,7 @@ enum PlanEnum {
   CREATOR
   PRO
   BUSINESS
+  SUPER_ADMIN
 }
 
 enum DomainStatus {
@@ -1429,8 +1430,9 @@ model PageTemplate {
 
   // Template metadata
   name        String
-  description String?
+  description String?  @db.Text
   category    String
+  industry    String?  // Industry-specific classification
   tags        String[]
 
   // Template type
@@ -1439,20 +1441,25 @@ model PageTemplate {
   // Template data storage
   headerData Json
   blocksData Json
+  theme      Json?    // Theme configuration (colors, fonts, spacing)
 
   // Preview assets
   thumbnailUrl String
   previewUrl   String?
 
   // Popularity tracking
-  useCount Int     @default(0)
-  featured Boolean @default(false)
-  isPublic Boolean @default(false)
+  useCount Int      @default(0)
+  rating   Float?   @default(0)
+  featured Boolean  @default(false)
+  isPublic Boolean  @default(false)
 
   // Relations
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, category])
+  @@index([category, featured])
+  @@index([industry])
+  @@index([useCount])
   @@index([featured, useCount])
   @@index([category, templateType])
   @@map("page_templates")

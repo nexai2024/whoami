@@ -14,10 +14,12 @@ export async function GET(request: NextRequest) {
 
     // Parse filters
     const category = searchParams.get('category');
+    const industry = searchParams.get('industry');
     const templateType = searchParams.get('templateType') as TemplateType | null;
     const featured = searchParams.get('featured');
     const tags = searchParams.get('tags')?.split(',').filter(Boolean);
     const search = searchParams.get('search');
+    const sortBy = searchParams.get('sortBy') || 'popular'; // popular, newest, rating
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = parseInt(searchParams.get('offset') || '0');
     const userId = request.headers.get('x-user-id');
@@ -32,6 +34,10 @@ export async function GET(request: NextRequest) {
 
     if (category) {
       where.category = category;
+    }
+
+    if (industry) {
+      where.industry = industry;
     }
 
     if (templateType) {
@@ -54,10 +60,37 @@ export async function GET(request: NextRequest) {
           OR: [
             { name: { contains: search, mode: 'insensitive' } },
             { description: { contains: search, mode: 'insensitive' } },
-            { category: { contains: search, mode: 'insensitive' } }
+            { category: { contains: search, mode: 'insensitive' } },
+            { industry: { contains: search, mode: 'insensitive' } }
           ]
         }
       ];
+    }
+
+    // Build orderBy based on sortBy parameter
+    let orderBy: any[] = [];
+    switch (sortBy) {
+      case 'newest':
+        orderBy = [
+          { featured: 'desc' },
+          { createdAt: 'desc' }
+        ];
+        break;
+      case 'rating':
+        orderBy = [
+          { featured: 'desc' },
+          { rating: 'desc' },
+          { useCount: 'desc' }
+        ];
+        break;
+      case 'popular':
+      default:
+        orderBy = [
+          { featured: 'desc' },
+          { useCount: 'desc' },
+          { createdAt: 'desc' }
+        ];
+        break;
     }
 
     // Fetch templates with pagination
@@ -66,20 +99,18 @@ export async function GET(request: NextRequest) {
         where,
         take: limit,
         skip: offset,
-        orderBy: [
-          { featured: 'desc' },
-          { useCount: 'desc' },
-          { createdAt: 'desc' }
-        ],
+        orderBy,
         select: {
           id: true,
           name: true,
           description: true,
           category: true,
+          industry: true,
           tags: true,
           templateType: true,
           thumbnailUrl: true,
           useCount: true,
+          rating: true,
           featured: true,
           isPublic: true,
           userId: true,
@@ -124,7 +155,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate required fields
-    const { name, category, templateType, headerData, blocksData, thumbnailUrl } = body;
+    const { name, category, templateType, headerData, blocksData, thumbnailUrl, industry, theme } = body;
 
     if (!name || !category || !templateType || !headerData || !blocksData || !thumbnailUrl) {
       return NextResponse.json(
@@ -156,10 +187,12 @@ export async function POST(request: NextRequest) {
         name,
         description: body.description || null,
         category,
+        industry: industry || null,
         tags: body.tags || [],
         templateType,
         headerData,
         blocksData,
+        theme: theme || null,
         thumbnailUrl,
         previewUrl: body.previewUrl || null,
         isPublic: body.isPublic || false,

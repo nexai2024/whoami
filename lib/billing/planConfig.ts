@@ -27,20 +27,26 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     features: {
       // Core content quotas
       pages: 1,
+      funnels: 0, // Free plan: no funnels
+      lead_magnets: 1, // Free plan: 1 lead magnet
+      courses: 0, // Free plan: 0 courses
+      workflows: 0, // Free plan: 1 workflow
+      campaigns: 0, // Free plan: 1 campaign
+      scheduled_posts: 1, // Free plan: 1 scheduled post
+      auto_post_accounts: 1, // Free plan: 1 auto post account
+      scheduler_posts: 1, // Free plan: 1 scheduler post
+      social_links: 1, // Free plan: 1 social link
+      ai_generations: 0, // Free plan: 0 ai generations
+      leads: 100, // Free plan: 100 leads
       // Explicit limits
-      leads: 100,
       emails: 100,
-      ai_generations: 1, // matches defaultEach
-      social_links: 1,
-      auto_post_accounts: 1,
-      // Scheduling is unlimited, but effective auto-post is constrained by linked accounts
-      scheduler_posts: 'unlimited',
     },
   },
   BASIC: {
     defaultEach: 5,
     features: {
       pages: 5,
+      funnels: 3, // Basic plan: 3 funnels
       leads: 1000,
       emails: 1000,
       ai_generations: 5,
@@ -53,6 +59,7 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     defaultEach: 10,
     features: {
       pages: 10,
+      funnels: 'unlimited', // Pro plan: unlimited funnels
       leads: 2500,
       emails: 2500,
       ai_generations: 10,

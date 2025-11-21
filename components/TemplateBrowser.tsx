@@ -15,6 +15,7 @@ interface TemplateBrowserProps {
   onApply?: (templateId: string) => void;
   pageId?: string;
   showAIGenerate?: boolean;
+  refreshKey?: number;
 }
 
 interface Template {
@@ -22,10 +23,12 @@ interface Template {
   name: string;
   description: string;
   category: string;
+  industry?: string;
   tags: string[];
   templateType: 'BIO_ONLY' | 'FULL_PAGE';
   thumbnailUrl: string;
   useCount: number;
+  rating?: number;
   featured: boolean;
   createdAt: string;
 }
@@ -34,14 +37,17 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
   templateType = 'ALL',
   onApply,
   pageId,
-  showAIGenerate = true
+  showAIGenerate = true,
+  refreshKey = 0
 }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [filteredTemplates, setFilteredTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedIndustry, setSelectedIndustry] = useState<string>('all');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<'popular' | 'newest' | 'rating'>('popular');
   const [showFilters, setShowFilters] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
   const [previewData, setPreviewData] = useState<any>(null);
@@ -49,29 +55,56 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
   const [applying, setApplying] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
 
-  // Fetch templates
+  // Fetch templates when filters change
   useEffect(() => {
     fetchTemplates();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateType]);
+  }, [templateType, selectedCategory, selectedIndustry, selectedTags, sortBy, refreshKey]);
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchTemplates();
+    }, 500);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
 
   // Filter templates
   useEffect(() => {
     filterTemplates();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templates, searchQuery, selectedCategory, selectedTags, templateType]);
+  }, [templates, searchQuery, selectedCategory, selectedIndustry, selectedTags, sortBy, templateType]);
 
   const fetchTemplates = async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
-        featured: 'true',
-        limit: '50'
+        limit: '100' // Increased to get more templates for filtering
       });
 
       if (templateType !== 'ALL') {
         params.append('templateType', templateType);
       }
+
+      if (selectedCategory !== 'all') {
+        params.append('category', selectedCategory);
+      }
+
+      if (selectedIndustry !== 'all') {
+        params.append('industry', selectedIndustry);
+      }
+
+      if (selectedTags.length > 0) {
+        params.append('tags', selectedTags.join(','));
+      }
+
+      if (searchQuery) {
+        params.append('search', searchQuery);
+      }
+
+      params.append('sortBy', sortBy);
 
       const response = await fetch(`/api/templates/pages?${params}`);
       if (response.ok) {
@@ -89,40 +122,9 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
   };
 
   const filterTemplates = () => {
-    let filtered = [...templates];
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(t =>
-        t.name.toLowerCase().includes(query) ||
-        t.description?.toLowerCase().includes(query) ||
-        t.category.toLowerCase().includes(query) ||
-        t.tags.some(tag => tag.toLowerCase().includes(query))
-      );
-    }
-
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(t => t.category === selectedCategory);
-    }
-
-    // Filter by tags
-    if (selectedTags.length > 0) {
-      filtered = filtered.filter(t =>
-        selectedTags.every(tag => t.tags.includes(tag))
-      );
-    }
-
-    // Sort: featured first, then by use count
-    filtered.sort((a, b) => {
-      if (a.featured !== b.featured) {
-        return a.featured ? -1 : 1;
-      }
-      return b.useCount - a.useCount;
-    });
-
-    setFilteredTemplates(filtered);
+    // Templates are already filtered and sorted by the API
+    // Just set them directly
+    setFilteredTemplates(templates);
   };
 
   const handleApplyTemplate = async (template: Template) => {
@@ -193,10 +195,15 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
 
   const categories = [
     'all',
-    ...Array.from(new Set(templates.map(t => t.category)))
+    ...Array.from(new Set(templates.map(t => t.category).filter(Boolean)))
   ];
 
-  const allTags = Array.from(new Set(templates.flatMap(t => t.tags)));
+  const industries = [
+    'all',
+    ...Array.from(new Set(templates.map(t => t.industry).filter(Boolean)))
+  ];
+
+  const allTags = Array.from(new Set(templates.flatMap(t => t.tags).filter(Boolean)));
 
   const toggleTag = (tag: string) => {
     setSelectedTags(prev =>
@@ -270,7 +277,10 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                   {categories.map(category => (
                     <button
                       key={category}
-                      onClick={() => setSelectedCategory(category)}
+                      onClick={() => {
+                        setSelectedCategory(category);
+                        setSelectedIndustry('all'); // Reset industry when category changes
+                      }}
                       className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                         selectedCategory === category
                           ? 'bg-indigo-600 text-white'
@@ -282,6 +292,32 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* Industry Filter */}
+              {industries.length > 1 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Industry
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {industries.map(industry => (
+                      <button
+                        key={industry}
+                        onClick={() => setSelectedIndustry(industry ?? 'all')}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                          selectedIndustry === industry
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {(industry ?? '')
+                          .charAt(0)
+                          .toUpperCase() + (industry ?? '').slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Tags Filter */}
               {allTags.length > 0 && (
@@ -311,11 +347,23 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* Results Count */}
+      {/* Results Count and Sort */}
       <div className="flex items-center justify-between">
         <p className="text-gray-600">
           {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''} found
         </p>
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Sort by:</label>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'popular' | 'newest' | 'rating')}
+            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          >
+            <option value="popular">Popular</option>
+            <option value="newest">Newest</option>
+            <option value="rating">Rating</option>
+          </select>
+        </div>
       </div>
 
       {/* Templates Grid */}
@@ -376,6 +424,11 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                   <span className="px-2 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
                     {template.category}
                   </span>
+                  {template.industry && (
+                    <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs">
+                      {template.industry}
+                    </span>
+                  )}
                   {template.tags.slice(0, 2).map(tag => (
                     <span key={tag} className="px-2 py-0.5 bg-purple-50 text-purple-700 rounded text-xs">
                       {tag}
@@ -389,17 +442,23 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                     <FiTrendingUp />
                     <span>{template.useCount} uses</span>
                   </div>
+                  {template.rating !== undefined && template.rating > 0 && (
+                    <div className="flex items-center gap-1">
+                      <FiStar className="text-yellow-500 fill-yellow-500" />
+                      <span>{template.rating.toFixed(1)}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Actions */}
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => handlePreview(template)}
+                  <a
+                    href={`/templates/${template.id}/preview${pageId ? `?pageId=${pageId}` : ''}`}
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <FiEye />
                     Preview
-                  </button>
+                  </a>
                   {pageId && (
                     <button
                       onClick={() => handleApplyTemplate(template)}

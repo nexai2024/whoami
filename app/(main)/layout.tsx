@@ -16,12 +16,14 @@ import ContentWrapper from '@/components/ContentWrapper';
 import { useUser } from "@stackframe/stack";
 import { usePathname } from 'next/navigation';
 import { checkUserFeature } from "@/lib/features/checkFeature";
+import React from 'react';
 
 keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const user = useUser();
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = React.useState(false);
 
   const publicRoutePatterns = [
     /^\/magnet(\/|$)/,
@@ -35,9 +37,21 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const isPublicRoute = pathname
     ? publicRoutePatterns.some((pattern) => pattern.test(pathname ?? ""))
     : false;
-  const isAdmin = checkUserFeature(user?.id ?? '', 'error_console_admin');
   
   const showNavigation = !isPublicRoute;
+
+  // Check admin status
+  React.useEffect(() => {
+    async function checkAdmin() {
+      if (user?.id) {
+        const adminStatus = await checkUserFeature(user.id, 'error_console_admin');
+        setIsAdmin(adminStatus);
+      } else {
+        setIsAdmin(false);
+      }
+    }
+    checkAdmin();
+  }, [user?.id]);
 
   return (
     <>
@@ -45,7 +59,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       <ContentWrapper hasSidebar={showNavigation && !!user}>
         {children}
       </ContentWrapper>
-      {showNavigation && <ErrorConsole />}
+      {showNavigation && isAdmin && <ErrorConsole />}
       {showNavigation && (
         <>
           <TourTooltip />

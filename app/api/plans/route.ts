@@ -44,7 +44,22 @@ export async function GET(request: NextRequest) {
       return !planIsSuperAdmin || userIsSuperAdmin;
     });
 
-    return NextResponse.json(filteredPlans)
+    // Add displayName to features for frontend compatibility
+    const plansWithDisplayNames = filteredPlans.map((plan: any) => ({
+      ...plan,
+      features: plan.features.map((pf: any) => ({
+        ...pf,
+        feature: {
+          ...pf.feature,
+          displayName: pf.feature.description || pf.feature.name
+            .split('_')
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+        }
+      }))
+    }));
+
+    return NextResponse.json(plansWithDisplayNames)
   } catch (error) {
     console.error('Error fetching plans:', error)
     return NextResponse.json(

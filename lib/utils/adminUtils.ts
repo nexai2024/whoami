@@ -36,7 +36,6 @@ export async function isSuperAdmin(userId: string): Promise<boolean> {
         plan: true,
       },
     });
-
     // User must have an active subscription
     if (!subscription || subscription.status !== 'active') {
       return false;

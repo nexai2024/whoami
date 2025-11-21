@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
           }
         }
       });
-      console.log("Fetched pages for user:", user?.id, pages);
+      //console.log("Fetched pages for user:", user?.id, pages);
 
     return NextResponse.json(pages);
 }

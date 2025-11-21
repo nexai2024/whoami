@@ -14,7 +14,7 @@ export class RateLimitService {
   /**
    * Check if user can access a feature based on their subscription
    */
-  static async checkFeatureAccess(
+  static async  checkFeatureAccess(
     userId: string,
     featureName: string
   ): Promise<RateLimitResult> {
@@ -44,7 +44,6 @@ export class RateLimitService {
         name: featureName,
         type: 'quota',
         description: `${featureName} usage`,
-        isActive: true,
       },
     })
 

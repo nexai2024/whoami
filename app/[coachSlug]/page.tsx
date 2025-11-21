@@ -7,13 +7,13 @@ import { FiCalendar, FiShoppingBag, FiMail, FiUser, FiBook } from 'react-icons/f
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 interface CoachBioPageProps {
-  params: {
+  params: Promise<{
     coachSlug: string;
-  };
+  }>;
 }
 
-export default function CoachBioPage({ params }: CoachBioPageProps) {
-  const { coachSlug } = params;
+export default async function CoachBioPage({ params }: CoachBioPageProps) {
+  const { coachSlug } = await params;
   const router = useRouter();
   const [coach, setCoach] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);

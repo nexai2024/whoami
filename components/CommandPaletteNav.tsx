@@ -14,7 +14,7 @@ import {
   FiLogOut, FiChevronDown, FiZap, FiHome, FiFileText,
   FiBook, FiGift, FiTrendingUp, FiBarChart2, FiLayers,
   FiX, FiCommand, FiMail, FiCalendar, FiUsers, FiActivity,
-  FiShoppingBag, FiGitBranch
+  FiShoppingBag, FiGitBranch, FiLayout, FiGlobe, FiRefreshCw
 } from 'react-icons/fi';
 import Logo from './Logo';
 
@@ -41,7 +41,8 @@ export default function CommandPaletteNav() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isCoach, setIsCoach] = useState(false);
-  const [subscription, setSubscription] = useState<{ plan: { name: string } } | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [subscription, setSubscription] = useState<{ plan: { name: string; planEnum?: string } } | null>(null);
   const [planName, setPlanName] = useState('Free');
 
   // Check if user is a coach
@@ -64,7 +65,7 @@ export default function CommandPaletteNav() {
     checkCoachStatus();
   }, [user]);
 
-  // Fetch subscription info
+  // Fetch subscription info and check super admin status
   useEffect(() => {
     const fetchSubscription = async () => {
       if (user?.id) {
@@ -76,13 +77,35 @@ export default function CommandPaletteNav() {
             const data = await response.json();
             setSubscription(data);
             setPlanName(data.plan?.name || 'Free');
+            
+            // Check if user is super admin
+            const planName = data.plan?.name?.toLowerCase() || '';
+            const planEnum = data.plan?.planEnum || '';
+            const isAdmin = planEnum === 'SUPER_ADMIN' || planName.includes('super admin');
+            setIsSuperAdmin(isAdmin);
+            
+            // Debug logging
+            console.log('Super Admin Check:', {
+              planName,
+              planEnum,
+              isAdmin,
+              plan: data.plan
+            });
+          } else if (response.status === 404) {
+            // No subscription found - user is on free plan
+            setPlanName('Free');
+            setIsSuperAdmin(false);
           } else {
             setPlanName('Free');
+            setIsSuperAdmin(false);
           }
         } catch (error) {
           console.error('Error fetching subscription:', error);
           setPlanName('Free');
+          setIsSuperAdmin(false);
         }
+      } else {
+        setIsSuperAdmin(false);
       }
     };
     fetchSubscription();
@@ -95,6 +118,8 @@ export default function CommandPaletteNav() {
     
     // Create
     { id: 'pages', name: 'Pages', href: '/dashboard', icon: FiFileText, category: 'Create', keywords: ['bio', 'page', 'landing', 'builder'], description: 'Build bio pages', hot: true },
+    { id: 'builder', name: 'Page Builder', href: '/builder', icon: FiLayout, category: 'Create', keywords: ['builder', 'page', 'edit', 'design'], description: 'Design your page', hot: true },
+    { id: 'templates', name: 'Templates', href: '/templates', icon: FiLayout, category: 'Create', keywords: ['template', 'gallery', 'design', 'ai'], description: 'Browse templates', hot: true },
     { id: 'courses', name: 'Courses', href: '/courses?new=true', icon: FiBook, category: 'Create', keywords: ['course', 'lms', 'learn', 'training'], description: 'Create courses', hot: true },
     { id: 'lead-magnets', name: 'Lead Magnets', href: '/marketing/lead-magnets', icon: FiGift, category: 'Create', keywords: ['lead', 'magnet', 'optin', 'opt-in'], description: 'Grow your list', hot: true },
     { id: 'products', name: 'Products', href: '/marketing/products', icon: FiShoppingBag, category: 'Create', keywords: ['product', 'sell', 'digital'], description: 'Sell digital products' },
@@ -103,9 +128,11 @@ export default function CommandPaletteNav() {
     // Manage
     { id: 'all-pages', name: 'All Pages', href: '/dashboard', icon: FiFileText, category: 'Manage', keywords: ['pages', 'all'] },
     { id: 'my-courses', name: 'My Courses', href: '/my-courses', icon: FiBook, category: 'Manage', keywords: ['courses', 'my'] },
+    { id: 'courses-marketplace', name: 'Course Marketplace', href: '/courses/marketplace', icon: FiBook, category: 'Manage', keywords: ['marketplace', 'browse', 'courses'] },
     { id: 'campaigns', name: 'Campaigns', href: '/marketing/campaigns', icon: FiMail, category: 'Manage', keywords: ['campaign', 'email'] },
     { id: 'workflows', name: 'Workflows', href: '/workflows', icon: FiGitBranch, category: 'Manage', keywords: ['workflow', 'automation'], description: 'Automations' },
     { id: 'schedule', name: 'Schedule Posts', href: '/marketing/schedule', icon: FiCalendar, category: 'Manage', keywords: ['schedule', 'post', 'social'] },
+    { id: 'repurpose', name: 'Content Repurpose', href: '/marketing/repurpose', icon: FiRefreshCw, category: 'Manage', keywords: ['repurpose', 'content', 'social'] },
     { id: 'bookings', name: 'Bookings', href: '/coach/bookings', icon: FiCalendar, category: 'Manage', keywords: ['booking', 'appointment', 'session'], description: 'Client bookings', hot: true, requiresCoach: true },
     { id: 'availability', name: 'Availability', href: '/coach/availability', icon: FiCalendar, category: 'Manage', keywords: ['availability', 'schedule', 'calendar'], description: 'Set schedule', requiresCoach: true },
     
@@ -121,12 +148,23 @@ export default function CommandPaletteNav() {
     // Settings
     { id: 'account', name: 'Account', href: '/settings', icon: FiSettings, category: 'Settings', keywords: ['account', 'settings'] },
     { id: 'billing', name: 'Billing', href: '/settings/billing', icon: FiCreditCard, category: 'Settings', keywords: ['billing', 'payment', 'subscription', 'plan', 'upgrade'] },
+    { id: 'domains', name: 'Domains', href: '/settings', icon: FiGlobe, category: 'Settings', keywords: ['domain', 'subdomain', 'custom'], tab: 'domains' },
     { id: 'profile', name: 'Profile', href: '/profile', icon: FiUser, category: 'Settings', keywords: ['profile', 'user'] },
     { id: 'coach-settings', name: 'Coach Settings', href: '/settings', icon: FiUser, category: 'Settings', keywords: ['coach', 'settings'], tab: 'coach', requiresCoach: true },
+    
+    // Admin (Super Admin only - filtered client-side)
+    { id: 'admin-dashboard', name: 'Admin Dashboard', href: '/admin', icon: FiSettings, category: 'Admin', keywords: ['admin', 'dashboard', 'super'], description: 'Super admin only', hot: true },
+    { id: 'admin-plans', name: 'Manage Plans & Features', href: '/admin/plans', icon: FiSettings, category: 'Admin', keywords: ['admin', 'plans', 'features', 'manage'], description: 'Super admin only' },
   ];
 
   // Filter nav items based on user role
-  const navItems = allNavItems.filter(item => !item.requiresCoach || isCoach);
+  const navItems = allNavItems.filter(item => {
+    // Filter coach-only items
+    if (item.requiresCoach && !isCoach) return false;
+    // Show admin items to everyone - the pages will handle auth
+    // This allows users to see the option and get redirected if not authorized
+    return true;
+  });
 
   // Filter nav items based on search
   const filteredItems = navItems.filter(item =>
@@ -305,28 +343,51 @@ export default function CommandPaletteNav() {
                 />
                 <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-50">
                   {/* User Info */}
-                  <div className="px-4 py-3 border-b border-gray-200">
+                  <Link
+                    href={isSuperAdmin ? '/admin' : '/profile'}
+                    className="px-4 py-3 border-b border-gray-200 hover:bg-gray-50 transition-colors block"
+                    onClick={() => setShowUserMenu(false)}
+                  >
                     <p className="font-semibold text-gray-900 truncate">{user?.displayName || 'User'}</p>
                     <p className="text-sm text-gray-600 truncate">{user?.primaryEmail}</p>
                     <div className="mt-2 flex items-center gap-2">
                       <span className={`px-2 py-1 text-xs font-medium rounded ${
                         planName === 'Free' 
                           ? 'bg-yellow-100 text-yellow-800' 
+                          : isSuperAdmin
+                          ? 'bg-purple-100 text-purple-800'
                           : 'bg-indigo-100 text-indigo-800'
                       }`}>
-                        {planName} Plan
+                        {isSuperAdmin ? 'Super Admin' : `${planName} Plan`}
                       </span>
-                      <Link
-                        href="/settings/billing"
-                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-                        onClick={() => setShowUserMenu(false)}
-                      >
-                        {planName === 'Free' ? 'Upgrade →' : 'Manage →'}
-                      </Link>
+                      {!isSuperAdmin && (
+                        <Link
+                          href="/settings/billing"
+                          className="text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {planName === 'Free' ? 'Upgrade →' : 'Manage →'}
+                        </Link>
+                      )}
                     </div>
-                  </div>
+                  </Link>
 
                   {/* Menu Items */}
+                  {/* Always show admin link - it will redirect if not super admin */}
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 text-gray-700 transition-colors"
+                    onClick={() => setShowUserMenu(false)}
+                  >
+                    <FiSettings size={18} className={isSuperAdmin ? 'text-purple-600' : 'text-gray-600'} />
+                    <span className={isSuperAdmin ? 'font-medium' : ''}>Admin Dashboard</span>
+                    {isSuperAdmin && (
+                      <span className="ml-auto px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">
+                        Admin
+                      </span>
+                    )}
+                  </Link>
+                  {isSuperAdmin && <div className="border-t border-gray-200 my-1" />}
                   <Link
                     href="/profile"
                     className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 text-gray-700 transition-colors"
