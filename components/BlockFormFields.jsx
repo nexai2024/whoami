@@ -456,7 +456,6 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
         {renderCheckbox('Allow Custom Amount', 'allowCustomAmount')}
         {renderTextField('Currency', 'currency', 'USD')}
         {renderSelect('Payment Provider', 'paymentProvider', [
-          { value: 'stripe', label: 'Stripe' },
           { value: 'paypal', label: 'PayPal' },
           { value: 'custom', label: 'Custom' }
         ])}

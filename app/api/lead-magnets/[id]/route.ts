@@ -6,6 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, MagnetType, DeliveryMethod, MagnetStatus } from '@prisma/client';
+import { requireResourceOwnership } from '@/lib/auth/serverAuth';
+import { logger } from '@/lib/utils/logger';
 
 const prisma = new PrismaClient();
 
@@ -14,17 +16,21 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
-
-    if (!userId) {
+    const { id } = await params;
+    
+    // Step 1: Require authentication and ownership
+    // Why: requireResourceOwnership() checks both auth AND ownership in one call
+    // It queries the database to verify the user owns this lead magnet
+    const auth = await requireResourceOwnership(request, id, 'leadMagnet');
+    
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: auth.error },
+        { status: auth.statusCode }
       );
     }
 
-    const { id } = await params;
+    // Step 2: Fetch the lead magnet (we know user owns it from auth check)
     const leadMagnet = await prisma.leadMagnet.findUnique({
       where: { id },
       include: {
@@ -36,14 +42,6 @@ export async function GET(
       return NextResponse.json(
         { error: 'Lead magnet not found' },
         { status: 404 }
-      );
-    }
-
-    // Check ownership
-    if (leadMagnet.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
       );
     }
 
@@ -95,7 +93,7 @@ export async function GET(
       embedCode
     });
   } catch (error) {
-    console.error('Error fetching lead magnet:', error);
+    logger.error('Error fetching lead magnet:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -108,16 +106,20 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
-
-    if (!userId) {
+    const { id } = await params;
+    
+    // Step 1: Require authentication and ownership
+    // Why: Only the owner should be able to update their lead magnet
+    const auth = await requireResourceOwnership(request, id, 'leadMagnet');
+    
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: auth.error },
+        { status: auth.statusCode }
       );
     }
 
+    const userId = auth.userId!;
     const body = await request.json();
     const {
       name,
@@ -135,8 +137,7 @@ export async function PATCH(
       status
     } = body;
 
-    const { id } = await params;
-    // Find existing lead magnet
+    // Step 2: Verify lead magnet exists (ownership already verified by requireResourceOwnership)
     const existingMagnet = await prisma.leadMagnet.findUnique({
       where: { id }
     });
@@ -145,14 +146,6 @@ export async function PATCH(
       return NextResponse.json(
         { error: 'Lead magnet not found' },
         { status: 404 }
-      );
-    }
-
-    // Check ownership
-    if (existingMagnet.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
       );
     }
 
@@ -237,7 +230,7 @@ export async function PATCH(
       message: 'Lead magnet updated successfully'
     });
   } catch (error) {
-    console.error('Error updating lead magnet:', error);
+    logger.error('Error updating lead magnet:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -250,18 +243,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
-
-    if (!userId) {
+    const { id } = await params;
+    
+    // Step 1: Require authentication and ownership
+    // Why: Only the owner should be able to delete their lead magnet
+    const auth = await requireResourceOwnership(request, id, 'leadMagnet');
+    
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: auth.error },
+        { status: auth.statusCode }
       );
     }
 
-    const { id } = await params;
-    // Find lead magnet
+    // Step 2: Verify lead magnet exists (ownership already verified)
     const leadMagnet = await prisma.leadMagnet.findUnique({
       where: { id }
     });
@@ -270,14 +265,6 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Lead magnet not found' },
         { status: 404 }
-      );
-    }
-
-    // Check ownership
-    if (leadMagnet.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
       );
     }
 
@@ -291,7 +278,7 @@ export async function DELETE(
       message: 'Lead magnet deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting lead magnet:', error);
+    logger.error('Error deleting lead magnet:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

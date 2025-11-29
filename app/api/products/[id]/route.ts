@@ -6,7 +6,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { stripe } from '@/lib/stripe';
+import { logger } from '@/lib/utils/logger';
+import { requireResourceOwnership } from '@/lib/auth/serverAuth';
 
 const prisma = new PrismaClient();
 
@@ -15,17 +16,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
-
-    if (!userId) {
+    const { id } = await params;
+    
+    // Check authentication and ownership
+    const auth = await requireResourceOwnership(request, id, 'product');
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: auth.error },
+        { status: auth.statusCode }
       );
     }
 
-    const { id } = await params;
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
@@ -40,14 +41,6 @@ export async function GET(
       return NextResponse.json(
         { error: 'Product not found' },
         { status: 404 }
-      );
-    }
-
-    // Check ownership
-    if (product.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
       );
     }
 
@@ -69,8 +62,6 @@ export async function GET(
       fileUrl: product.fileUrl,
       downloadLimit: product.downloadLimit,
       isActive: product.isActive,
-      stripeProductId: product.stripeProductId,
-      stripePriceId: product.stripePriceId,
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
       sales: product.sales.map(sale => ({
@@ -85,7 +76,7 @@ export async function GET(
       totalRevenue
     });
   } catch (error) {
-    console.error('Error fetching product:', error);
+    logger.error('Error fetching product:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -98,13 +89,14 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
-
-    if (!userId) {
+    const { id } = await params;
+    
+    // Check authentication and ownership
+    const auth = await requireResourceOwnership(request, id, 'product');
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: auth.error },
+        { status: auth.statusCode }
       );
     }
 
@@ -117,10 +109,8 @@ export async function PATCH(
       fileUrl,
       downloadLimit,
       isActive,
-      updateStripe = true
     } = body;
 
-    const { id } = await params;
     // Find existing product
     const existingProduct = await prisma.product.findUnique({
       where: { id }
@@ -130,14 +120,6 @@ export async function PATCH(
       return NextResponse.json(
         { error: 'Product not found' },
         { status: 404 }
-      );
-    }
-
-    // Check ownership
-    if (existingProduct.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
       );
     }
 
@@ -181,40 +163,6 @@ export async function PATCH(
       );
     }
 
-    let newStripePriceId: string | null = null;
-
-    // Update Stripe if requested and product has Stripe integration
-    if (updateStripe && existingProduct.stripeProductId) {
-      try {
-        // Update Stripe Product metadata
-        if (name !== undefined || description !== undefined) {
-          await stripe.products.update(existingProduct.stripeProductId, {
-            name: name || existingProduct.name,
-            description: description !== undefined ? description || undefined : existingProduct.description || undefined
-          });
-        }
-
-        // If price changed, create new Stripe Price (prices are immutable)
-        if (price !== undefined && price !== existingProduct.price) {
-          const newPrice = await stripe.prices.create({
-            product: existingProduct.stripeProductId,
-            unit_amount: Math.round(price * 100),
-            currency: (currency || existingProduct.currency).toLowerCase()
-          });
-          newStripePriceId = newPrice.id;
-
-          // Archive old price
-          if (existingProduct.stripePriceId) {
-            await stripe.prices.update(existingProduct.stripePriceId, {
-              active: false
-            });
-          }
-        }
-      } catch (stripeError) {
-        console.error('Stripe error during update:', stripeError);
-        // Continue with local update even if Stripe fails
-      }
-    }
 
     // Build update data
     const updateData: any = {};
@@ -225,7 +173,6 @@ export async function PATCH(
     if (fileUrl !== undefined) updateData.fileUrl = fileUrl;
     if (downloadLimit !== undefined) updateData.downloadLimit = downloadLimit;
     if (isActive !== undefined) updateData.isActive = isActive;
-    if (newStripePriceId) updateData.stripePriceId = newStripePriceId;
 
     // Update product in database
     await prisma.product.update({
@@ -235,11 +182,10 @@ export async function PATCH(
 
     return NextResponse.json({
       productId: id,
-      stripePriceId: newStripePriceId,
       message: 'Product updated successfully'
     });
   } catch (error) {
-    console.error('Error updating product:', error);
+    logger.error('Error updating product:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -252,20 +198,20 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
-
-    if (!userId) {
+    const { id } = await params;
+    
+    // Check authentication and ownership
+    const auth = await requireResourceOwnership(request, id, 'product');
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: auth.error },
+        { status: auth.statusCode }
       );
     }
 
     const { searchParams } = new URL(request.url);
     const hard = searchParams.get('hard') === 'true';
 
-    const { id } = await params;
     // Find product
     const product = await prisma.product.findUnique({
       where: { id },
@@ -280,14 +226,6 @@ export async function DELETE(
       return NextResponse.json(
         { error: 'Product not found' },
         { status: 404 }
-      );
-    }
-
-    // Check ownership
-    if (product.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
       );
     }
 
@@ -315,7 +253,7 @@ export async function DELETE(
       message: 'Product deleted successfully'
     });
   } catch (error) {
-    console.error('Error deleting product:', error);
+    logger.error('Error deleting product:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -191,7 +191,7 @@ export interface TipJarBlockData {
   suggestedAmounts?: number[];
   allowCustomAmount?: boolean;
   currency?: string;
-  paymentProvider?: 'stripe' | 'paypal' | 'custom';
+  paymentProvider?: 'paypal' | 'custom';
   thankYouMessage?: string;
   showSupporterNames?: boolean;
   goalAmount?: number;

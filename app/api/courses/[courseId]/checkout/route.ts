@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma                                                                              from '@/lib/prisma';
-import Stripe from 'stripe';
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-09-30.clover'
-});
+import prisma from '@/lib/prisma';
+import { logger } from '@/lib/utils/logger';
 
 export async function POST(
   request: NextRequest,
@@ -56,40 +52,15 @@ export async function POST(
       );
     }
 
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: course.title,
-              description: course.description || undefined,
-              images: course.coverImageUrl ? [course.coverImageUrl] : undefined
-            },
-            unit_amount: Math.round(course.price * 100) // Convert to cents
-          },
-          quantity: 1
-        }
-      ],
-      mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || request.headers.get('origin')}/c/${course.slug}/learn?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || request.headers.get('origin')}/c/${course.slug}`,
-      metadata: {
-        userId,
-        courseId: course.id
-      }
-    });
-
-    return NextResponse.json({
-      sessionId: session.id,
-      url: session.url
-    });
-  } catch (error) {
-    console.error('Error creating checkout session:', error);
+    // Payment processing not available - Stripe has been removed
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: 'Payment processing is not currently available. Please contact support.' },
+      { status: 503 }
+    );
+  } catch (error) {
+    logger.error('Error in course checkout:', error);
+    return NextResponse.json(
+      { error: 'Failed to process checkout' },
       { status: 500 }
     );
   }

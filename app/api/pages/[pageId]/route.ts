@@ -2,115 +2,119 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 import { Prisma } from '@prisma/client';
+import { getAuthenticatedUser, requireResourceOwnership } from '@/lib/auth/serverAuth';
 
 // GET: Fetch all blocks for a page
 export async function GET(req: NextRequest, { params }: { params: Promise<{ pageId: string }> }) {
-    const { pageId } = await params;
-    const userId = req.headers.get('x-user-id'); // Optional - may not be present for public access
+  const { pageId } = await params;
+  
+  try {
+    // Get authenticated user (optional - for public access)
+    const auth = await getAuthenticatedUser(req);
+    const userId = auth?.userId || null;
     
-    try {
-        const page = await prisma.page.findUnique({
-          where: { id: pageId },
-          select: {
-            id: true,
-            userId: true,
-            isActive: true,
-            slug: true,
-            title: true,
-            description: true,
-            backgroundColor: true,
-            textColor: true,
-            fontFamily: true,
-            metaTitle: true,
-            metaDescription: true,
-            metaKeywords: true,
-            ogImage: true,
-            createdAt: true,
-            updatedAt: true,
-          }
-        });
-        
-        if (!page) {
-          return NextResponse.json(
-            { error: 'Page not found' },
-            { status: 404 }
-          );
-        }
-
-        // Authorization check:
-        // - Published pages (isActive: true) are publicly accessible
-        // - Unpublished pages can only be viewed by the owner
-        if (!page.isActive && page.userId !== userId) {
-          return NextResponse.json(
-            { error: 'Unauthorized - this page is not published' },
-            { status: 403 }
-          );
-        }
-        
-        // Get page header
-        const pageHeader = await prisma.pageHeader.findUnique({
-          where: { pageId: pageId },
-        });
-        
-        if (!pageHeader) {
-          return NextResponse.json(
-            { error: 'Page header not found' },
-            { status: 404 }
-          );
-        }
-        
-        // Get blocks - only active blocks for public, all blocks for owner
-        const blocks = await prisma.block.findMany({
-          where: {
-            pageId: pageId,
-            ...(page.userId !== userId ? { isActive: true } : {}), // Only active blocks for non-owners
-          },
-          orderBy: { position: 'asc' }
-        });
-        
-        // Get user info for public pages
-        let user = null;
-        if (page.isActive) {
-          const pageWithUser = await prisma.page.findUnique({
-            where: { id: pageId },
-            select: {
-              user: {
-                include: {
-                  profile: true
-                }
-              }
-            }
-          });
-          user = pageWithUser?.user || null;
-        }
-        
-        logger.info(`Page loaded successfully: ${pageId} (public: ${page.isActive}, owner: ${page.userId === userId})`);
-        
-        // Get actual click count from database (with error handling)
-        let clickCount = 0;
-        try {
-          clickCount = await prisma.click.count({
-            where: { pageId: pageId }
-          });
-        } catch (countError) {
-          logger.error('Error counting clicks:', countError);
-          // Continue with 0 if count fails
-        }
-        
-        return NextResponse.json({
-          ...page,
-          pageHeader,
-          blocks,
-          user,
-          _count: { clicks: clickCount }
-        });
-      } catch (error) {
-        logger.error(`Error fetching page ${pageId}:`, error);
-        return NextResponse.json(
-          { error: 'Internal server error' },
-          { status: 500 }
-        );
+    const page = await prisma.page.findUnique({
+      where: { id: pageId },
+      select: {
+        id: true,
+        userId: true,
+        isActive: true,
+        slug: true,
+        title: true,
+        description: true,
+        backgroundColor: true,
+        textColor: true,
+        fontFamily: true,
+        metaTitle: true,
+        metaDescription: true,
+        metaKeywords: true,
+        ogImage: true,
+        createdAt: true,
+        updatedAt: true,
       }
+    });
+    
+    if (!page) {
+      return NextResponse.json(
+        { error: 'Page not found' },
+        { status: 404 }
+      );
+    }
+
+    // Authorization check:
+    // - Published pages (isActive: true) are publicly accessible
+    // - Unpublished pages can only be viewed by the owner
+    if (!page.isActive && page.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized - this page is not published' },
+        { status: 403 }
+      );
+    }
+    
+    // Get page header
+    const pageHeader = await prisma.pageHeader.findUnique({
+      where: { pageId: pageId },
+    });
+    
+    if (!pageHeader) {
+      return NextResponse.json(
+        { error: 'Page header not found' },
+        { status: 404 }
+      );
+    }
+    
+    // Get blocks - only active blocks for public, all blocks for owner
+    const blocks = await prisma.block.findMany({
+      where: {
+        pageId: pageId,
+        ...(page.userId !== userId ? { isActive: true } : {}), // Only active blocks for non-owners
+      },
+      orderBy: { position: 'asc' }
+    });
+    
+    // Get user info for public pages
+    let user = null;
+    if (page.isActive) {
+      const pageWithUser = await prisma.page.findUnique({
+        where: { id: pageId },
+        select: {
+          user: {
+            include: {
+              profile: true
+            }
+          }
+        }
+      });
+      user = pageWithUser?.user || null;
+    }
+    
+    logger.info(`Page loaded successfully: ${pageId} (public: ${page.isActive}, owner: ${page.userId === userId})`);
+    
+    // Get actual click count from database (with error handling)
+    let clickCount = 0;
+    try {
+      clickCount = await prisma.click.count({
+        where: { pageId: pageId }
+      });
+    } catch (countError) {
+      logger.error('Error counting clicks:', countError);
+      // Continue with 0 if count fails
+    }
+    
+    return NextResponse.json({
+      ...page,
+      pageHeader,
+      blocks,
+      user,
+      _count: { clicks: clickCount }
+    });
+  } catch (error) {
+    logger.error(`Error fetching page ${pageId}:`, error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(
@@ -118,21 +122,23 @@ export async function POST(
   { params }: { params: Promise<{ pageId: string }> }
 ) {
   const { pageId } = await params;
-  const userId = req.headers.get('x-user-id');
   const headerData = await req.json();
   
   try {
-    // Require authentication for updates
-    if (!userId) {
+    // Require authentication and ownership
+    const auth = await requireResourceOwnership(req, pageId, 'page');
+    
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: auth.error },
+        { status: auth.statusCode }
       );
     }
 
-    console.log("Page data received for update:", headerData);
+    const userId = auth.userId!;
+    logger.info("Page data received for update:", headerData);
     
-    // Step 1: Validate page exists and check ownership
+    // Validate page exists
     const page = await prisma.page.findUnique({
       where: { id: pageId },
       select: { id: true, userId: true }
@@ -142,14 +148,6 @@ export async function POST(
       return NextResponse.json(
         { error: 'Page not found' }, 
         { status: 404 }
-      );
-    }
-
-    // Check ownership - only the page owner can update
-    if (page.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Forbidden - you can only update your own pages' },
-        { status: 403 }
       );
     }
 
@@ -181,37 +179,19 @@ export async function DELETE(
   { params }: { params: Promise<{ pageId: string }> }
 ) {
   const { pageId } = await params;
-  const userId = req.headers.get('x-user-id');
   
   try {
-    // Require authentication
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Verify page exists and check ownership
-    const page = await prisma.page.findUnique({
-      where: { id: pageId },
-      select: { id: true, userId: true, title: true }
-    });
+    // Require authentication and ownership
+    const auth = await requireResourceOwnership(req, pageId, 'page');
     
-    if (!page) {
+    if (!auth.authorized) {
       return NextResponse.json(
-        { error: 'Page not found' },
-        { status: 404 }
+        { error: auth.error },
+        { status: auth.statusCode }
       );
     }
 
-    // Check ownership - only the page owner can delete
-    if (page.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Forbidden - you can only delete your own pages' },
-        { status: 403 }
-      );
-    }
+    const userId = auth.userId!;
 
     // Delete the page (Prisma will cascade delete related records: blocks, clicks, forms, header)
     await prisma.page.delete({

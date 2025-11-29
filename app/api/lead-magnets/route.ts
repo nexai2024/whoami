@@ -5,6 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, MagnetType, DeliveryMethod, MagnetStatus } from '@prisma/client';
+import { requireAuth, requireFeature } from '@/lib/auth/serverAuth';
+import { RateLimitService } from '@/lib/rate-limit';
+import { logger } from '@/lib/utils/logger';
 
 const prisma = new PrismaClient();
 
@@ -54,15 +57,28 @@ async function generateUniqueSlug(name: string, existingId?: string): Promise<st
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
-
-    if (!userId) {
+    // Step 1: Require authentication and check feature access (lead_magnets quota)
+    // Why: We use requireFeature() which combines auth check + rate limiting in one call
+    // This ensures the user is authenticated AND has remaining quota
+    const auth = await requireFeature(request, 'lead_magnets');
+    
+    if (!auth.authorized) {
+      // Return detailed error with limit information
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        {
+          error: auth.error || 'Lead magnet limit reached for your plan',
+          limit: auth.featureResult?.limit,
+          remaining: auth.featureResult?.remaining ?? 0,
+          resetAt: auth.featureResult?.resetAt?.toISOString()
+        },
+        { status: auth.statusCode || 403 }
       );
     }
+
+    // Step 2: Extract userId from auth result
+    // Why: The auth object contains the authenticated user's ID
+    const userId = auth.userId!;
+    logger.info("Creating lead magnet for user:", userId);
 
     const body = await request.json();
     const {
@@ -181,6 +197,10 @@ export async function POST(request: NextRequest) {
         data: leadMagnetData,
       });
 
+      // Step 5: For AI generation, we still increment usage even though it's async
+      // Why: The user has committed to creating a lead magnet, so it counts against quota
+      await RateLimitService.incrementUsage(userId, 'lead_magnets');
+
       // Trigger AI generation in background (in production, use job queue)
       // For now, return immediately
       return NextResponse.json(
@@ -203,10 +223,15 @@ export async function POST(request: NextRequest) {
       data: leadMagnetData,
     });
 
-    // Generate opt-in URL and embed code
+    // Step 3: Generate opt-in URL and embed code
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const optInUrl = `${baseUrl}/magnet/${leadMagnet.slug}`;
     const embedCode = `<script src="${baseUrl}/embed/magnet/${leadMagnet.slug}.js"></script>`;
+
+    // Step 4: Increment usage counter after successful creation
+    // Why: We only increment AFTER the lead magnet is successfully created
+    // This prevents counting failed attempts against the user's quota
+    await RateLimitService.incrementUsage(userId, 'lead_magnets');
 
     return NextResponse.json({
       leadMagnetId: leadMagnet.id,
@@ -215,7 +240,7 @@ export async function POST(request: NextRequest) {
       embedCode,
     });
   } catch (error) {
-    console.error('Error creating lead magnet:', error);
+    logger.error('Error creating lead magnet:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -225,9 +250,22 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
+    // Step 1: Require authentication
+    // Why: Users should only see their own lead magnets
+    const auth = await requireAuth(request);
+    
+    // Check if auth failed (AuthorizationResult with authorized: false)
+    if ('authorized' in auth && !auth.authorized) {
+      return NextResponse.json(
+        { error: auth.error },
+        { status: auth.statusCode || 401 }
+      );
+    }
 
+    // Step 2: Extract userId from auth result
+    // Why: The auth object contains the authenticated user's ID
+    const userId = 'userId' in auth ? auth.userId : null;
+    
     if (!userId) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -280,7 +318,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('Error fetching lead magnets:', error);
+    logger.error('Error fetching lead magnets:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -17,7 +17,7 @@ import { useSensors, useSensor, PointerSensor, DndContext, closestCenter } from 
 import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'framer-motion';
-
+import { RateLimitService } from '../lib/rate-limit';
 
 const {
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage,

@@ -9,7 +9,8 @@ import { useState, useEffect } from 'react';
 import { MagnetType, MagnetStatus, DeliveryMethod } from '@prisma/client';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@stackframe/stack';
+import { useUserContext } from '@/lib/contexts/UserContext';
+import { useFeatureGate } from '@/lib/hooks/useFeatureGate';
 import { FiUpload, FiUsers } from 'react-icons/fi';
 import Image from 'next/image';
 interface LeadMagnet {
@@ -42,9 +43,86 @@ interface Template {
   featured: boolean;
 }
 
+// Template Card Component
+function TemplateCard({ 
+  template, 
+  onUse, 
+  getTypeIcon 
+}: { 
+  template: Template; 
+  onUse: (template: Template) => void;
+  getTypeIcon: (type: MagnetType) => string;
+}) {
+  const [imageError, setImageError] = useState(false);
+  const hasValidImage = template.thumbnailUrl && 
+                       !template.thumbnailUrl.includes('placeholder') && 
+                       !imageError;
+
+  return (
+    <div
+      onClick={() => onUse(template)}
+      className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+    >
+      {/* Template Thumbnail */}
+      <div className="h-48 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white relative overflow-hidden">
+        {hasValidImage ? (
+          <img 
+            src={template.thumbnailUrl}
+            alt={template.name}
+            className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full w-full">
+            <span className="text-6xl mb-2">
+              {getTypeIcon(template.type)}
+            </span>
+            <span className="text-sm font-medium opacity-90">{template.category}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="font-semibold text-gray-900 line-clamp-1">
+            {template.name}
+          </h3>
+          {template.featured && (
+            <span className="text-yellow-500 text-sm">⭐</span>
+          )}
+        </div>
+
+        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+          {template.description}
+        </p>
+
+        <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+          <span className="px-2 py-1 bg-gray-100 rounded">
+            {template.category}
+          </span>
+          <span>{template.useCount} uses</span>
+        </div>
+
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onUse(template);
+          }}
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700 transition-colors"
+        >
+          Use This Template
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function LeadMagnetDashboard() {
   const router = useRouter();
-  const user = useUser();
+  const { user, userId, isAuthenticated } = useUserContext();
+  const { hasAccess: canCreateLeadMagnet, limit: leadMagnetLimit, remaining: leadMagnetsRemaining, loading: featureLoading } = useFeatureGate('lead_magnets', { autoCheck: true });
+  
   const [magnets, setMagnets] = useState<LeadMagnet[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,18 +157,18 @@ export default function LeadMagnetDashboard() {
   const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
-    if (user?.id) {
+    if (userId && isAuthenticated) {
       fetchLeadMagnets();
       fetchTemplates();
       fetchLeadsCount();
     }
-  }, [user]);
+  }, [userId, isAuthenticated]);
   
   const fetchLeadsCount = async () => {
-    if (!user?.id) return;
+    if (!userId) return;
     try {
-      const response = await fetch(`/api/leads?userId=${user.id}`, {
-        headers: { 'x-user-id': user.id },
+      const response = await fetch(`/api/leads?userId=${userId}`, {
+        headers: { 'x-user-id': userId },
       });
       if (response.ok) {
         const data = await response.json();
@@ -102,11 +180,9 @@ export default function LeadMagnetDashboard() {
   };
 
   const fetchLeadMagnets = async () => {
-    if (!user?.id) return;
+    if (!userId) return;
     try {
-      const response = await fetch('/api/lead-magnets', {
-        headers: { 'x-user-id': user.id }
-      });
+      const response = await fetch('/api/lead-magnets');
       const data = await response.json();
       setMagnets(data.leadMagnets || []);
     } catch (error) {
@@ -285,8 +361,18 @@ export default function LeadMagnetDashboard() {
       return;
     }
 
-    if (!user?.id) {
+    if (!userId) {
       toast.error('You must be logged in to create a lead magnet.');
+      return;
+    }
+
+    // Check if user can create more lead magnets
+    if (!canCreateLeadMagnet) {
+      toast.error(
+        leadMagnetsRemaining !== null 
+          ? `You've reached your lead magnet limit (${leadMagnetLimit} lead magnets). Upgrade your plan to create more.`
+          : 'You cannot create more lead magnets. Please upgrade your plan.'
+      );
       return;
     }
 
@@ -320,7 +406,6 @@ export default function LeadMagnetDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id
         },
         body: JSON.stringify(payload)
       });
@@ -560,6 +645,21 @@ export default function LeadMagnetDashboard() {
     setEditFormErrors({});
   };
 
+  const handleUseTemplate = (template: Template) => {
+    setSelectedTemplateId(template.id);
+    setCreationMethod('TEMPLATE');
+    // Pre-fill form data based on template
+    setFormData({
+      name: '',
+      type: template.type,
+      headline: `Get your free ${template.name.toLowerCase()}`,
+      description: template.description,
+      deliveryMethod: 'INSTANT_DOWNLOAD',
+    });
+    setFormErrors({});
+    setShowCreateModal(true);
+  };
+
   const getTypeIcon = (type: MagnetType) => {
     const icons: Record<MagnetType, string> = {
       PDF: '📄',
@@ -660,11 +760,30 @@ export default function LeadMagnetDashboard() {
                 </button>
               )}
               <button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                onClick={() => {
+                  if (!canCreateLeadMagnet) {
+                    toast.error(
+                      leadMagnetsRemaining !== null 
+                        ? `You've reached your lead magnet limit (${leadMagnetLimit} lead magnets). Upgrade your plan to create more.`
+                        : 'You cannot create more lead magnets. Please upgrade your plan.'
+                    );
+                    return;
+                  }
+                  setShowCreateModal(true);
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  canCreateLeadMagnet
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
                 data-tour-id="create-magnet-button"
+                title={!canCreateLeadMagnet ? `Lead magnet limit reached (${leadMagnetLimit} lead magnets). Upgrade to create more.` : ''}
+                disabled={!canCreateLeadMagnet}
               >
                 + Create Lead Magnet
+                {!canCreateLeadMagnet && leadMagnetsRemaining !== null && (
+                  <span className="ml-2 text-xs">({leadMagnetsRemaining}/{leadMagnetLimit})</span>
+                )}
               </button>
             </div>
           </div>
@@ -675,10 +794,26 @@ export default function LeadMagnetDashboard() {
               <div className="text-5xl mb-4">📧</div>
               <p className="text-gray-500 mb-4">No lead magnets yet</p>
               <button
-                onClick={() => setShowCreateModal(true)}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                onClick={() => {
+                  if (!canCreateLeadMagnet) {
+                    toast.error(
+                      leadMagnetsRemaining !== null 
+                        ? `You've reached your lead magnet limit (${leadMagnetLimit} lead magnets). Upgrade your plan to create more.`
+                        : 'You cannot create more lead magnets. Please upgrade your plan.'
+                    );
+                    return;
+                  }
+                  setShowCreateModal(true);
+                }}
+                className={`font-medium transition-colors ${
+                  canCreateLeadMagnet
+                    ? 'text-blue-600 hover:text-blue-700'
+                    : 'text-gray-400 cursor-not-allowed'
+                }`}
+                title={!canCreateLeadMagnet ? `Lead magnet limit reached. Upgrade to create more.` : ''}
+                disabled={!canCreateLeadMagnet}
               >
-                Create your first lead magnet →
+                {canCreateLeadMagnet ? 'Create your first lead magnet →' : `Limit Reached (${leadMagnetLimit})`}
               </button>
             </div>
           ) : (
@@ -792,48 +927,12 @@ export default function LeadMagnetDashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {templates.map((template) => (
-              <div
+              <TemplateCard
                 key={template.id}
-                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              >
-                {/* Template Thumbnail */}
-                <div className="h-48 bg-gray-100 overflow-hidden">
-                  <Image 
-                    src={template.thumbnailUrl}
-                    alt={template.name}
-                    width={400}
-                    height={192}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Content */}
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 line-clamp-1">
-                      {template.name}
-                    </h3>
-                    {template.featured && (
-                      <span className="text-yellow-500 text-sm">⭐</span>
-                    )}
-                  </div>
-
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                    {template.description}
-                  </p>
-
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                    <span className="px-2 py-1 bg-gray-100 rounded">
-                      {template.category}
-                    </span>
-                    <span>{template.useCount} uses</span>
-                  </div>
-
-                  <button className="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700">
-                    Use This Template
-                  </button>
-                </div>
-              </div>
+                template={template}
+                onUse={handleUseTemplate}
+                getTypeIcon={getTypeIcon}
+              />
             ))}
           </div>
         </div>

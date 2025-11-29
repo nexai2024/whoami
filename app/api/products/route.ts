@@ -1,11 +1,11 @@
 /**
  * GET /api/products - List all products for authenticated user
- * POST /api/products - Create new product with Stripe integration
+ * POST /api/products - Create new product
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { stripe } from '@/lib/stripe';
+import { logger } from '@/lib/utils/logger';
 
 const prisma = new PrismaClient();
 
@@ -60,8 +60,6 @@ export async function GET(request: NextRequest) {
         fileUrl: product.fileUrl,
         downloadLimit: product.downloadLimit,
         isActive: product.isActive,
-        stripeProductId: product.stripeProductId,
-        stripePriceId: product.stripePriceId,
         createdAt: product.createdAt.toISOString(),
         updatedAt: product.updatedAt.toISOString(),
         salesCount: product._count.sales
@@ -74,7 +72,7 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logger.error('Error fetching products:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -103,7 +101,6 @@ export async function POST(request: NextRequest) {
       fileUrl,
       downloadLimit,
       isActive = true,
-      createStripeProduct = true
     } = body;
 
     // Validate required fields
@@ -114,9 +111,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!price || price < 0.5) {
+    if (!price || price < 0) {
       return NextResponse.json(
-        { error: 'Price must be at least $0.50 (Stripe minimum)' },
+        { error: 'Price must be at least $0' },
         { status: 400 }
       );
     }
@@ -157,35 +154,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let stripeProductId: string | null = null;
-    let stripePriceId: string | null = null;
-
-    // Create Stripe product and price if requested
-    if (createStripeProduct) {
-      try {
-        // Create Stripe Product
-        const stripeProduct = await stripe.products.create({
-          name,
-          description: description || undefined,
-          metadata: {
-            userId
-          }
-        });
-        stripeProductId = stripeProduct.id;
-
-        // Create Stripe Price
-        const stripePrice = await stripe.prices.create({
-          product: stripeProductId,
-          unit_amount: Math.round(price * 100), // Convert to cents
-          currency: currency.toLowerCase()
-        });
-        stripePriceId = stripePrice.id;
-      } catch (stripeError) {
-        console.error('Stripe error:', stripeError);
-        // Continue with product creation even if Stripe fails
-        // This allows users to create products without Stripe integration
-      }
-    }
 
     // Create product in database
     const product = await prisma.product.create({
@@ -198,19 +166,15 @@ export async function POST(request: NextRequest) {
         fileUrl,
         downloadLimit,
         isActive,
-        stripeProductId,
-        stripePriceId
       }
     });
 
     return NextResponse.json({
       productId: product.id,
-      stripeProductId,
-      stripePriceId,
       message: 'Product created successfully'
     });
   } catch (error) {
-    console.error('Error creating product:', error);
+    logger.error('Error creating product:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

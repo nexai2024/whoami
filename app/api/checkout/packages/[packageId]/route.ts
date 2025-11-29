@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe } from '@/lib/stripe';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 
@@ -51,74 +50,16 @@ export async function POST(
       );
     }
 
-    // Get included products
-    const includedProducts = await prisma.product.findMany({
-      where: {
-        id: { in: packageProduct.packageProducts || [] },
-        isActive: true
-      }
-    });
-
-    if (includedProducts.length === 0) {
-      return NextResponse.json(
-        { error: 'Package has no products' },
-        { status: 400 }
-      );
-    }
-
-    // Create Stripe checkout session
-    const origin = request.headers.get('origin') || 
-                   process.env.NEXT_PUBLIC_BASE_URL || 
-                   'http://localhost:3000';
-
-    // Build line items for all products in package
-    const lineItems = includedProducts.map((product: any) => ({
-      price_data: {
-        currency: product.currency.toLowerCase(),
-        product_data: {
-          name: product.name,
-          description: product.description || undefined,
-        },
-        unit_amount: Math.round(product.price * 100), // Convert to cents
-      },
-      quantity: 1,
-    }));
-
-    // If package has a discount, apply it
-    // For now, we'll use the package price as the total
-    // In production, you might want to calculate discount separately
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      line_items: lineItems,
-      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/checkout/cancel`,
-      customer_email: email || undefined,
-      metadata: {
-        packageId: packageId,
-        userId: userId || '',
-        type: 'package',
-        includedProducts: JSON.stringify(packageProduct.packageProducts || [])
-      }
-    });
-
-    logger.info('Package checkout session created', {
-      sessionId: session.id,
-      packageId,
-      userId
-    });
-
-    return NextResponse.json({
-      sessionId: session.id,
-      url: session.url
-    });
-  } catch (error) {
-    logger.error('Error creating package checkout:', error);
+    // Payment processing not available - Stripe has been removed
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: 'Payment processing is not currently available. Please contact support.' },
+      { status: 503 }
+    );
+  } catch (error) {
+    logger.error('Error in package checkout:', error);
+    return NextResponse.json(
+      { error: 'Failed to process checkout' },
       { status: 500 }
     );
   }
 }
-

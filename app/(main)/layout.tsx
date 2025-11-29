@@ -4,6 +4,7 @@ import { StackProvider, StackTheme } from "@stackframe/stack";
 import { stackClientApp } from "../../stack/client";
 import { Geist, Geist_Mono } from "next/font/google";
 import './globals.css';
+import { UserProvider } from "@/lib/contexts/UserContext"
 import { AuthProvider } from "@/lib/auth/AuthContext"
 import { ensureOnboarded } from "./onboarding-functions";
 import { ErrorBoundary } from '../../components/ErrorBoundary';
@@ -15,15 +16,15 @@ import Header from '@/components/Header';
 import ContentWrapper from '@/components/ContentWrapper';
 import { useUser } from "@stackframe/stack";
 import { usePathname } from 'next/navigation';
-import { checkUserFeature } from "@/lib/features/checkFeature";
 import React from 'react';
+import { useAuthorization } from "@/lib/hooks/useAuthorization";
 
 keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const user = useUser();
   const pathname = usePathname();
-  const [isAdmin, setIsAdmin] = React.useState(false);
+  const { isAdmin } = useAuthorization();
 
   const publicRoutePatterns = [
     /^\/magnet(\/|$)/,
@@ -39,19 +40,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     : false;
   
   const showNavigation = !isPublicRoute;
-
-  // Check admin status
-  React.useEffect(() => {
-    async function checkAdmin() {
-      if (user?.id) {
-        const adminStatus = await checkUserFeature(user.id, 'error_console_admin');
-        setIsAdmin(adminStatus);
-      } else {
-        setIsAdmin(false);
-      }
-    }
-    checkAdmin();
-  }, [user?.id]);
 
   return (
     <>
@@ -79,15 +67,17 @@ export default function AppLayout({
   return (
     <StackProvider app={stackClientApp}>
       <StackTheme>
-        <AuthProvider>
-          <TourProvider>
-            <ErrorBoundary>
-              <LayoutContent>
-                {children}
-              </LayoutContent>
-            </ErrorBoundary>
-          </TourProvider>
-        </AuthProvider>
+        <UserProvider>
+          <AuthProvider>
+            <TourProvider>
+              <ErrorBoundary>
+                <LayoutContent>
+                  {children}
+                </LayoutContent>
+              </ErrorBoundary>
+            </TourProvider>
+          </AuthProvider>
+        </UserProvider>
       </StackTheme>
     </StackProvider>
   );

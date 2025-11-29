@@ -46,10 +46,48 @@ export async function GET(request: NextRequest) {
     })
 
     if (!subscription) {
-      return NextResponse.json(
-        { error: 'Subscription not found' },
-        { status: 404 }
-      )
+      // Assign free plan to user
+      const freePlan = await prisma.plan.findFirst({
+        where: {
+          planEnum: 'FREE',
+          isActive: true
+        }
+      })
+
+      if (!freePlan) {
+        return NextResponse.json(
+          { error: 'FREE plan not found in database' },
+          { status: 500 }
+        )
+      }
+
+      const now = new Date()
+      const periodEnd = new Date(now)
+      periodEnd.setMonth(periodEnd.getMonth() + 1)
+
+      const newSubscription = await prisma.subscription.create({
+        data: {
+          userId,
+          planId: freePlan.id,
+          status: 'active',
+          currentPeriodStart: now,
+          currentPeriodEnd: periodEnd,
+          cancelAtPeriodEnd: false,
+        },
+        include: {
+          plan: {
+            include: {
+              features: {
+                include: {
+                  feature: true,
+                },
+              },
+            },
+          },
+        },
+      })
+
+      return NextResponse.json(newSubscription)
     }
 
     return NextResponse.json(subscription)

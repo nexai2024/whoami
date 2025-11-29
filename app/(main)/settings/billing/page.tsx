@@ -72,21 +72,6 @@ interface UsageItem {
   resetDate: string;
 }
 
-interface Invoice {
-  id: string;
-  number: string | null;
-  amount: number;
-  currency: string;
-  status: string;
-  date: string;
-  dueDate: string | null;
-  periodStart: string | null;
-  periodEnd: string | null;
-  description: string | null;
-  hostedInvoiceUrl: string | null;
-  invoicePdf: string | null;
-  subscriptionId: string | null;
-}
 
 export default function BillingPage() {
   const user = useUser();
@@ -94,7 +79,6 @@ export default function BillingPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [usage, setUsage] = useState<UsageItem[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -128,7 +112,6 @@ export default function BillingPage() {
       fetchSubscription(),
       fetchPlans(),
       fetchUsage(),
-      fetchInvoices(),
       checkSuperAdminStatus()
     ]);
     setLoading(false);
@@ -212,25 +195,6 @@ export default function BillingPage() {
     }
   };
 
-  const fetchInvoices = async () => {
-    if (!userId) return;
-    
-    try {
-      const response = await fetch('/api/billing/invoices', {
-        headers: { 'x-user-id': userId } as HeadersInit
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setInvoices(data.invoices || []);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error fetching invoices:', errorData.error || 'Unknown error');
-      }
-    } catch (error) {
-      console.error('Error fetching invoices:', error);
-    }
-  };
 
   const handleUpgradeClick = (plan: Plan) => {
     setSelectedPlan(plan);
@@ -247,52 +211,9 @@ export default function BillingPage() {
 
     setActionLoading(true);
     try {
-      // For new subscriptions, create checkout session
-      if (!subscription.stripeSubscriptionId) {
-        const checkoutResponse = await fetch('/api/subscriptions/checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': userId
-          } as HeadersInit,
-          body: JSON.stringify({
-            planId: selectedPlan.id
-          })
-        });
-
-        if (checkoutResponse.ok) {
-          const { url } = await checkoutResponse.json();
-          window.location.href = url;
-          return;
-        } else {
-          const error = await checkoutResponse.json();
-          toast.error(error.error || 'Failed to start checkout');
-          setActionLoading(false);
-          return;
-        }
-      }
-
-      // For existing subscriptions, update via API
-      const response = await fetch(`/api/subscriptions/${subscription.id}`, {
-        method: 'PATCH',
-        headers: {
-          'x-user-id': userId,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          planId: selectedPlan.id,
-          prorate: true
-        })
-      });
-
-      if (response.ok) {
-        toast.success(`Upgraded to ${selectedPlan.name}!`);
-        setShowUpgradeModal(false);
-        await fetchSubscription();
-      } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to upgrade subscription');
-      }
+      // Payment processing not available - Stripe has been removed
+      toast.error('Payment processing is not currently available. Please contact support to change your plan.');
+      setShowUpgradeModal(false);
     } catch (error) {
       toast.error('Failed to upgrade subscription. Please try again.');
     }
@@ -304,26 +225,9 @@ export default function BillingPage() {
 
     setActionLoading(true);
     try {
-      const response = await fetch(`/api/subscriptions/${subscription.id}`, {
-        method: 'PATCH',
-        headers: {
-          'x-user-id': userId,
-          'Content-Type': 'application/json'
-        } as HeadersInit,
-        body: JSON.stringify({
-          planId: selectedPlan.id,
-          applyAtPeriodEnd: true
-        })
-      });
-
-      if (response.ok) {
-        toast.success(`Will downgrade to ${selectedPlan.name} at period end`);
-        setShowDowngradeModal(false);
-        await fetchSubscription();
-      } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to downgrade subscription');
-      }
+      // Payment processing not available - Stripe has been removed
+      toast.error('Payment processing is not currently available. Please contact support to change your plan.');
+      setShowDowngradeModal(false);
     } catch (error) {
       toast.error('Failed to downgrade subscription. Please try again.');
     }
@@ -479,30 +383,6 @@ export default function BillingPage() {
               >
                 View Plans
               </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch('/api/billing/portal', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'x-user-id': userId || ''
-                      }
-                    });
-                    if (response.ok) {
-                      const { url } = await response.json();
-                      window.location.href = url;
-                    } else {
-                      toast.error('Failed to open billing portal');
-                    }
-                  } catch (error) {
-                    toast.error('Failed to open billing portal');
-                  }
-                }}
-                className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 font-medium transition"
-              >
-                Change Payment Method
-              </button>
             </div>
           </div>
         ) : (
@@ -548,74 +428,6 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Billing History */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Billing History</h2>
-
-        {invoices.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No billing history available</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Date</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Description</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Amount</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Status</th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Invoice</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((invoice) => (
-                  <tr key={invoice.id} className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-sm text-gray-900">
-                      {formatDate(invoice.date)}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-900">
-                      {invoice.description || 'Subscription'}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-900">
-                      {formatCurrency(invoice.amount)} {invoice.currency}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-2 py-1 text-xs rounded ${
-                          invoice.status === 'paid'
-                            ? 'bg-green-100 text-green-800'
-                            : invoice.status === 'open'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : invoice.status === 'void'
-                            ? 'bg-gray-100 text-gray-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {invoice.invoicePdf || invoice.hostedInvoiceUrl ? (
-                        <a
-                          href={invoice.hostedInvoiceUrl || invoice.invoicePdf || '#'}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline text-sm"
-                        >
-                          {invoice.invoicePdf ? 'Download PDF' : 'View Invoice'}
-                        </a>
-                      ) : (
-                        <span className="text-gray-400 text-sm">N/A</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
 
       {/* Danger Zone */}
       {subscription && (

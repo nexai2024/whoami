@@ -5,10 +5,10 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '@/common/SafeIcon';
 import { PageService } from '@/lib/database/pages';
 import { AnalyticsService } from '@/lib/services/analyticsService';
-import { useAuth } from '@/lib/auth/AuthContext';
+import { useUserContext } from '@/lib/contexts/UserContext';
+import { useFeatureGate } from '@/lib/hooks/useFeatureGate';
 import { logger } from '@/lib/utils/logger';
 import toast from 'react-hot-toast';
-import { useUser } from '@stackframe/stack';
 const {
   FiPlus, FiEdit3, FiBarChart3, FiSettings, FiEye, FiDollarSign,
   FiUsers, FiTrendingUp, FiExternalLink, FiCopy, FiMoreHorizontal,
@@ -17,8 +17,10 @@ const {
 } = FiIcons;
 
 export default function Dashboard() {
-  const { currUser } = useAuth();
-  const stackUser = useUser();
+  const { user, userId, isAuthenticated, loading: userLoading } = useUserContext();
+  const { hasAccess: canCreatePage, limit: pageLimit, remaining: pagesRemaining, loading: featureLoading } = useFeatureGate('pages', { autoCheck: true });
+  const { hasAccess: canCreateLeadMagnet, limit: leadMagnetLimit, remaining: leadMagnetsRemaining } = useFeatureGate('lead_magnets', { autoCheck: true });
+  
   const [userPages, setUserPages] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,17 +30,17 @@ export default function Dashboard() {
   const [bookingsCount, setBookingsCount] = useState(0);
 
   useEffect(() => {
-    if (currUser || stackUser) {
+    if (userId && isAuthenticated) {
       loadDashboardData();
       checkCoachStatus();
       loadStats();
     }
-  }, [currUser, stackUser]);
+  }, [userId, isAuthenticated]);
 
   const loadDashboardData = async () => {
+    if (!userId) return;
     try {
       setLoading(true);
-      const userId = currUser?.id || stackUser?.id;
       const [pages, userAnalytics] = await Promise.all([
         PageService.getUserPages(userId),
         AnalyticsService.getUserAnalytics(userId, 30)
@@ -53,7 +55,6 @@ export default function Dashboard() {
   };
 
   const checkCoachStatus = async () => {
-    const userId = currUser?.id || stackUser?.id;
     if (!userId) return;
     try {
       const response = await fetch(`/api/profiles/${userId}`, {
@@ -69,7 +70,6 @@ export default function Dashboard() {
   };
 
   const loadStats = async () => {
-    const userId = currUser?.id || stackUser?.id;
     if (!userId) return;
     
     try {
@@ -106,13 +106,44 @@ export default function Dashboard() {
     }
   };
 
+  // const createNewPage = async () => {
+  //   const limitCheck = await RateLimitService.checkFeatureAccess(currUser?.id || stackUser?.id, 'pages');
+  //   if (!limitCheck.allowed) {
+  //     toast.error(limitCheck.message);
+  //     return;
+  //   } else {
+  //     navigate('/builder?new=true');
+  //   }
+  // }
   const copyPageUrl = (slug) => {
     const pageUrl = `${window.location.origin}/p/${slug}`;
     navigator.clipboard.writeText(pageUrl);
     toast.success('Page URL copied to clipboard!');
   };
 
-  if (!currUser && !stackUser) {
+  const handleCreatePageClick = (e) => {
+    if (!canCreatePage) {
+      e.preventDefault();
+      toast.error(
+        pagesRemaining !== null 
+          ? `You've reached your page limit (${pageLimit} pages). Upgrade your plan to create more pages.`
+          : 'You cannot create more pages. Please upgrade your plan.'
+      );
+    }
+  };
+
+  const handleCreateLeadMagnetClick = (e) => {
+    if (!canCreateLeadMagnet) {
+      e.preventDefault();
+      toast.error(
+        leadMagnetsRemaining !== null 
+          ? `You've reached your lead magnet limit (${leadMagnetLimit} lead magnets). Upgrade your plan to create more.`
+          : 'You cannot create more lead magnets. Please upgrade your plan.'
+      );
+    }
+  };
+
+  if (userLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -123,12 +154,33 @@ export default function Dashboard() {
     );
   }
 
-  const displayUser = currUser || stackUser;
+  const displayUser = user;
 
   // Hot items - most frequently used features
   const hotItems = [
-    { name: 'Create Page', href: '/builder?new=true', icon: FiFileText, color: 'blue', description: 'Build your bio page' },
-    { name: 'Create Lead Magnet', href: '/marketing/lead-magnets', icon: FiGift, color: 'green', description: 'Grow your email list', badge: leadMagnetCount },
+    { 
+      name: 'Create Page', 
+      href: '/builder?new=true', 
+      icon: FiFileText, 
+      color: 'blue', 
+      description: canCreatePage 
+        ? (pagesRemaining !== null ? `${pagesRemaining} remaining` : 'Build your bio page')
+        : 'Page limit reached',
+      disabled: !canCreatePage,
+      onClick: handleCreatePageClick
+    },
+    { 
+      name: 'Create Lead Magnet', 
+      href: '/marketing/lead-magnets', 
+      icon: FiGift, 
+      color: 'green', 
+      description: canCreateLeadMagnet 
+        ? (leadMagnetsRemaining !== null ? `${leadMagnetsRemaining} remaining` : 'Grow your email list')
+        : 'Lead magnet limit reached',
+      disabled: !canCreateLeadMagnet,
+      onClick: handleCreateLeadMagnetClick,
+      badge: leadMagnetCount
+    },
     { name: 'Create Course', href: '/courses', icon: FiBook, color: 'purple', description: 'Share your knowledge' },
   ];
 
@@ -163,12 +215,21 @@ export default function Dashboard() {
                 {analytics?.totals.pageViews ? ` ${analytics.totals.pageViews.toLocaleString()} total views` : ' Get started by creating your first page'}
               </p>
             </div>
-            <Link
+            <Link 
               href="/builder?new=true"
-              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              onClick={handleCreatePageClick}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                canCreatePage
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              title={!canCreatePage ? `Page limit reached (${pageLimit} pages). Upgrade to create more.` : ''}
             >
               <SafeIcon name={undefined}  icon={FiPlus} />
               Create New Page
+              {!canCreatePage && pagesRemaining !== null && (
+                <span className="ml-2 text-xs">({pagesRemaining}/{pageLimit})</span>
+              )}
             </Link>
           </div>
         </motion.div>
@@ -264,29 +325,52 @@ export default function Dashboard() {
             </div>
 
             <div className="space-y-3">
-              {hotItems.map((item, index) => (
-                <Link
-                  key={index}
-                  href={item.href}
-                  className="flex items-center gap-4 p-4 bg-gradient-to-r hover:shadow-md transition-all rounded-xl border border-gray-100 group"
-                >
-                  <div className={`p-3 bg-${item.color}-100 rounded-lg group-hover:bg-${item.color}-200 transition-colors`}>
-                    <SafeIcon name={undefined}  icon={item.icon} className={`text-${item.color}-600`} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-gray-900">{item.name}</h3>
-                      {item.badge !== undefined && item.badge > 0 && (
-                        <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 text-xs font-medium rounded-full">
-                          {item.badge}
-                        </span>
-                      )}
+              {hotItems.map((item, index) => {
+                const isDisabled = item.disabled || false;
+                return (
+                  <Link
+                    key={index}
+                    href={item.href}
+                    onClick={item.onClick}
+                    className={`flex items-center gap-4 p-4 bg-gradient-to-r rounded-xl border transition-all group ${
+                      isDisabled
+                        ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                        : 'border-gray-100 hover:shadow-md'
+                    }`}
+                    title={isDisabled ? (item.name.includes('Page') ? `Page limit reached. Upgrade to create more pages.` : `Lead magnet limit reached. Upgrade to create more.`) : ''}
+                  >
+                    <div className={`p-3 bg-${item.color}-100 rounded-lg transition-colors ${
+                      !isDisabled && `group-hover:bg-${item.color}-200`
+                    }`}>
+                      <SafeIcon name={undefined}  icon={item.icon} className={`text-${item.color}-600`} />
                     </div>
-                    <p className="text-sm text-gray-600">{item.description}</p>
-                  </div>
-                  <SafeIcon name={undefined}  icon={FiExternalLink} className="text-gray-400 group-hover:text-gray-600" />
-                </Link>
-              ))}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-medium ${isDisabled ? 'text-gray-500' : 'text-gray-900'}`}>{item.name}</h3>
+                        {item.badge !== undefined && item.badge > 0 && (
+                          <span className="px-2 py-0.5 bg-indigo-100 text-indigo-600 text-xs font-medium rounded-full">
+                            {item.badge}
+                          </span>
+                        )}
+                        {isDisabled && (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                            Limit Reached
+                          </span>
+                        )}
+                        {!isDisabled && item.name === 'Create Lead Magnet' && leadMagnetsRemaining !== null && (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-600 text-xs font-medium rounded-full">
+                            {leadMagnetsRemaining} left
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-600'}`}>{item.description}</p>
+                    </div>
+                    {!isDisabled && (
+                      <SafeIcon name={undefined}  icon={FiExternalLink} className="text-gray-400 group-hover:text-gray-600" />
+                    )}
+                  </Link>
+                );
+              })}
 
               {/* Contextual Actions */}
               {contextualActions.map((action, index) => (
@@ -422,9 +506,15 @@ export default function Dashboard() {
               <h2 className="text-xl font-semibold text-gray-900">Recent Pages</h2>
               <Link
                 href="/builder?new=true"
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                onClick={handleCreatePageClick}
+                className={`text-sm font-medium transition-colors ${
+                  canCreatePage
+                    ? 'text-indigo-600 hover:text-indigo-700'
+                    : 'text-gray-400 cursor-not-allowed'
+                }`}
+                title={!canCreatePage ? `Page limit reached. Upgrade to create more.` : ''}
               >
-                Create New
+                {canCreatePage ? 'Create New' : `Limit Reached (${pageLimit})`}
               </Link>
             </div>
 

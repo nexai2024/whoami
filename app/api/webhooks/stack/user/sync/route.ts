@@ -209,6 +209,41 @@ export async function POST(request: Request) {
           });
         }
 
+        // Create subscription with FREE plan if it doesn't exist
+        const existingSubscription = await tx.subscription.findUnique({
+          where: { userId: data.id }
+        });
+
+        if (!existingSubscription) {
+          // Find the FREE plan
+          const freePlan = await tx.plan.findFirst({
+            where: {
+              planEnum: 'FREE',
+              isActive: true
+            }
+          });
+
+          if (freePlan) {
+            const now = new Date();
+            const nextMonth = new Date(now);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+            await tx.subscription.create({
+              data: {
+                userId: data.id,
+                planId: freePlan.id,
+                status: 'active',
+                currentPeriodStart: now,
+                currentPeriodEnd: nextMonth,
+                cancelAtPeriodEnd: false,
+              },
+            });
+            logger.info('Created FREE subscription for user', { userId: data.id });
+          } else {
+            logger.warn('FREE plan not found in database', { userId: data.id });
+          }
+        }
+
         return { user, profile };
       });
 
