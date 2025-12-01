@@ -22,6 +22,7 @@ interface Funnel {
   createdAt: string;
   updatedAt: string;
   steps: any[];
+  leadsCount?: number;
   _count: {
     visits: number;
     conversions: number;
@@ -332,10 +333,14 @@ const FunnelsPage = () => {
                     {funnel.description || 'No description'}
                   </p>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                  <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
                     <div>
                       <div className="text-gray-500">Visits</div>
                       <div className="font-semibold text-gray-900">{funnel._count.visits}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">Leads</div>
+                      <div className="font-semibold text-indigo-600">{funnel.leadsCount || 0}</div>
                     </div>
                     <div>
                       <div className="text-gray-500">Conversions</div>

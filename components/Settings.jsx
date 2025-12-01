@@ -98,22 +98,52 @@ const Settings = () => {
       logger.error('Error loading user pages:', error);
     }
   };
-
+  // Load user data from stackUser first, then fallback to database profile
   const loadUserData = async () => {
     if (!stackUser) return;
     try {
       setLoading(true);
       setUser(stackUser);
+      
+      // Get values from stackUser first
+      const stackDisplayName = stackUser.profile?.displayName;
+      const stackEmail = stackUser.primaryEmail;
+      const stackBio = stackUser.profile?.bio;
+      const stackAvatar = stackUser.profile?.avatar;
+      const stackPhone = stackUser.profile?.phone;
+      const stackWebsite = stackUser.profile?.website;
+      const stackLocation = stackUser.profile?.location;
+      const stackTimezone = stackUser.profile?.timezone;
+      const stackNotifications = stackUser.profile?.notifications;
+      
+      // Fetch from database if stackUser values are not set (for fields that exist in Profile model)
+      let dbProfile = null;
+      if (!stackDisplayName || !stackBio || !stackAvatar || !stackPhone || !stackWebsite || !stackLocation || !stackTimezone) {
+        try {
+          const response = await fetch(`/api/profiles/${stackUser.id}`, {
+            headers: {
+              'x-user-id': stackUser.id,
+            },
+          });
+          if (response.ok) {
+            dbProfile = await response.json();
+          }
+        } catch (error) {
+          logger.error('Error fetching profile from database:', error);
+        }
+      }
+      
+      // Use stackUser values if available, otherwise fallback to database
       setFormData({
-        displayName: stackUser.profile?.displayName || '',
-        email: stackUser.primaryEmail || '',
-        bio: stackUser.profile?.bio || '',
-        avatar: stackUser.profile?.avatar || null,
-        phone: stackUser.profile?.phone || '',
-        website: stackUser.profile?.website || '',
-        location: stackUser.profile?.location || '',
-        timezone: stackUser.profile?.timezone || 'UTC',
-        notifications: stackUser.profile?.notifications || {
+        displayName: stackDisplayName || dbProfile?.displayName || '',
+        email: stackEmail || '',
+        bio: stackBio || dbProfile?.bio || '',
+        avatar: stackAvatar || dbProfile?.avatar || null,
+        phone: stackPhone || dbProfile?.phone || '',
+        website: stackWebsite || dbProfile?.website || '',
+        location: stackLocation || dbProfile?.location || '',
+        timezone: stackTimezone || dbProfile?.timezone || 'UTC',
+        notifications: stackNotifications || {
           email: true,
           push: true,
           marketing: false
@@ -328,6 +358,8 @@ const Settings = () => {
               src={formData.avatar}
               alt="Profile"
               className="w-20 h-20 rounded-full object-cover"
+              width={80}
+              height={80}
             />
           )}
           <FileUpload

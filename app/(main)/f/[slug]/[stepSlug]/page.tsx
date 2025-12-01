@@ -54,6 +54,13 @@ export default function FunnelStepPage() {
     loadFunnelStep();
   }, [slug, stepSlug]);
 
+  // Track page view after both funnel and visitorId are loaded
+  useEffect(() => {
+    if (funnel && currentStep && visitorId) {
+      trackStepView(funnel.id, currentStep.id);
+    }
+  }, [funnel, currentStep, visitorId]);
+
   const loadFunnelStep = async () => {
     try {
       setLoading(true);
@@ -61,11 +68,13 @@ export default function FunnelStepPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setFunnel(data.funnel);
+        // Ensure steps are sorted by order
+        const sortedSteps = [...(data.funnel.steps || [])].sort((a: FunnelStep, b: FunnelStep) => a.order - b.order);
+        setFunnel({
+          ...data.funnel,
+          steps: sortedSteps,
+        });
         setCurrentStep(data.step);
-
-        // Track page view
-        trackStepView(data.funnel.id, data.step.id);
       } else {
         console.error('Failed to load funnel step');
       }
@@ -77,6 +86,8 @@ export default function FunnelStepPage() {
   };
 
   const trackStepView = async (funnelId: string, stepId: string) => {
+    if (!visitorId) return; // Wait for visitorId to be set
+    
     try {
       await fetch('/api/funnels/track/view', {
         method: 'POST',
@@ -138,17 +149,37 @@ export default function FunnelStepPage() {
         }),
       });
 
-      if (response.ok) {
-        // Move to next step
-        const nextStep = funnel.steps.find(s => s.order === currentStep.order + 1);
+      const responseData = await response.json();
+
+      if (response.ok && responseData.success) {
+        // Ensure steps are sorted by order
+        const sortedSteps = [...funnel.steps].sort((a, b) => a.order - b.order);
+        
+        // Find the next step
+        const nextStep = sortedSteps.find(s => s.order === currentStep.order + 1);
+        
         if (nextStep) {
+          // Navigate to next step
           router.push(`/f/${slug}/${nextStep.slug}`);
         } else if (currentStep.ctaUrl) {
-          router.push(currentStep.ctaUrl);
+          // If no next step, use CTA URL
+          if (currentStep.ctaUrl.startsWith('http')) {
+            window.location.href = currentStep.ctaUrl;
+          } else {
+            router.push(currentStep.ctaUrl);
+          }
+        } else {
+          // No next step and no CTA - show completion message or redirect
+          console.warn('No next step found and no CTA URL configured');
+          // Could show a success message or redirect to a thank you page
         }
+      } else {
+        console.error('Form submission failed:', responseData.error || 'Unknown error');
+        alert('Failed to submit form. Please try again.');
       }
     } catch (error) {
       console.error('Error submitting form:', error);
+      alert('An error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }

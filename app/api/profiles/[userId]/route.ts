@@ -86,6 +86,10 @@ export async function PATCH(
     if (body.displayName !== undefined) updateData.displayName = body.displayName;
     if (body.bio !== undefined) updateData.bio = body.bio;
     if (body.avatar !== undefined) updateData.avatar = body.avatar;
+    if (body.phone !== undefined) updateData.phone = body.phone || null;
+    if (body.website !== undefined) updateData.website = body.website || null;
+    if (body.location !== undefined) updateData.location = body.location || null;
+    if (body.timezone !== undefined) updateData.timezone = body.timezone;
     if (body.isCoach !== undefined) updateData.isCoach = body.isCoach;
     if (body.coachSlug !== undefined) updateData.coachSlug = body.coachSlug || null;
     if (body.bookingEnabled !== undefined) updateData.bookingEnabled = body.bookingEnabled;

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useParams, useRouter } from 'next/navigation';
 import {
   FiPlus, FiSave, FiEye, FiTrash2, FiEdit3, FiArrowRight,
-  FiUpload, FiSettings, FiMove, FiCheck, FiX
+  FiUpload, FiSettings, FiMove, FiCheck, FiX, FiUsers
 } from 'react-icons/fi';
 import SafeIcon from '@/common/SafeIcon';
 import { useAuth } from '@/lib/auth/AuthContext.jsx';
@@ -52,12 +52,21 @@ export default function FunnelEditorPage() {
   const [showAddStep, setShowAddStep] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'steps' | 'leads'>('steps');
+  const [leads, setLeads] = useState<any[]>([]);
+  const [leadsLoading, setLeadsLoading] = useState(false);
 
   useEffect(() => {
     if (currUser && funnelId) {
       loadFunnel();
     }
   }, [currUser, funnelId]);
+
+  useEffect(() => {
+    if (activeTab === 'leads' && funnelId && currUser) {
+      loadLeads();
+    }
+  }, [activeTab, funnelId, currUser]);
 
   const loadFunnel = async () => {
     try {
@@ -198,6 +207,27 @@ export default function FunnelEditorPage() {
     }
   };
 
+  const loadLeads = async () => {
+    try {
+      setLeadsLoading(true);
+      const response = await fetch(`/api/funnels/${funnelId}/leads`, {
+        headers: { 'x-user-id': currUser.id },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setLeads(data.leads || []);
+      } else {
+        toast.error('Failed to load leads');
+      }
+    } catch (error) {
+      console.error('Error loading leads:', error);
+      toast.error('Failed to load leads');
+    } finally {
+      setLeadsLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -275,9 +305,34 @@ export default function FunnelEditorPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-12 gap-6">
-          {/* Steps List */}
-          <div className="col-span-4 bg-white rounded-2xl shadow-sm border p-6">
+        {/* Tabs */}
+        <div className="mb-6 flex gap-2 border-b">
+          <button
+            onClick={() => setActiveTab('steps')}
+            className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+              activeTab === 'steps'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Steps
+          </button>
+          <button
+            onClick={() => setActiveTab('leads')}
+            className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+              activeTab === 'leads'
+                ? 'border-indigo-600 text-indigo-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Leads ({leads.length})
+          </button>
+        </div>
+
+        {activeTab === 'steps' ? (
+          <div className="grid grid-cols-12 gap-6">
+            {/* Steps List */}
+            <div className="col-span-4 bg-white rounded-2xl shadow-sm border p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-900">Funnel Steps</h2>
               <button
@@ -356,6 +411,80 @@ export default function FunnelEditorPage() {
             )}
           </div>
         </div>
+        ) : (
+          /* Leads Section */
+          <div className="bg-white rounded-2xl shadow-sm border p-6">
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Funnel Leads</h2>
+              <p className="text-gray-600">View all leads captured from this funnel</p>
+            </div>
+
+            {leadsLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+              </div>
+            ) : leads.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <SafeIcon name={undefined} icon={FiUsers} className="text-6xl mx-auto mb-4 text-gray-300" />
+                <p className="text-lg font-medium mb-2">No leads yet</p>
+                <p className="text-sm">Leads will appear here once visitors submit their information</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Name
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Email
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Source
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {leads.map((lead) => (
+                      <tr key={lead.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {lead.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {lead.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(lead.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {lead.converted ? (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                              Converted
+                            </span>
+                          ) : (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                              Lead
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {lead.utmSource || lead.referrer || '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Add Step Modal */}

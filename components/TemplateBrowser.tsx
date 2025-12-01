@@ -555,7 +555,8 @@ const TemplateBrowser: React.FC<TemplateBrowserProps> = ({
                             key={index}
                             block={block}
                             onBlockClick={() => {}}
-                          />
+                            themeColors={previewData.themeColors}
+                          />  
                         ))}
                       </div>
                     )}

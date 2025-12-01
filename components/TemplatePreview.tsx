@@ -200,15 +200,10 @@ const TemplatePreview: React.FC<TemplatePreviewProps> = ({
                   <BlockRenderer
                     block={block}
                     onBlockClick={() => {}}
+                    themeColors={blocksData[index].themeColors}
                   />
                 </motion.div>
               ))}
-            </div>
-          )}
-
-          {templateType === 'BIO_ONLY' && (!blocksData || blocksData.length === 0) && (
-            <div className="p-12 text-center text-gray-500">
-              <p>This is a Bio Only template with no content blocks</p>
             </div>
           )}
         </div>

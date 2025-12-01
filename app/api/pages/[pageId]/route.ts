@@ -25,6 +25,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ page
         backgroundColor: true,
         textColor: true,
         fontFamily: true,
+        theme: true,
+        typography: true,
+        layout: true,
+        animations: true,
+        customCss: true,
         metaTitle: true,
         metaDescription: true,
         metaKeywords: true,
@@ -151,14 +156,23 @@ export async function POST(
       );
     }
 
+    // Build update data object, only including fields that are provided
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+    
+    if (headerData.slug !== undefined) updateData.slug = headerData.slug;
+    if (headerData.title !== undefined) updateData.title = headerData.title;
+    if (headerData.description !== undefined) updateData.description = headerData.description;
+    if (headerData.theme !== undefined) updateData.theme = headerData.theme;
+    if (headerData.typography !== undefined) updateData.typography = headerData.typography;
+    if (headerData.layout !== undefined) updateData.layout = headerData.layout;
+    if (headerData.animations !== undefined) updateData.animations = headerData.animations;
+    if (headerData.customCss !== undefined) updateData.customCss = headerData.customCss;
+
     const updatedPage = await prisma.page.update({
       where: { id: pageId },
-      data: {
-        slug: headerData.slug,
-        title: headerData.title,
-        description: headerData.description,
-        updatedAt: new Date()
-      }
+      data: updateData
     }) as Prisma.PageSelect;
 
     logger.info(`Page updated successfully: ${pageId} by user ${userId}`);

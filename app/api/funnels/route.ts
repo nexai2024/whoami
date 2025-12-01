@@ -41,7 +41,23 @@ export async function GET(request: NextRequest) {
       orderBy: { updatedAt: 'desc' },
     });
 
-    return NextResponse.json({ funnels });
+    // Add leads count for each funnel
+    const funnelsWithLeads = await Promise.all(
+      funnels.map(async (funnel : any) => {
+        const leadsCount = await prisma.funnelVisit.count({
+          where: {
+            funnelId: funnel.id,
+            email: { not: null },
+          },
+        });
+        return {
+          ...funnel,
+          leadsCount,
+        };
+      })
+    );
+
+    return NextResponse.json({ funnels: funnelsWithLeads });
   } catch (error) {
     console.error('Error fetching funnels:', error);
     return NextResponse.json(

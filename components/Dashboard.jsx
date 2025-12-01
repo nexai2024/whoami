@@ -20,13 +20,15 @@ export default function Dashboard() {
   const { user, userId, isAuthenticated, loading: userLoading } = useUserContext();
   const { hasAccess: canCreatePage, limit: pageLimit, remaining: pagesRemaining, loading: featureLoading } = useFeatureGate('pages', { autoCheck: true });
   const { hasAccess: canCreateLeadMagnet, limit: leadMagnetLimit, remaining: leadMagnetsRemaining } = useFeatureGate('lead_magnets', { autoCheck: true });
-  
+  const { hasAccess: canCreateCourse, limit: courseLimit, remaining: coursesRemaining } = useFeatureGate('courses', { autoCheck: true });
+
   const [userPages, setUserPages] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isCoach, setIsCoach] = useState(false);
   const [leadMagnetCount, setLeadMagnetCount] = useState(0);
   const [leadsCount, setLeadsCount] = useState(0);
+  const [courseCount, setCourseCount] = useState(0);
   const [bookingsCount, setBookingsCount] = useState(0);
 
   useEffect(() => {
@@ -143,6 +145,17 @@ export default function Dashboard() {
     }
   };
 
+  const handleCreateCourseClick = (e) => {
+    if (!canCreateCourse) {
+      e.preventDefault();
+      toast.error(
+        coursesRemaining !== null 
+          ? `You've reached your course limit (${courseLimit} courses). Upgrade your plan to create more courses.`
+          : 'You cannot create more courses. Please upgrade your plan.'
+      );
+    }
+  };
+
   if (userLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -181,7 +194,17 @@ export default function Dashboard() {
       onClick: handleCreateLeadMagnetClick,
       badge: leadMagnetCount
     },
-    { name: 'Create Course', href: '/courses', icon: FiBook, color: 'purple', description: 'Share your knowledge' },
+    { name: 'Create Course', 
+      href: '/courses', 
+      icon: FiBook,
+      color: 'purple', 
+      description: canCreateCourse 
+        ? (coursesRemaining !== null ? `${coursesRemaining} remaining` : 'Share your knowledge')
+        : 'Course limit reached',
+      disabled: !canCreateCourse,
+      onClick: handleCreateCourseClick,
+      badge: courseCount
+    },
   ];
 
   // Contextual actions based on user type and activity

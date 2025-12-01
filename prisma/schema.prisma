@@ -58,6 +58,12 @@ model Profile {
   avatar      String?
   theme       String  @default("default")
 
+  // Contact information
+  phone    String?
+  website  String?
+  location String?
+  timezone String  @default("UTC")
+
   // Subscription and billing
   plan               PlanEnum @default(FREE)
   stripeCustomerId   String?
@@ -101,6 +107,13 @@ model Page {
   textColor       String @default("#000000")
   buttonStyle     String @default("rounded")
   fontFamily      String @default("inter")
+  
+  // Enhanced styling (JSON for flexibility)
+  theme           Json?  // Theme preset name and colors
+  typography      Json?  // Font settings, sizes, weights
+  layout          Json?  // Container width, spacing, alignment
+  animations      Json?  // Animation preferences
+  customCss       String? @db.Text
 
   // Analytics settings
   googleAnalyticsId String?
@@ -147,6 +160,9 @@ model Block {
   backgroundColor String?
   textColor       String?
   borderRadius    Int     @default(8)
+  
+  // Enhanced block styling (JSON for flexibility)
+  style Json? // { shadow, border, hoverEffect, layout, colors }
 
   // Block-specific data (JSON for flexibility)
   data Json @default("{}")

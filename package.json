@@ -71,6 +71,7 @@
     "@types/react-dom": "^19",
     "@types/react-window": "^1.8.8",
     "@types/sharp": "^0.31.1",
+    "baseline-browser-mapping": "^2.8.32",
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "prisma": "^6.19.0",

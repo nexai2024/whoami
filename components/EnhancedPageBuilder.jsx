@@ -7,6 +7,11 @@ import { useAuth } from '../lib/auth/AuthContext.jsx';
 import BlockFormFields from './BlockFormFields';
 import toast from 'react-hot-toast';
 import TemplateBrowser from './TemplateBrowser';
+import TemplateMarketplace from './TemplateMarketplace';
+import ThemeSelector from './ThemeSelector';
+import LayoutControls from './LayoutControls';
+import TypographyControls from './TypographyControls';
+import AnimationControls from './AnimationControls';
 import * as FiIcons from 'react-icons/fi';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PageService } from '../lib/database/pages';
@@ -615,11 +620,15 @@ const EnhancedPageBuilder = () => {
     try {
       setIsSaving(true);
 
-      // Save page settings (title, description, slug)
+      // Save page settings (title, description, slug, theme, typography, layout, animations)
       await PageService.updatePage(currentPageId, {
         title: pageData?.title || 'Untitled Page',
         description: pageData?.description || '',
         slug: pageData?.slug || '',
+        theme: pageData?.theme || null,
+        typography: pageData?.typography || null,
+        layout: pageData?.layout || null,
+        animations: pageData?.animations || null,
       });
 
       // Save blocks
@@ -908,21 +917,17 @@ const EnhancedPageBuilder = () => {
 
   const renderTemplatesTab = () => (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-4">
-        <h3 className="font-medium text-purple-900 mb-2">Template Gallery</h3>
-        <p className="text-sm text-purple-800">
-          Browse our collection of professionally designed templates. Apply any template to instantly
-          update your page with beautiful, production-ready content. You can also use AI to generate
-          custom templates tailored to your needs.
-        </p>
-      </div>
-      
-      <TemplateBrowser
-        templateType="ALL"
+      <TemplateMarketplace
         pageId={pageData?.id}
+        userId={user?.id || currUser?.id}
         onApply={(templateId) => {
           // Template will be applied and page will reload
           console.log('Template applied:', templateId);
+          toast.success('Template applied! Refreshing page...');
+          // Reload page data
+          if (pageData?.id) {
+            loadPageData(pageData.id);
+          }
         }}
         showAIGenerate={true}
       />
@@ -1058,9 +1063,65 @@ const EnhancedPageBuilder = () => {
   );
 
   const renderSettingsTab = () => (
-    <div className="bg-white rounded-2xl shadow-sm border p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-6">Page Settings</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-6">
+      {/* Theme Selection */}
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Design & Theme</h2>
+        <ThemeSelector
+          selectedThemeId={pageData?.theme?.id || pageData?.theme?.name}
+          onThemeSelect={(theme) => {
+            setPageData(prev => ({
+              ...prev,
+              theme: { id: theme.id, name: theme.name }
+            }));
+          }}
+          showPreview={true}
+        />
+      </div>
+
+      {/* Layout Controls */}
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <LayoutControls
+          layout={pageData?.layout || null}
+          onLayoutChange={(layout) => {
+            setPageData(prev => ({
+              ...prev,
+              layout: layout
+            }));
+          }}
+        />
+      </div>
+
+      {/* Typography Controls */}
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <TypographyControls
+          typography={pageData?.typography || null}
+          onTypographyChange={(typography) => {
+            setPageData(prev => ({
+              ...prev,
+              typography: typography
+            }));
+          }}
+        />
+      </div>
+
+      {/* Animation Controls */}
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <AnimationControls
+          animations={pageData?.animations || null}
+          onAnimationChange={(animations) => {
+            setPageData(prev => ({
+              ...prev,
+              animations: animations
+            }));
+          }}
+        />
+      </div>
+
+      {/* Page Settings */}
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Page Settings</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Page Title</label>
           <input
@@ -1160,6 +1221,7 @@ const EnhancedPageBuilder = () => {
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

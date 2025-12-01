@@ -16,6 +16,10 @@ import AMAModal from './AMAModal';
 import QRCodeShare from './QRCodeShare';
 import BlockRenderer from './BlockRenderer';
 import toast from 'react-hot-toast';
+import { getThemeById, getDefaultTheme, getThemeCSSVariables } from '../lib/themes/themePresets';
+import { getFontById, getFontFamilyCSS, getGoogleFontsURL } from '../lib/themes/fonts';
+import DOMPurify from 'isomorphic-dompurify';
+import { isRichTextEmpty } from '../lib/utils/richText';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo, 
@@ -117,6 +121,9 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
         throw new Error('Page not found');
       }
       console.log('pageData', pageData);
+      console.log('Theme data:', pageData.theme);
+      console.log('Typography data:', pageData.typography);
+      console.log('Layout data:', pageData.layout);
       setPage(pageData);
       
       // Record page view asynchronously without blocking UI
@@ -444,7 +451,7 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
 
   // Memoized profile header component
   const ProfileHeader = memo(
-    ({ headerData, user, shareMenuOpen, setShareMenuOpen, shareUrl }) => {
+    ({ headerData, user, shareMenuOpen, setShareMenuOpen, shareUrl, headingFontFamily, pageLoadAnimation, themeColors }) => {
       const data = headerData ?? {};
       const avatar =
         data.logoUrl ||
@@ -486,14 +493,32 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
       const containerClasses = (() => {
         const base = 'relative mb-8 p-6 rounded-2xl transition-all';
         const styleMap = {
-          minimal: 'bg-white text-gray-900 shadow-sm',
-          card: 'bg-white text-gray-900 border border-gray-200 shadow-md',
-          gradient:
-            'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg',
-          split: 'bg-white text-gray-900 border border-gray-200 shadow-sm',
+          minimal: 'shadow-sm',
+          card: 'border shadow-md',
+          gradient: 'shadow-lg',
+          split: 'border shadow-sm',
         };
         return `${base} ${styleMap[data.headerStyle] || styleMap.minimal}`;
       })();
+      
+      // Get container styles based on theme and header style
+      const getContainerStyles = () => {
+        const baseStyles = {
+          backgroundColor: themeColors?.surface || '#FFFFFF',
+          color: themeColors?.text || '#111827',
+          borderColor: themeColors?.border || '#E5E7EB',
+        };
+        
+        if (data.headerStyle === 'gradient') {
+          // For gradient, use primary and secondary colors
+          return {
+            background: `linear-gradient(to right, ${themeColors?.primary || '#6366F1'}, ${themeColors?.secondary || '#8B5CF6'})`,
+            color: '#FFFFFF',
+          };
+        }
+        
+        return baseStyles;
+      };
 
       const isGradient = data.headerStyle === 'gradient';
 
@@ -518,12 +543,26 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
         return iconMap[platform] || FiGlobe;
       };
 
+      // Get animation props for header
+      const getHeaderAnimationProps = () => {
+        if (pageLoadAnimation === 'none') return {};
+        switch (pageLoadAnimation) {
+          case 'fade':
+            return { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.6 } };
+          case 'slide-up':
+            return { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.6 } };
+          case 'zoom':
+            return { initial: { scale: 0.95, opacity: 0 }, animate: { scale: 1, opacity: 1 }, transition: { duration: 0.5 } };
+          default:
+            return { initial: { y: 20, opacity: 0 }, animate: { y: 0, opacity: 1 }, transition: { duration: 0.6 } };
+        }
+      };
+
       return (
         <motion.div
           className={containerClasses}
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.6 }}
+          style={getContainerStyles()}
+          {...getHeaderAnimationProps()}
         >
           {data.backgroundImage && (
             <div
@@ -534,7 +573,12 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
           <div className="relative z-10">
             <div className={contentLayoutClass}>
               <div
-                className={`${avatarWrapperClass} mb-4 rounded-full overflow-hidden bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center`}
+                className={`${avatarWrapperClass} mb-4 rounded-full overflow-hidden flex items-center justify-center`}
+                style={{
+                  background: isGradient 
+                    ? 'rgba(255, 255, 255, 0.2)' 
+                    : `linear-gradient(to right, ${themeColors?.primary || '#6366F1'}, ${themeColors?.secondary || '#8B5CF6'})`
+                }}
               >
                 {avatar ? (
                   <Image
@@ -553,44 +597,47 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
               </div>
 
               <div className={data.headerStyle === 'split' ? 'flex-1 text-left md:pl-6' : ''}>
-                <h1 className="text-2xl font-bold mb-1">{displayName}</h1>
+                <h1 className="text-2xl font-bold mb-1" style={{ fontFamily: headingFontFamily || 'inherit' }}>{displayName}</h1>
                 {title && (
-                  <p className="text-lg opacity-80 mb-2">{title}</p>
+                  <p className="text-lg opacity-80 mb-2" style={{ color: isGradient ? '#FFFFFF' : (themeColors?.textSecondary || '#6B7280') }}>{title}</p>
                 )}
                 {company && (
-                  <div className="flex items-center justify-center md:justify-start gap-2 text-sm mb-2 opacity-80">
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-sm mb-2 opacity-80" style={{ color: isGradient ? '#FFFFFF' : (themeColors?.textSecondary || '#6B7280') }}>
                     <SafeIcon name={undefined} icon={FiBuilding} />
                     <span>{company}</span>
                   </div>
                 )}
                 {location && (
-                  <div className="flex items-center justify-center md:justify-start gap-2 text-sm mb-3 opacity-80">
+                  <div className="flex items-center justify-center md:justify-start gap-2 text-sm mb-3 opacity-80" style={{ color: isGradient ? '#FFFFFF' : (themeColors?.textSecondary || '#6B7280') }}>
                     <SafeIcon name={undefined} icon={FiMapPin} />
                     <span>{location}</span>
                   </div>
                 )}
-                {bio && (
-                  <p className={`text-sm mb-4 max-w-xl mx-auto md:mx-0 ${isGradient ? 'opacity-95' : 'opacity-90 text-gray-600 md:text-gray-700'}`}>
-                    {bio}
-                  </p>
+                {!isRichTextEmpty(bio) && (
+                  <div
+                    className={`text-sm mb-4 max-w-xl mx-auto md:mx-0 ${isGradient ? 'opacity-95' : 'opacity-90'}`}
+                    style={!isGradient ? { color: themeColors?.textSecondary || '#6B7280' } : {}}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(bio || '') }}
+                  />
                 )}
-                {data.customIntroduction && (
+                {!isRichTextEmpty(data.customIntroduction) && (
                   <div
                     className={`rounded-lg p-3 mb-4 text-sm font-medium ${
                       isGradient
                         ? 'bg-white bg-opacity-10'
-                        : 'bg-gray-100'
+                        : ''
                     }`}
-                  >
-                    {data.customIntroduction}
-                  </div>
+                    style={!isGradient ? { backgroundColor: themeColors?.surface || '#F3F4F6' } : {}}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data.customIntroduction || '') }}
+                  />
                 )}
                 {showContact && (
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-4 text-sm">
+                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mb-4 text-sm" style={{ color: isGradient ? '#FFFFFF' : (themeColors?.textSecondary || '#6B7280') }}>
                     {data.email && (
                       <a
                         href={`mailto:${data.email}`}
                         className="flex items-center gap-1 hover:underline"
+                        style={{ color: isGradient ? '#FFFFFF' : (themeColors?.accent || themeColors?.primary || '#6366F1') }}
                       >
                         <SafeIcon name={undefined} icon={FiMail} />
                         {data.email}
@@ -600,6 +647,7 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                       <a
                         href={`tel:${data.phone}`}
                         className="flex items-center gap-1 hover:underline"
+                        style={{ color: isGradient ? '#FFFFFF' : (themeColors?.accent || themeColors?.primary || '#6366F1') }}
                       >
                         <SafeIcon name={undefined} icon={FiPhone} />
                         {data.phone}
@@ -611,6 +659,7 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center gap-1 hover:underline"
+                        style={{ color: isGradient ? '#FFFFFF' : (themeColors?.accent || themeColors?.primary || '#6366F1') }}
                       >
                         <SafeIcon name={undefined} icon={FiGlobe} />
                         Website
@@ -631,8 +680,12 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                           className={`w-10 h-10 rounded-full flex items-center justify-center transition ${
                             isGradient
                               ? 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
-                              : 'bg-black bg-opacity-10 text-gray-700 hover:bg-opacity-20'
+                              : ''
                           }`}
+                          style={!isGradient ? {
+                            backgroundColor: themeColors?.surface || 'rgba(0, 0, 0, 0.1)',
+                            color: themeColors?.text || '#374151',
+                          } : {}}
                           aria-label={`${displayName} on ${platform}`}
                         >
                           <SafeIcon name={undefined} icon={Icon} />
@@ -651,8 +704,12 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                   className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                     isGradient
                       ? 'bg-white bg-opacity-20 text-white hover:bg-opacity-30'
-                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                      : ''
                   }`}
+                  style={!isGradient ? {
+                    backgroundColor: themeColors?.surface || '#F3F4F6',
+                    color: themeColors?.text || '#1F2937',
+                  } : {}}
                   aria-label="Share this page"
                 >
                   <SafeIcon name={undefined} icon={FiShare2} />
@@ -717,6 +774,160 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
     page?.user?.profile?.avatar ||
     undefined;
 
+  // Get theme from page settings or use default
+  // Handle both string (JSON) and object formats
+  let themeData = page?.theme;
+  if (typeof themeData === 'string') {
+    try {
+      themeData = JSON.parse(themeData);
+    } catch (e) {
+      console.warn('Failed to parse theme JSON:', e);
+      themeData = null;
+    }
+  }
+  console.log('Processed themeData:', themeData);
+  const themeId = themeData?.id || themeData?.name || (typeof themeData === 'string' ? themeData : null);
+  console.log('Resolved themeId:', themeId);
+  const theme = themeId ? getThemeById(themeId) : getDefaultTheme();
+  console.log('Selected theme:', theme);
+  const themeColors = theme?.colors || {
+    primary: '#000000',
+    secondary: '#666666',
+    background: '#FFFFFF',
+    surface: '#F9FAFB',
+    text: '#111827',
+    textSecondary: '#6B7280',
+    accent: '#000000',
+    border: '#E5E7EB',
+    shadow: 'rgba(0, 0, 0, 0.05)',
+  };
+
+  // Get typography settings
+  // Handle both string (JSON) and object formats
+  let typography = page?.typography || {};
+  if (typeof typography === 'string') {
+    try {
+      typography = JSON.parse(typography);
+    } catch (e) {
+      console.warn('Failed to parse typography JSON:', e);
+      typography = {};
+    }
+  }
+  const fontId = typography.fontFamily || page?.fontFamily || 'inter';
+  const headingFontId = typography.headingFont || fontId;
+  const bodyFontId = typography.bodyFont || fontId;
+  const font = getFontById(fontId);
+  const headingFont = getFontById(headingFontId);
+  const bodyFont = getFontById(bodyFontId);
+  const fontFamily = font ? getFontFamilyCSS(font) : 'Inter, sans-serif';
+  const headingFontFamily = headingFont ? getFontFamilyCSS(headingFont) : fontFamily;
+  const bodyFontFamily = bodyFont ? getFontFamilyCSS(bodyFont) : fontFamily;
+  
+  // Typography CSS variables
+  const typographyStyles = {
+    '--font-family': fontFamily,
+    '--heading-font-family': headingFontFamily,
+    '--body-font-family': bodyFontFamily,
+    '--font-weight': typography.fontWeight || '400',
+    '--font-size': typography.fontSize === 'small' ? '0.875rem' :
+                   typography.fontSize === 'large' ? '1.125rem' :
+                   typography.fontSize === 'xl' ? '1.25rem' : '1rem',
+    '--line-height': typography.lineHeight === 'tight' ? '1.2' :
+                     typography.lineHeight === 'relaxed' ? '1.8' : '1.5',
+    '--letter-spacing': typography.letterSpacing === 'tight' ? '-0.025em' :
+                        typography.letterSpacing === 'wide' ? '0.025em' : '0',
+  };
+  
+  // Get layout settings
+  // Handle both string (JSON) and object formats
+  let layout = page?.layout || {};
+  if (typeof layout === 'string') {
+    try {
+      layout = JSON.parse(layout);
+    } catch (e) {
+      console.warn('Failed to parse layout JSON:', e);
+      layout = {};
+    }
+  }
+  const containerWidth = layout.containerWidth || 'md'; // md = max-w-md
+  const spacing = layout.spacing || 'normal'; // normal = space-y-4
+  const alignment = layout.alignment || 'center'; // center, left, right
+  const padding = layout.padding || {};
+  
+  // Container width classes
+  const containerWidthClasses = {
+    narrow: 'max-w-xs',
+    compact: 'max-w-sm',
+    md: 'max-w-md',
+    standard: 'max-w-lg',
+    wide: 'max-w-xl',
+    full: 'max-w-4xl',
+  };
+  
+  // Spacing classes
+  const spacingClasses = {
+    tight: 'space-y-2',
+    normal: 'space-y-4',
+    comfortable: 'space-y-6',
+    spacious: 'space-y-8',
+  };
+  
+  // Alignment classes
+  const alignmentClasses = {
+    left: 'text-left',
+    center: 'text-center',
+    right: 'text-right',
+  };
+
+  // Get animation settings
+  const animations = page?.animations || {};
+  const pageLoadAnimation = animations.pageLoad || 'fade';
+  const scrollAnimation = animations.scroll || 'none';
+  const staggerDelay = animations.staggerDelay || 0.1;
+  const microInteractions = animations.microInteractions || false;
+
+  // Get animation props based on page load animation type
+  const getPageLoadAnimationProps = (index = 0) => {
+    if (pageLoadAnimation === 'none') return {};
+    
+    const delay = pageLoadAnimation === 'stagger' ? index * staggerDelay : 0;
+    
+    switch (pageLoadAnimation) {
+      case 'fade':
+        return {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          transition: { duration: 0.6, delay }
+        };
+      case 'slide-up':
+        return {
+          initial: { y: 20, opacity: 0 },
+          animate: { y: 0, opacity: 1 },
+          transition: { duration: 0.6, delay }
+        };
+      case 'slide-down':
+        return {
+          initial: { y: -20, opacity: 0 },
+          animate: { y: 0, opacity: 1 },
+          transition: { duration: 0.6, delay }
+        };
+      case 'zoom':
+        return {
+          initial: { scale: 0.95, opacity: 0 },
+          animate: { scale: 1, opacity: 1 },
+          transition: { duration: 0.5, delay }
+        };
+      case 'stagger':
+        return {
+          initial: { y: 20, opacity: 0 },
+          animate: { y: 0, opacity: 1 },
+          transition: { duration: 0.6, delay }
+        };
+      default:
+        return {};
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -744,26 +955,56 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
             keywords={page.metaKeywords}
             author={resolvedDisplayName || undefined}
           />
+          {/* Load Google Fonts if needed */}
+          {(() => {
+            const fontsToLoad = [];
+            if (font?.googleFont) fontsToLoad.push(font);
+            if (headingFont?.googleFont && headingFont.id !== font?.id) fontsToLoad.push(headingFont);
+            if (bodyFont?.googleFont && bodyFont.id !== font?.id && bodyFont.id !== headingFont?.id) fontsToLoad.push(bodyFont);
+            return fontsToLoad.length > 0 ? (
+              <link
+                href={getGoogleFontsURL(fontsToLoad)}
+                rel="stylesheet"
+              />
+            ) : null;
+          })()}
+          
           <div
-            className="min-h-screen py-8 px-4 flex flex-col items-center justify-center"
+            className="min-h-screen flex flex-col items-center justify-center"
             style={{
-              backgroundColor: page.backgroundColor || '#f8fafc',
-              color: page.textColor || '#1f2937',
-              fontFamily: page.fontFamily || 'Inter, sans-serif'
+              backgroundColor: themeColors.background || page.backgroundColor || '#FFFFFF',
+              color: themeColors.text || page.textColor || '#111827',
+              fontFamily: bodyFontFamily,
+              fontSize: typographyStyles['--font-size'],
+              fontWeight: typographyStyles['--font-weight'],
+              lineHeight: typographyStyles['--line-height'],
+              letterSpacing: typographyStyles['--letter-spacing'],
+              paddingTop: padding.top ? `${padding.top}px` : '2rem',
+              paddingBottom: padding.bottom ? `${padding.bottom}px` : '2rem',
+              paddingLeft: padding.left ? `${padding.left}px` : '1rem',
+              paddingRight: padding.right ? `${padding.right}px` : '1rem',
+              ...getThemeCSSVariables(theme || getDefaultTheme()),
+              ...typographyStyles,
             }}
           >
-            <div className="w-full max-w-md mx-auto text-center">
+            <div 
+              className={`w-full ${containerWidthClasses[containerWidth] || containerWidthClasses.md} mx-auto`}
+              style={{ textAlign: alignment === 'left' ? 'left' : alignment === 'right' ? 'right' : 'center' }}
+            >
               {(page.pageHeader || page.user) && (
                 <ProfileHeader 
                   headerData={page.pageHeader?.data ?? {}}
                   user={page.user} 
                   shareMenuOpen={shareMenuOpen} 
                   setShareMenuOpen={setShareMenuOpen} 
-                  shareUrl={shareUrl} 
+                  shareUrl={shareUrl}
+                  headingFontFamily={headingFontFamily}
+                  pageLoadAnimation={pageLoadAnimation}
+                  themeColors={themeColors}
                 />
               )}
               {/* Blocks */}
-              <div className="space-y-4 text-center" role="main" aria-label="Page content">
+              <div className={`${spacingClasses[spacing] || spacingClasses.normal} text-center`} role="main" aria-label="Page content">
                 {page.blocks && page.blocks.length > 0 ? (
                   page.blocks.map((block, index) => {
                     try {
@@ -774,13 +1015,26 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
                       return (
                         <motion.div
                           key={block.id || `block-${index}`}
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ delay: index * 0.1, duration: 0.6 }}
+                          {...getPageLoadAnimationProps(index)}
                           role="article"
                           aria-label={`Block: ${block.title || block.type || 'Unknown'}`}
+                          {...(scrollAnimation === 'fade-on-scroll' ? {
+                            whileInView: { opacity: 1 },
+                            viewport: { once: true, margin: '-100px' },
+                            initial: { opacity: 0 }
+                          } : {})}
+                          {...(scrollAnimation === 'slide-on-scroll' ? {
+                            whileInView: { x: 0, opacity: 1 },
+                            viewport: { once: true, margin: '-100px' },
+                            initial: { x: index % 2 === 0 ? -50 : 50, opacity: 0 },
+                            transition: { duration: 0.6 }
+                          } : {})}
                         >
-                          <BlockRenderer block={blockWithUnlock} onBlockClick={handleBlockClick} />
+                          <BlockRenderer 
+                            block={blockWithUnlock} 
+                            onBlockClick={handleBlockClick}
+                            themeColors={themeColors}
+                          />
                         </motion.div>
                       );
                     } catch (blockError) {

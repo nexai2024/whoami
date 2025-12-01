@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['localhost', '127.0.0.1','images.unsplash.com','lh3.googleusercontent.com'],
+    domains: ['localhost', '127.0.0.1','images.unsplash.com','lh3.googleusercontent.com','content.stack-auth.com'],
   },
   // Let Tailwind's PostCSS plugin handle CSS processing
 

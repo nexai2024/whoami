@@ -140,11 +140,22 @@ export async function listCampaigns({
   userId: string;
   filters?: CampaignListFilters;
 }): Promise<CampaignSummary[]> {
-  const campaigns = await prisma.campaign.findMany({
-    where: {
-      userId,
-      ...(filters?.status ? { status: filters.status } : {}),
-    },
+  logger.info('listCampaigns called', { userId, filters });
+  
+  if (!userId) {
+    logger.error('listCampaigns called without userId');
+    throw new Error('User ID is required');
+  }
+  
+  const whereClause = {
+    userId,
+    ...(filters?.status ? { status: filters.status } : {}),
+  };
+  
+  logger.info('Querying campaigns with where clause', { whereClause });
+  
+  let campaigns = await prisma.campaign.findMany({
+    where: whereClause,
     include: {
       assets: {
         select: {
@@ -165,7 +176,33 @@ export async function listCampaigns({
     },
   });
 
-  return campaigns.map((campaign: { assets: { map: (arg0: (asset: any) => any) => any[]; length: any; filter: (arg0: (asset: any) => boolean) => { (): any; new(): any; length: any; }; }; id: any; name: any; status: any; goal: any; productId: any; blockId: any; createdAt: { toISOString: () => any; }; product: any; }) => {
+  logger.info('Campaigns found', {
+    userId,
+    count: campaigns.length,
+    campaignIds: campaigns.map((c: { id: any; userId: any; }) => ({ id: c.id, userId: c.userId })),
+  });
+
+  // Verify all campaigns belong to the user (security check)
+  const invalidCampaigns = campaigns.filter((c: { userId: any; }) => c.userId !== userId);
+  if (invalidCampaigns.length > 0) {
+    logger.error('Security issue: Found campaigns not belonging to user', {
+      requestedUserId: userId,
+      invalidCampaigns: invalidCampaigns.map((c: { id: any; userId: any; }) => ({
+        id: c.id,
+        userId: c.userId,
+      })),
+    });
+    // Filter out invalid campaigns for security
+    const validCampaigns = campaigns.filter((c: { userId: any; }) => c.userId === userId);
+    logger.warn('Filtered out invalid campaigns', {
+      originalCount: campaigns.length,
+      validCount: validCampaigns.length,
+    });
+    // Use only valid campaigns
+    campaigns = validCampaigns;
+  }
+
+  return await Promise.all(campaigns.map(async (campaign: { assets: { map: (arg0: (asset: any) => any) => any[]; length: any; filter: (arg0: (asset: any) => boolean) => { (): any; new(): any; length: any; }; }; id: any; name: any; status: any; goal: any; productId: any; blockId: any; createdAt: { toISOString: () => any; }; product: any; userId: any; }) => {
     const platforms = Array.from(
       new Set(
         campaign.assets
@@ -173,6 +210,28 @@ export async function listCampaigns({
           .filter((platform: any): platform is Platform => !!platform)
       )
     );
+
+    // Get accurate asset counts from database
+    // This ensures we get the real count even if the relation wasn't loaded properly
+    const assetCount = await prisma.campaignAsset.count({
+      where: { campaignId: campaign.id },
+    });
+    
+    const scheduledCount = await prisma.campaignAsset.count({
+      where: {
+        campaignId: campaign.id,
+        status: AssetStatus.SCHEDULED,
+      },
+    });
+
+    // Log if there's a mismatch between relation count and direct count
+    if (campaign.assets.length !== assetCount) {
+      logger.warn('Asset count mismatch in listCampaigns', {
+        campaignId: campaign.id,
+        relationCount: campaign.assets.length,
+        directCount: assetCount,
+      });
+    }
 
     return {
       id: campaign.id,
@@ -184,16 +243,14 @@ export async function listCampaigns({
       createdAt: campaign.createdAt.toISOString(),
       product: campaign.product,
       _count: {
-        assets: campaign.assets.length,
-        scheduledPosts: campaign.assets.filter(
-          (asset: { status: string; }) => asset.status === AssetStatus.SCHEDULED
-        ).length,
+        assets: assetCount, // Use direct count instead of relation length
+        scheduledPosts: scheduledCount, // Use direct count instead of filter
       },
       stats: {
         totalEngagement: 0,
       },
     };
-  });
+  }));
 }
 
 export async function getCampaign({
@@ -203,6 +260,8 @@ export async function getCampaign({
   userId: string;
   campaignId: string;
 }): Promise<CampaignDetail | null> {
+  logger.info('getCampaign called', { campaignId, userId });
+  
   const campaign = await prisma.campaign.findFirst({
     where: {
       id: campaignId,
@@ -219,7 +278,66 @@ export async function getCampaign({
   });
 
   if (!campaign) {
+    logger.warn('Campaign not found in database', { campaignId, userId });
+    
+    // Check if campaign exists with different userId
+    const campaignExists = await prisma.campaign.findUnique({
+      where: { id: campaignId },
+      select: { id: true, userId: true },
+    });
+    
+    if (campaignExists) {
+      logger.warn('Campaign exists but userId mismatch', {
+        campaignId,
+        requestedUserId: userId,
+        actualUserId: campaignExists.userId,
+      });
+    } else {
+      logger.warn('Campaign does not exist in database', { campaignId });
+    }
+    
     return null;
+  }
+
+  logger.info('Campaign fetched from database', {
+    campaignId,
+    assetCount: campaign.assets.length,
+    status: campaign.status,
+  });
+
+  // If no assets from relation, query directly
+  let assets = campaign.assets;
+  if (campaign.assets.length === 0) {
+    logger.warn('Campaign has zero assets from relation, querying directly', {
+      campaignId,
+      status: campaign.status,
+    });
+    
+    // Query assets directly from database
+    const directAssets = await prisma.campaignAsset.findMany({
+      where: { campaignId },
+      orderBy: { createdAt: 'asc' },
+    });
+    
+    logger.info('Direct asset query result', {
+      campaignId,
+      assetCount: directAssets.length,
+    });
+    
+    if (directAssets.length > 0) {
+      logger.warn('Assets exist but were not included in relation', {
+        campaignId,
+        assetCount: directAssets.length,
+      });
+      // Use the directly queried assets
+      assets = directAssets;
+    } else {
+      // Double-check by counting
+      const assetCount = await prisma.campaignAsset.count({
+        where: { campaignId },
+      });
+      logger.info('Direct asset count query', { campaignId, assetCount });
+    }
   }
 
   return {
@@ -236,7 +354,7 @@ export async function getCampaign({
           price: campaign.product.price,
         }
       : null,
-    assets: campaign.assets.map((asset: { id: any; type: any; platform: any; content: any; mediaUrl: any; status: any; scheduledAt: { toISOString: () => any; }; publishedAt: { toISOString: () => any; }; views: any; clicks: any; conversions: any; }) => ({
+    assets: assets.map((asset: { id: any; type: any; platform: any; content: any; mediaUrl: any; status: any; scheduledAt: { toISOString: () => any; } | null; publishedAt: { toISOString: () => any; } | null; views: any; clicks: any; conversions: any; }) => ({
       id: asset.id,
       type: asset.type,
       platform: asset.platform,
@@ -419,7 +537,12 @@ async function generateCampaignAssets({
 
     // Save all successfully generated assets
     if (assets.length > 0) {
-      await prisma.campaignAsset.createMany({
+      logger.info('Saving campaign assets', {
+        campaignId,
+        assetCount: assets.length,
+      });
+      
+      const result = await prisma.campaignAsset.createMany({
         data: assets.map((asset) => ({
           campaignId,
           type: asset.type,
@@ -428,6 +551,27 @@ async function generateCampaignAssets({
           status: AssetStatus.DRAFT,
         })),
       });
+      
+      logger.info('Campaign assets saved', {
+        campaignId,
+        count: result.count,
+        expected: assets.length,
+      });
+      
+      // Verify assets were saved
+      const savedCount = await prisma.campaignAsset.count({
+        where: { campaignId },
+      });
+      
+      if (savedCount !== assets.length) {
+        logger.error('Asset count mismatch', {
+          campaignId,
+          saved: savedCount,
+          expected: assets.length,
+        });
+      }
+    } else {
+      logger.warn('No assets to save', { campaignId, hasErrors });
     }
 
     // Update campaign status based on results

@@ -5,6 +5,7 @@ import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { logger } from '../lib/utils/logger';
 import DOMPurify from 'isomorphic-dompurify';
+import { applyBlockStyle } from '../lib/themes/blockStyles';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo,
@@ -15,7 +16,7 @@ const {
  * Comprehensive block renderer for all 23 block types
  * Renders blocks on the public page with proper styling and interactivity
  */
-const BlockRenderer = ({ block, onBlockClick }) => {
+const BlockRenderer = ({ block, onBlockClick, themeColors }) => {
   // Error boundary - catch any rendering errors
   try {
     if (!block || !block.type) {
@@ -27,12 +28,35 @@ const BlockRenderer = ({ block, onBlockClick }) => {
       );
     }
 
-    const baseStyles = "w-full p-6 rounded-xl border border-gray-200 transition-all duration-200 hover:scale-[1.02] cursor-pointer bg-white shadow-md hover:shadow-lg";
+    // Get block style from block.style JSON or use defaults
+    const blockStyle = block.style || {
+      shadow: 'md',
+      borderRadius: 'lg',
+      hoverEffect: 'lift',
+      border: {
+        width: 1,
+        style: 'solid',
+        color: themeColors?.border || '#E5E7EB',
+      },
+      backgroundColor: themeColors?.surface || '#FFFFFF',
+      textColor: themeColors?.text || '#111827',
+    };
+
+    // Apply enhanced styling
+    const styleProps = applyBlockStyle(blockStyle, themeColors?.primary);
+    
+    // Base classes with enhanced styling
+    const baseClasses = `w-full p-6 cursor-pointer ${styleProps.className}`;
+    const baseStyles = {
+      ...styleProps.style,
+      backgroundColor: blockStyle.backgroundColor || themeColors?.surface || '#FFFFFF',
+      color: blockStyle.textColor || themeColors?.text || '#111827',
+    };
   // LINK Block
   if (block.type === 'LINK') {
     const url = block.data?.url || block.url;
     return (
-      <div className={`${baseStyles} text-center`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses} text-center`} style={baseStyles} onClick={() => onBlockClick(block)}>
         <div className="flex flex-col items-center gap-3">
           {block.data?.thumbnail && (
             <Image 
@@ -70,7 +94,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     const showAppIcon = block.data?.showAppIcon !== false;
 
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-center`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses} text-center`} style={baseStyles} onClick={() => onBlockClick(block)}>
         <div className="flex flex-col items-center gap-3">
           {block.data?.thumbnail && (
             <Image 
@@ -113,7 +137,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // PRODUCT Block
   if (block.type === 'PRODUCT') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-green-50 to-emerald-50 border-green-200 text-center`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses} text-center`} style={baseStyles} onClick={() => onBlockClick(block)}>
         <div className="flex flex-col items-center gap-4">
           {block.data?.images?.[0] && (
             <Image 
@@ -168,7 +192,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // EMAIL_CAPTURE / NEWSLETTER / WAITLIST Blocks
   if (['EMAIL_CAPTURE', 'NEWSLETTER', 'WAITLIST'].includes(block.type)) {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses}`} style={baseStyles} onClick={() => onBlockClick(block)}>
         <div className="text-center">
           <SafeIcon name={undefined}  icon={FiMail} className="text-3xl text-purple-600 mx-auto mb-3" />
           <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
@@ -298,7 +322,7 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     };
 
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200 text-center`}>
+      <div className={`${baseClasses} text-center`} style={baseStyles}>
         <div className="flex flex-col items-center gap-4">
           {block.data?.albumArtwork && (
             <Image src={block.data.albumArtwork} alt={block.data?.trackTitle || 'Album artwork'} width={128} height={128} className="w-32 h-32 rounded-lg object-cover" />
@@ -399,8 +423,8 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     const embedUrl = getEmbedUrl(videoUrl, platform);
     
     return (
-      <div className={`${baseStyles} text-center`}>
-        <h3 className="font-bold text-gray-900 mb-3">{block.title}</h3>
+      <div className={`${baseClasses} text-center`} style={baseStyles}>
+        <h3 className="font-bold mb-3" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
         <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
           {embedUrl ? (
             <iframe
@@ -423,21 +447,21 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // BOOKING_CALENDAR Block
   if (block.type === 'BOOKING_CALENDAR') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-200`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses}`} style={baseStyles} onClick={() => onBlockClick(block)}>
         <div className="text-center">
-          <SafeIcon name={undefined}  icon={FiCalendar} className="text-3xl text-indigo-600 mx-auto mb-3" />
-          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          <SafeIcon name={undefined}  icon={FiCalendar} className="text-3xl mx-auto mb-3" style={{ color: themeColors?.primary || '#6366F1' }} />
+          <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
           {block.data?.serviceType && (
-            <p className="text-sm text-gray-600 mb-1">{block.data.serviceType}</p>
+            <p className="text-sm mb-1" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.data.serviceType}</p>
           )}
           {block.data?.duration && (
-            <p className="text-sm text-gray-500 mb-3">{block.data.duration} minutes</p>
+            <p className="text-sm mb-3" style={{ color: themeColors?.textSecondary || '#9CA3AF' }}>{block.data.duration} minutes</p>
           )}
           {block.data?.price && (
-            <p className="text-lg font-bold text-indigo-600 mb-3">${block.data.price}</p>
+            <p className="text-lg font-bold mb-3" style={{ color: themeColors?.primary || '#6366F1' }}>${block.data.price}</p>
           )}
-          <div className="bg-white rounded-lg p-3">
-            <p className="text-sm font-medium text-indigo-600">{block.data?.bookingButtonText || 'Book Now'}</p>
+          <div className="rounded-lg p-3" style={{ backgroundColor: themeColors?.background || '#FFFFFF' }}>
+            <p className="text-sm font-medium" style={{ color: themeColors?.primary || '#6366F1' }}>{block.data?.bookingButtonText || 'Book Now'}</p>
           </div>
         </div>
       </div>
@@ -447,18 +471,18 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // TIP_JAR Block
   if (block.type === 'TIP_JAR') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses}`} style={baseStyles} onClick={() => onBlockClick(block)}>
         <div className="text-center">
-          <SafeIcon name={undefined}  icon={FiHeart} className="text-3xl text-yellow-600 mx-auto mb-3" />
-          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          <SafeIcon name={undefined}  icon={FiHeart} className="text-3xl mx-auto mb-3" style={{ color: themeColors?.accent || '#F59E0B' }} />
+          <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
           {block.data?.message && (
-            <p className="text-sm text-gray-600 mb-4">{block.data.message}</p>
+            <p className="text-sm mb-4" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.data.message}</p>
           )}
           {block.data?.suggestedAmounts && block.data.suggestedAmounts.length > 0 && (
             <div className="flex gap-2 justify-center mb-3">
               {block.data.suggestedAmounts.map((amount, idx) => (
-                <div key={idx} className="px-4 py-2 bg-white rounded-lg border border-yellow-200">
-                  <span className="font-medium text-gray-900">{block.data?.currency || '$'}{amount}</span>
+                <div key={idx} className="px-4 py-2 rounded-lg border" style={{ backgroundColor: themeColors?.background || '#FFFFFF', borderColor: themeColors?.border || '#E5E7EB' }}>
+                  <span className="font-medium" style={{ color: themeColors?.text || '#111827' }}>{block.data?.currency || '$'}{amount}</span>
                 </div>
               ))}
             </div>
@@ -471,17 +495,17 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // PROMO Block
   if (block.type === 'PROMO') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300`}>
+      <div className={`${baseClasses}`} style={baseStyles}>
         <div className="text-center">
-          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
           {block.data?.description && (
-            <p className="text-sm text-gray-600 mb-3">{block.data.description}</p>
+            <p className="text-sm mb-3" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.data.description}</p>
           )}
-          <div className="bg-white border-2 border-dashed border-yellow-400 rounded-lg p-4 mb-2">
-            <p className="text-2xl font-mono font-bold text-gray-900">{block.data?.promoCode}</p>
+          <div className="border-2 border-dashed rounded-lg p-4 mb-2" style={{ backgroundColor: themeColors?.background || '#FFFFFF', borderColor: themeColors?.accent || '#F59E0B' }}>
+            <p className="text-2xl font-mono font-bold" style={{ color: themeColors?.text || '#111827' }}>{block.data?.promoCode}</p>
           </div>
           {(block.data?.discountPercentage || block.data?.discountAmount) && (
-            <p className="text-sm font-medium text-yellow-700">
+            <p className="text-sm font-medium" style={{ color: themeColors?.accent || '#F59E0B' }}>
               {block.data.discountPercentage ? `${block.data.discountPercentage}% OFF` : `$${block.data.discountAmount} OFF`}
             </p>
           )}
@@ -493,12 +517,12 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // SOCIAL_SHARE Block
   if (block.type === 'SOCIAL_SHARE') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-cyan-50 to-blue-50 border-cyan-200`}>
+      <div className={`${baseClasses}`} style={baseStyles}>
         <div className="text-center">
-          <h3 className="font-bold text-gray-900 mb-3">{block.title}</h3>
+          <h3 className="font-bold mb-3" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
           <div className="flex gap-3 justify-center">
-            <button className="p-3 bg-white rounded-lg hover:bg-gray-50 transition-colors">
-              <SafeIcon name={undefined}  icon={FiShare2} className="text-cyan-600" />
+            <button className="p-3 rounded-lg hover:opacity-80 transition-colors" style={{ backgroundColor: themeColors?.background || '#FFFFFF' }}>
+              <SafeIcon name={undefined}  icon={FiShare2} style={{ color: themeColors?.primary || '#06B6D4' }} />
             </button>
           </div>
         </div>
@@ -533,10 +557,11 @@ const BlockRenderer = ({ block, onBlockClick }) => {
 
     return (
       <div
-        className={`${baseStyles} ${alignmentClass}`}
+        className={`${baseClasses} ${alignmentClass}`}
         style={{
-          backgroundColor: block.data?.backgroundColor || 'white',
-          color: block.data?.textColor || '#1f2937',
+          ...baseStyles,
+          backgroundColor: block.data?.backgroundColor || baseStyles.backgroundColor || 'white',
+          color: block.data?.textColor || baseStyles.color || '#1f2937',
           padding: `${block.data?.padding || 24}px`
         }}
       >
@@ -576,18 +601,18 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // PORTFOLIO Block
   if (block.type === 'PORTFOLIO') {
     return (
-      <div className={`${baseStyles} text-center`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses} text-center`} style={baseStyles} onClick={() => onBlockClick(block)}>
         {block.data?.images?.[0] && (
           <Image src={block.data.images[0]} alt={block.data?.projectTitle || 'Project image'} width={400} height={192} className="w-full h-48 object-cover rounded-lg mb-3" />
         )}
-        <h3 className="font-bold text-gray-900 mb-2">{block.data?.projectTitle || block.title}</h3>
+        <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.data?.projectTitle || block.title}</h3>
         {block.data?.projectDescription && (
-          <p className="text-sm text-gray-600 mb-2">{block.data.projectDescription}</p>
+          <p className="text-sm mb-2" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.data.projectDescription}</p>
         )}
         {block.data?.technologies && block.data.technologies.length > 0 && (
           <div className="flex flex-wrap gap-2 justify-center">
             {block.data.technologies.map((tech, idx) => (
-              <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">{tech}</span>
+              <span key={idx} className="px-2 py-1 text-xs rounded-full" style={{ backgroundColor: themeColors?.surface || '#F3F4F6', color: themeColors?.text || '#374151' }}>{tech}</span>
             ))}
           </div>
         )}
@@ -604,21 +629,21 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     ];
     
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-center`} onClick={() => onBlockClick(block)}>
-        <h3 className="font-bold text-gray-900 mb-2">{block.title || 'Contact Us'}</h3>
+      <div className={`${baseClasses} text-center`} style={baseStyles} onClick={() => onBlockClick(block)}>
+        <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.title || 'Contact Us'}</h3>
         {block.description && (
-          <p className="text-sm text-gray-600 mb-4">{block.description}</p>
+          <p className="text-sm mb-4" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.description}</p>
         )}
         <div className="space-y-3">
           {fields.slice(0, 3).map((field, idx) => (
-            <div key={idx} className="bg-white rounded-lg p-3 border border-gray-200">
-              <p className="text-sm text-gray-500">{field.placeholder || field.label || field.name}</p>
+            <div key={idx} className="rounded-lg p-3 border" style={{ backgroundColor: themeColors?.background || '#FFFFFF', borderColor: themeColors?.border || '#E5E7EB' }}>
+              <p className="text-sm" style={{ color: themeColors?.textSecondary || '#9CA3AF' }}>{field.placeholder || field.label || field.name}</p>
             </div>
           ))}
           {fields.length > 3 && (
-            <p className="text-xs text-gray-500 text-center">+ {fields.length - 3} more fields</p>
+            <p className="text-xs text-center" style={{ color: themeColors?.textSecondary || '#9CA3AF' }}>+ {fields.length - 3} more fields</p>
           )}
-          <div className="bg-indigo-600 text-white rounded-lg p-3 text-center mt-4 cursor-pointer hover:bg-indigo-700 transition-colors">
+          <div className="rounded-lg p-3 text-center mt-4 cursor-pointer hover:opacity-90 transition-opacity" style={{ backgroundColor: themeColors?.primary || '#4F46E5', color: themeColors?.background || '#FFFFFF' }}>
             <p className="text-sm font-medium">{block.data?.submitButtonText || 'Send Message'}</p>
           </div>
         </div>
@@ -629,27 +654,27 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // COURSE Block
   if (block.type === 'COURSE') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 text-center`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses} text-center`} style={baseStyles} onClick={() => onBlockClick(block)}>
         <div className="flex flex-col items-center gap-4">
           {block.data?.coverImageUrl && (
             <Image src={block.data.coverImageUrl} alt={block.title} width={200} height={120} className="w-full h-32 object-cover rounded-lg" />
           )}
           <div className="flex flex-col items-center">
-            <h3 className="font-bold text-gray-900 mb-1">{block.data?.headline || block.title}</h3>
+            <h3 className="font-bold mb-1" style={{ color: themeColors?.text || '#111827' }}>{block.data?.headline || block.title}</h3>
             {block.data?.subheadline && (
-              <p className="text-sm text-gray-600 mb-2">{block.data.subheadline}</p>
+              <p className="text-sm mb-2" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.data.subheadline}</p>
             )}
             {block.data?.description && (
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{block.data.description}</p>
+              <p className="text-sm mb-3 line-clamp-2" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.data.description}</p>
             )}
             {block.data?.features && block.data.features.length > 0 && (
-              <ul className="text-xs text-gray-600 mb-3 space-y-1">
+              <ul className="text-xs mb-3 space-y-1" style={{ color: themeColors?.textSecondary || '#6B7280' }}>
                 {block.data.features.slice(0, 3).map((feature, idx) => (
                   <li key={idx}>✓ {feature}</li>
                 ))}
               </ul>
             )}
-            <div className="bg-blue-600 text-white rounded-lg px-6 py-2 mt-2">
+            <div className="rounded-lg px-6 py-2 mt-2" style={{ backgroundColor: themeColors?.primary || '#2563EB', color: themeColors?.background || '#FFFFFF' }}>
               <p className="text-sm font-medium">{block.data?.buttonText || 'Enroll Now'}</p>
             </div>
           </div>
@@ -661,24 +686,24 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // DISCOUNT Block
   if (block.type === 'DISCOUNT') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-red-50 to-pink-50 border-red-300`}>
+      <div className={`${baseClasses}`} style={baseStyles}>
         <div className="text-center">
-          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
           {block.data?.description && (
-            <p className="text-sm text-gray-600 mb-3">{block.data.description}</p>
+            <p className="text-sm mb-3" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.data.description}</p>
           )}
-          <div className="bg-white border-2 border-dashed border-red-400 rounded-lg p-4 mb-2">
+          <div className="border-2 border-dashed rounded-lg p-4 mb-2" style={{ backgroundColor: themeColors?.background || '#FFFFFF', borderColor: themeColors?.accent || '#EF4444' }}>
             {(block.data?.discountPercentage || block.data?.discountAmount) && (
-              <p className="text-3xl font-bold text-red-600 mb-1">
+              <p className="text-3xl font-bold mb-1" style={{ color: themeColors?.accent || '#EF4444' }}>
                 {block.data.discountPercentage ? `${block.data.discountPercentage}% OFF` : `$${block.data.discountAmount} OFF`}
               </p>
             )}
             {block.data?.code && (
-              <p className="text-lg font-mono font-semibold text-gray-900">{block.data.code}</p>
+              <p className="text-lg font-mono font-semibold" style={{ color: themeColors?.text || '#111827' }}>{block.data.code}</p>
             )}
           </div>
           {block.data?.showCountdown && (
-            <p className="text-xs text-gray-500">Limited time offer</p>
+            <p className="text-xs" style={{ color: themeColors?.textSecondary || '#9CA3AF' }}>Limited time offer</p>
           )}
         </div>
       </div>
@@ -734,10 +759,10 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     const feedType = block.data?.feedType || 'posts';
 
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-pink-50 to-rose-50 border-pink-200`}>
+      <div className={`${baseClasses}`} style={baseStyles}>
         <div className="text-center">
-          <SafeIcon name={undefined} icon={FiShare2} className="text-3xl text-pink-600 mx-auto mb-3" />
-          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          <SafeIcon name={undefined} icon={FiShare2} className="text-3xl mx-auto mb-3" style={{ color: themeColors?.primary || '#EC4899' }} />
+          <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
           {block.data?.username && (
             <p className="text-sm text-gray-600 mb-1">@{block.data.username}</p>
           )}
@@ -797,10 +822,10 @@ const BlockRenderer = ({ block, onBlockClick }) => {
   // AMA_BLOCK
   if (block.type === 'AMA_BLOCK') {
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-purple-50 to-violet-50 border-purple-200`} onClick={() => onBlockClick(block)}>
+      <div className={`${baseClasses}`} style={baseStyles} onClick={() => onBlockClick(block)}>
         <div className="text-center">
-          <SafeIcon name={undefined} icon={FiMail} className="text-3xl text-purple-600 mx-auto mb-3" />
-          <h3 className="font-bold text-gray-900 mb-2">{block.data?.questionFormTitle || block.title || 'Ask Me Anything'}</h3>
+          <SafeIcon name={undefined} icon={FiMail} className="text-3xl mx-auto mb-3" style={{ color: themeColors?.primary || '#9333EA' }} />
+          <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.data?.questionFormTitle || block.title || 'Ask Me Anything'}</h3>
           {block.data?.introMessage && (
             <div 
               className="text-sm text-gray-600 mb-4 prose prose-sm max-w-none"
@@ -873,10 +898,10 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     const excerptLength = block.data?.excerptLength || 150;
 
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-orange-50 to-amber-50 border-orange-200`}>
+      <div className={`${baseClasses}`} style={baseStyles}>
         <div className="text-center">
-          <SafeIcon name={undefined} icon={FiLink} className="text-3xl text-orange-600 mx-auto mb-3" />
-          <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+          <SafeIcon name={undefined} icon={FiLink} className="text-3xl mx-auto mb-3" style={{ color: themeColors?.primary || '#F97316' }} />
+          <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
           
           {loading && (
             <div className="bg-white rounded-lg p-4">
@@ -984,12 +1009,12 @@ const BlockRenderer = ({ block, onBlockClick }) => {
     const currency = block.data?.currency || '$';
     
     return (
-      <div className={`${baseStyles} bg-gradient-to-r from-fuchsia-50 to-pink-50 border-fuchsia-200 text-center`}>
+      <div className={`${baseClasses} text-center`} style={baseStyles}>
         {!isUnlocked ? (
           <>
             <div className="mb-4">
-              <SafeIcon name={undefined} icon={FiSettings} className="text-3xl text-fuchsia-600 mx-auto mb-3" />
-              <h3 className="font-bold text-gray-900 mb-2">{block.title}</h3>
+              <SafeIcon name={undefined} icon={FiSettings} className="text-3xl mx-auto mb-3" style={{ color: themeColors?.primary || '#D946EF' }} />
+              <h3 className="font-bold mb-2" style={{ color: themeColors?.text || '#111827' }}>{block.title}</h3>
               {previewContent && (
                 <div 
                   className="text-sm text-gray-600 mb-4 prose prose-sm max-w-none"
@@ -1072,15 +1097,15 @@ const BlockRenderer = ({ block, onBlockClick }) => {
 
   // Default rendering for other block types
   return (
-    <div className={`${baseStyles} text-center`} onClick={() => onBlockClick(block)}>
+    <div className={`${baseClasses} text-center`} style={baseStyles} onClick={() => onBlockClick(block)}>
       <div className="flex flex-col items-center gap-3">
         <div className="flex flex-col items-center">
-          <h3 className="font-semibold text-gray-900">{block.title || 'Block'}</h3>
+          <h3 className="font-semibold" style={{ color: themeColors?.text || '#111827' }}>{block.title || 'Block'}</h3>
           {block.description && (
-            <p className="text-sm text-gray-600">{block.description}</p>
+            <p className="text-sm" style={{ color: themeColors?.textSecondary || '#6B7280' }}>{block.description}</p>
           )}
         </div>
-        <SafeIcon name={undefined}  icon={FiExternalLink} className="text-gray-400" />
+        <SafeIcon name={undefined}  icon={FiExternalLink} style={{ color: themeColors?.textSecondary || '#9CA3AF' }} />
       </div>
     </div>
   );

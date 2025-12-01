@@ -58,15 +58,28 @@ export default function CampaignAssets() {
 
   const fetchCampaign = useCallback(
     async (silent = false) => {
-      if (!campaignId || !user?.id) {
+      if (!campaignId) {
+        console.error('No campaignId provided', { params });
         if (!silent) {
           setLoading(false);
+          toast.error('Campaign ID is missing');
+        }
+        return;
+      }
+
+      if (!user?.id) {
+        console.error('No user ID available', { userId: user?.id });
+        if (!silent) {
+          setLoading(false);
+          toast.error('You must be signed in to view campaigns');
         }
         return;
       }
 
       try {
         if (!silent) setLoading(true);
+        console.log('Fetching campaign', { campaignId, userId: user.id });
+        
         const response = await fetch(`/api/campaigns/${campaignId}`, {
           headers: {
             'x-user-id': user.id,
@@ -74,23 +87,52 @@ export default function CampaignAssets() {
         });
 
         if (response.status === 404) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Campaign not found', {
+            campaignId,
+            userId: user.id,
+            error: errorData.error,
+          });
           setCampaign(null);
           if (!silent) {
-            toast.error('Campaign not found');
+            toast.error(errorData.error || 'Campaign not found');
           }
           return;
         }
 
         if (!response.ok) {
-          throw new Error(`Failed to load campaign: ${response.status}`);
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Failed to load campaign', {
+            status: response.status,
+            campaignId,
+            error: errorData.error,
+          });
+          throw new Error(errorData.error || `Failed to load campaign: ${response.status}`);
         }
 
         const data = await response.json();
-        setCampaign(data.campaign ?? null);
+        console.log('Campaign data received:', {
+          campaignId,
+          hasCampaign: !!data.campaign,
+          assetCount: data.campaign?.assets?.length ?? 0,
+          status: data.campaign?.status,
+          assets: data.campaign?.assets,
+        });
+        
+        if (!data.campaign) {
+          console.error('Campaign data is null', { data });
+          if (!silent) {
+            toast.error('Invalid campaign data received');
+          }
+          return;
+        }
+        
+        setCampaign(data.campaign);
       } catch (error) {
         console.error('Error fetching campaign:', error);
         if (!silent) {
-          toast.error('Failed to load campaign');
+          const errorMessage = error instanceof Error ? error.message : 'Failed to load campaign';
+          toast.error(errorMessage);
         }
       } finally {
         if (!silent) {

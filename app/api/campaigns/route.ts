@@ -17,7 +17,14 @@ export async function GET(request: NextRequest) {
     // TODO: Replace with actual auth middleware
     const userId = request.headers.get('x-user-id');
 
+    logger.info('Campaigns list request', { 
+      userId,
+      hasUserId: !!userId,
+      headers: Object.fromEntries(request.headers.entries()),
+    });
+
     if (!userId) {
+      logger.warn('Campaigns list request without userId');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -37,6 +44,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    logger.info('Fetching campaigns for user', { userId, status: parsedStatus });
+
     const campaigns = await listCampaigns({
       userId,
       filters: {
@@ -44,11 +53,20 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    logger.info('Campaigns list returned', {
+      userId,
+      count: campaigns.length,
+      campaignIds: campaigns.map(c => c.id),
+    });
+
     return NextResponse.json({
       campaigns,
     });
   } catch (error) {
-    logger.error('Error fetching campaigns', { error });
+    logger.error('Error fetching campaigns', { 
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

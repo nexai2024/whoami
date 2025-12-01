@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stackServerApp } from '@/stack/server';
 import prisma from '@/lib/prisma';
 import { checkUserFeature } from '@/lib/features/checkFeature';
+import { checkFeatureGate } from '@/lib/gating/contentGate';
 
 /**
  * POST /api/errors
@@ -95,8 +96,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user has admin feature access
-    const hasAccess = await checkUserFeature(user.id, 'error_console_admin');
-    if (!hasAccess) {
+    const hasAccess = await checkFeatureGate(user.id, 'error_console_admin');
+    if (!hasAccess.allowed) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
