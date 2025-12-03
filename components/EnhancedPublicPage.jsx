@@ -20,6 +20,7 @@ import { getThemeById, getDefaultTheme, getThemeCSSVariables } from '../lib/them
 import { getFontById, getFontFamilyCSS, getGoogleFontsURL } from '../lib/themes/fonts';
 import DOMPurify from 'isomorphic-dompurify';
 import { isRichTextEmpty } from '../lib/utils/richText';
+import { generatePageSchema } from '../lib/seo/pageSchemaGenerator';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo, 
@@ -940,21 +941,33 @@ const EnhancedPublicPage = ({ subdomain, slug }) => {
     <>
       {page && (
         <>
-          <SEOHead
-            title={
-              page.metaTitle ||
-              page.title ||
-              (resolvedDisplayName ? `${resolvedDisplayName}'s Page` : 'WhoAmI Page')
-            }
-            description={
-              resolvedDescription ||
-              'Discover this creator on WhoAmI.'
-            }
-            ogImage={resolvedOgImage}
-            url={typeof window !== 'undefined' ? window.location.href : ''}
-            keywords={page.metaKeywords}
-            author={resolvedDisplayName || undefined}
-          />
+          {(() => {
+            // Generate schema markup automatically
+            const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'https://whoami.bio';
+            const schemaData = generatePageSchema(page, baseUrl);
+            
+            return (
+              <SEOHead
+                title={
+                  page.metaTitle ||
+                  page.title ||
+                  (resolvedDisplayName ? `${resolvedDisplayName}'s Page` : 'WhoAmI Page')
+                }
+                description={
+                  resolvedDescription ||
+                  'Discover this creator on WhoAmI.'
+                }
+                ogImage={resolvedOgImage}
+                url={typeof window !== 'undefined' ? window.location.href : ''}
+                keywords={page.metaKeywords}
+                author={resolvedDisplayName || undefined}
+                schema={schemaData ? {
+                  type: schemaData.type,
+                  data: schemaData.schema
+                } : undefined}
+              />
+            );
+          })()}
           {/* Load Google Fonts if needed */}
           {(() => {
             const fontsToLoad = [];

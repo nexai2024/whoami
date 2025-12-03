@@ -12,6 +12,8 @@ import ThemeSelector from './ThemeSelector';
 import LayoutControls from './LayoutControls';
 import TypographyControls from './TypographyControls';
 import AnimationControls from './AnimationControls';
+import SEOAuditDashboard from './SEOAuditDashboard';
+import SitemapSubmissionTool from './SitemapSubmissionTool';
 import * as FiIcons from 'react-icons/fi';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { PageService } from '../lib/database/pages';
@@ -27,7 +29,8 @@ import { RateLimitService } from '../lib/rate-limit';
 const {
   FiPlus, FiMove, FiEdit3, FiTrash2, FiSave, FiEye, FiImage,
   FiLink, FiShoppingBag, FiMail, FiMusic, FiVideo, FiCalendar,
-  FiUser, FiSettings, FiTag, FiShare2, FiLayout, FiUpload, FiBook, FiTrendingUp
+  FiUser, FiSettings, FiTag, FiShare2, FiLayout, FiUpload, FiBook, FiTrendingUp,
+  FiSearch, FiGlobe
 } = FiIcons;
 
 // SortableBlock component for drag-and-drop functionality
@@ -169,6 +172,7 @@ const EnhancedPageBuilder = () => {
     { id: 'header', label: 'Header', icon: FiUser },
     { id: 'blocks', label: 'Content Blocks', icon: FiLink },
     { id: 'templates', label: 'Templates', icon: FiLayout },
+    { id: 'seo', label: 'SEO', icon: FiSearch },
     { id: 'settings', label: 'Page Settings', icon: FiSettings }
   ];
 
@@ -1062,6 +1066,157 @@ const EnhancedPageBuilder = () => {
     </div>
   );
 
+  const renderSEOTab = () => (
+    <div className="space-y-6">
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <h3 className="font-medium text-green-900 mb-2">SEO Optimization</h3>
+        <p className="text-sm text-green-800">
+          Improve your page's search engine visibility. Fix issues and optimize your content for better rankings.
+        </p>
+      </div>
+
+      {pageData?.id && (
+        <SEOAuditDashboard 
+          pageId={pageData.id}
+          onRefresh={() => {
+            if (pageData?.id) {
+              loadPageData(pageData.id);
+            }
+          }}
+        />
+      )}
+
+      {/* SEO Settings Form */}
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">SEO Settings</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Meta Title
+            </label>
+            <input
+              type="text"
+              value={pageData?.metaTitle || pageData?.title || ''}
+              onChange={(e) => {
+                setPageData({ ...pageData, metaTitle: e.target.value });
+              }}
+              onBlur={async () => {
+                if (pageData?.id) {
+                  try {
+                    await PageService.updatePage(pageData.id, {
+                      metaTitle: pageData.metaTitle
+                    });
+                    toast.success('SEO settings saved');
+                  } catch (error) {
+                    toast.error('Failed to save SEO settings');
+                  }
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Page title for search engines (50-60 characters)"
+              maxLength={60}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {(pageData?.metaTitle || pageData?.title || '').length}/60 characters
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Meta Description
+            </label>
+            <textarea
+              value={pageData?.metaDescription || pageData?.description || ''}
+              onChange={(e) => {
+                setPageData({ ...pageData, metaDescription: e.target.value });
+              }}
+              onBlur={async () => {
+                if (pageData?.id) {
+                  try {
+                    await PageService.updatePage(pageData.id, {
+                      metaDescription: pageData.metaDescription
+                    });
+                    toast.success('SEO settings saved');
+                  } catch (error) {
+                    toast.error('Failed to save SEO settings');
+                  }
+                }
+              }}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="Page description for search engines (150-160 characters)"
+              maxLength={160}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {(pageData?.metaDescription || pageData?.description || '').length}/160 characters
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Meta Keywords (optional)
+            </label>
+            <input
+              type="text"
+              value={pageData?.metaKeywords || ''}
+              onChange={(e) => {
+                setPageData({ ...pageData, metaKeywords: e.target.value });
+              }}
+              onBlur={async () => {
+                if (pageData?.id) {
+                  try {
+                    await PageService.updatePage(pageData.id, {
+                      metaKeywords: pageData.metaKeywords
+                    });
+                    toast.success('SEO settings saved');
+                  } catch (error) {
+                    toast.error('Failed to save SEO settings');
+                  }
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="keyword1, keyword2, keyword3"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Open Graph Image URL
+            </label>
+            <input
+              type="url"
+              value={pageData?.ogImage || ''}
+              onChange={(e) => {
+                setPageData({ ...pageData, ogImage: e.target.value });
+              }}
+              onBlur={async () => {
+                if (pageData?.id) {
+                  try {
+                    await PageService.updatePage(pageData.id, {
+                      ogImage: pageData.ogImage
+                    });
+                    toast.success('SEO settings saved');
+                  } catch (error) {
+                    toast.error('Failed to save SEO settings');
+                  }
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              placeholder="https://example.com/og-image.jpg"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Recommended size: 1200x630px
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Sitemap Submission Tool */}
+      <SitemapSubmissionTool />
+    </div>
+  );
+
   const renderSettingsTab = () => (
     <div className="space-y-6">
       {/* Theme Selection */}
@@ -1316,6 +1471,7 @@ const EnhancedPageBuilder = () => {
         {activeTab === 'header' && renderHeaderTab()}
         {activeTab === 'blocks' && renderBlocksTab()}
         {activeTab === 'templates' && renderTemplatesTab()}
+        {activeTab === 'seo' && renderSEOTab()}
         {activeTab === 'settings' && renderSettingsTab()}
       </div>
     </div>
