@@ -34,6 +34,12 @@ export function mapBlockType(frontendType: string): BlockType {
     'deep_link': BlockType.DEEP_LINK,
     'deeplink': BlockType.DEEP_LINK,
     'funnel': BlockType.FUNNEL,
+    'quiz': BlockType.QUIZ,
+    'promo': BlockType.PROMO,
+    'social_proof': BlockType.SOCIAL_PROOF,
+    'saas_app': BlockType.SAAS_APP,
+    'app': BlockType.SAAS_APP,
+    'saas': BlockType.SAAS_APP,
   };
 
   // Check for special mappings first
@@ -84,6 +90,9 @@ export function mapBlockTypeToFrontend(backendType: BlockType | string): string 
     [BlockType.COURSE]: 'course',
     [BlockType.DEEP_LINK]: 'deep_link',
     [BlockType.FUNNEL]: 'funnel',
+    [BlockType.QUIZ]: 'quiz',
+    [BlockType.SOCIAL_PROOF]: 'social_proof',
+    [BlockType.SAAS_APP]: 'saas_app'
   };
 
   // Check for reverse mappings first

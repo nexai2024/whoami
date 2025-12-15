@@ -9,11 +9,10 @@ import SafeIcon from '@/common/SafeIcon';
 import BlockRenderer from './BlockRenderer';
 import TemplateRecommendations from './TemplateRecommendations';
 const {
-  FiSearch, FiX, FiEye, FiDownload, FiGrid, FiFilter, FiStar,
-  FiTrendingUp, FiZap, FiLayout, FiFileText, FiChevronDown,
+  FiSearch, FiX, FiEye, FiDownload, FiGrid, FiStar,
+  FiTrendingUp, FiZap, FiLayout, FiFileText, 
   FiShoppingBag, FiUsers, FiBriefcase, FiMusic, FiCamera,
-  FiCode, FiHeart, FiBook, FiCoffee, FiDroplet, FiUser, FiSparkles
-} = FiIcons;
+  FiCode, FiHeart, FiBook, FiCoffee, FiDroplet, FiUser} = FiIcons;
 
 interface TemplateMarketplaceProps {
   onApply?: (templateId: string) => void;
@@ -240,7 +239,6 @@ const TemplateMarketplace: React.FC<TemplateMarketplaceProps> = ({
     }
   };
 
-  const selectedCategoryData = templateCategories.find(c => c.id === selectedCategory);
 
   return (
     <div className="space-y-6">

@@ -41,7 +41,7 @@
     "app/(main)/dashboard/page.jsx",
     "globals.d.ts",
     ".next/dev/types/**/*.ts"
-  ],
+, "components/payments/CheckoutForm.jsx"  ],
   "exclude": [
     "node_modules"
   ]

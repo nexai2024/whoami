@@ -66,15 +66,19 @@ export async function POST(request: NextRequest) {
 
     const yourAudit = auditPageSEO({
       title: yourPage.title,
-      metaTitle: yourPage.metaTitle,
-      metaDescription: yourPage.metaDescription,
-      metaKeywords: yourPage.metaKeywords,
-      description: yourPage.description,
-      ogImage: yourPage.ogImage,
+      metaTitle: yourPage.metaTitle ?? undefined,
+      metaDescription: yourPage.metaDescription || undefined,
+      metaKeywords: yourPage.metaKeywords || undefined,
+      description: yourPage.description || undefined,
+      ogImage: yourPage.ogImage || undefined,
       url: yourPageUrl,
       customDomain: yourPage.customDomain || undefined,
       subdomain: yourPage.subdomain || undefined,
-      blocks: yourPage.blocks,
+      blocks: yourPage.blocks.map(({ type, title, description }) => ({
+        type,
+        title: title || undefined,
+        description: description || undefined,
+      })),
       user: {
         profile: {
           displayName: yourPage.user.profile?.displayName || undefined,

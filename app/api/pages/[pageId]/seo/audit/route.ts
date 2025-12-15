@@ -67,16 +67,20 @@ export async function GET(
 
     // Perform SEO audit
     const auditResult = auditPageSEO({
-      title: page.title,
-      metaTitle: page.metaTitle,
-      metaDescription: page.metaDescription,
-      metaKeywords: page.metaKeywords,
-      description: page.description,
-      ogImage: page.ogImage,
+      title: page.title ?? undefined,
+      metaTitle: page.metaTitle ?? undefined,
+      metaDescription: page.metaDescription ?? undefined,
+      metaKeywords: page.metaKeywords ?? undefined,
+      description: page.description ?? undefined,
+      ogImage: page.ogImage ?? undefined,
       url: pageUrl,
       customDomain: page.customDomain || undefined,
       subdomain: page.subdomain || undefined,
-      blocks: page.blocks,
+      blocks: page.blocks.map(({ type, title, description }) => ({
+        type,
+        title: title ?? undefined,
+        description: description ?? undefined,
+      })),
       user: {
         profile: {
           displayName: page.user.profile?.displayName || undefined,

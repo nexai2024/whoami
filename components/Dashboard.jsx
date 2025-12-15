@@ -527,18 +527,28 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900">Recent Pages</h2>
-              <Link
-                href="/builder?new=true"
-                onClick={handleCreatePageClick}
-                className={`text-sm font-medium transition-colors ${
-                  canCreatePage
-                    ? 'text-indigo-600 hover:text-indigo-700'
-                    : 'text-gray-400 cursor-not-allowed'
-                }`}
-                title={!canCreatePage ? `Page limit reached. Upgrade to create more.` : ''}
-              >
-                {canCreatePage ? 'Create New' : `Limit Reached (${pageLimit})`}
-              </Link>
+              <div className="flex items-center gap-4">
+                {userPages.length > 6 && (
+                  <Link
+                    href="/pages"
+                    className="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+                  >
+                    View All ({userPages.length})
+                  </Link>
+                )}
+                <Link
+                  href="/builder?new=true"
+                  onClick={handleCreatePageClick}
+                  className={`text-sm font-medium transition-colors ${
+                    canCreatePage
+                      ? 'text-indigo-600 hover:text-indigo-700'
+                      : 'text-gray-400 cursor-not-allowed'
+                  }`}
+                  title={!canCreatePage ? `Page limit reached. Upgrade to create more.` : ''}
+                >
+                  {canCreatePage ? 'Create New' : `Limit Reached (${pageLimit})`}
+                </Link>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -102,7 +102,7 @@ export default function Sidebar() {
       icon: FiLayers,
       description: 'Your content',
       links: [
-        { name: 'All Pages', href: '/dashboard', icon: FiFileText },
+        { name: 'All Pages', href: '/pages', icon: FiFileText },
         { name: 'My Courses', href: '/my-courses', icon: FiBook },
         { name: 'Campaigns', href: '/marketing/campaigns', icon: FiMail },
         { name: 'Workflows', href: '/workflows', icon: FiGitBranch, description: 'Automations' },

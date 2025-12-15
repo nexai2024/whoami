@@ -96,7 +96,7 @@ export default function CheckoutPage() {
         {/* Checkout Form */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-6">Complete Your Purchase</h2>
-          <CheckoutForm blockId={blockId} productTitle={product.title} />
+          <CheckoutForm uiMode="hosted" />
         </div>
       </div>
     </div>

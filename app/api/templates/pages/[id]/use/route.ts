@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { block } from 'sharp';
 
 const prisma = new PrismaClient();
 
@@ -99,6 +100,7 @@ console.log('blocksData', blocksData);
 
         // Create new blocks from template
         if (Array.isArray(blocksData) && blocksData.length > 0) {
+          console.log('Creating blocks:', blocksData);
           await tx.block.createMany({
             data: blocksData.map((block: any) => ({
               pageId,

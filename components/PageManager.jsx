@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'next/link';
+import Link from 'next/link';
 import * as FiIcons from 'react-icons/fi';
 import SafeIcon from '../common/SafeIcon';
 import { PageService } from '../lib/database/pages';
@@ -421,7 +421,7 @@ const PageManager = () => {
               </button>
               
               <Link
-                to={`/analytics?page=${page.id}`}
+                href={`/analytics?page=${page.id}`}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                 title="Analytics"
               >
@@ -429,7 +429,7 @@ const PageManager = () => {
               </Link>
               
               <Link
-                to={`/builder?page=${page.id}`}
+                href={`/builder?page=${page.id}`}
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
                 title="Edit"
               >
@@ -485,7 +485,7 @@ const PageManager = () => {
               </a>
             ) : (
               <Link
-                to="/builder?new=true"
+                href="/builder?new=true"
                 className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
                 data-tour-id="create-page-button"
               >
@@ -575,7 +575,7 @@ const PageManager = () => {
               }
             </p>
             <Link
-              to="/builder?new=true"
+              href="/builder?new=true"
               className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               <SafeIcon name={undefined}  icon={FiPlus} />

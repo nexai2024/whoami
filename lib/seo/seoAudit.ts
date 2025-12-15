@@ -160,10 +160,10 @@ export function auditPageSEO(pageData: PageSEOData): SEOAuditResult {
       priority: 'medium'
     });
     score -= 10;
-  } else {
+  } else if (pageData.blocks) {
     // Check for headings
     const hasHeadings = pageData.blocks.some(block => 
-      block.type === 'TEXT_BLOCK' && block.title
+      block.type === 'TEXT_BLOCK' && !!block.title
     );
     if (!hasHeadings) {
       issues.push({

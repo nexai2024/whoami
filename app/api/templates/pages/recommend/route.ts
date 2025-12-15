@@ -49,11 +49,19 @@ export async function GET(request: NextRequest) {
 
     // Analyze user profile and page to determine recommendations
     const profile = userProfile?.profile;
-    const industry = profile?.industry || searchParams.get('industry');
+
+    // Safely get industry, fallback to query param if not found in profile
+    let industry: string | null | undefined = undefined;
+    if (profile && typeof profile === 'object' && profile !== null) {
+      // Try to get 'industry' property in a fully typesafe way first, fallback to index signature if necessary
+      industry = (profile as Record<string, any>).industry;
+    }
+    if (!industry) {
+      industry = searchParams.get('industry');
+    }
+
     const pageBlocks = pageData?.blocks || [];
-    
-    // Determine user type based on profile and content
-    const hasProducts = pageBlocks.some(b => b.type === 'PRODUCT');
+    const hasProducts = pageBlocks.some((b: { type?: string }) => b.type === 'PRODUCT');
     const hasCourses = pageBlocks.some(b => b.type === 'COURSE');
     const isCoach = profile?.isCoach || false;
     const isCreator = profile?.bio?.toLowerCase().includes('creator') || 

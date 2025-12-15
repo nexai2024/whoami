@@ -45,6 +45,17 @@ model User {
   stripeConnectedAccount StripeConnectedAccount?
   creatorEarnings        CreatorEarning[]
 
+  // Enhancement features relations
+  templateCustomizations TemplateCustomization[]
+  seoPerformance        SEOPerformance[]
+  contentOptimizations   ContentOptimization[]
+  templatePerformance    TemplatePerformance[]
+  abTestExperiments      ABTestExperiment[]
+  templatePurchasesAsBuyer TemplatePurchase[] @relation("TemplateBuyer")
+  templatePurchasesAsSeller TemplatePurchase[] @relation("TemplateSeller")
+  templateReviews        TemplateReview[]
+  templateCreatorProfile TemplateCreatorProfile?
+
   @@map("users")
 }
 
@@ -129,6 +140,13 @@ model Page {
   clicks Click[]
   forms  Form[]
 
+  // Enhancement features relations
+  templateCustomizations TemplateCustomization[]
+  seoPerformance        SEOPerformance[]
+  contentOptimizations   ContentOptimization[]
+  templatePerformance    TemplatePerformance[]
+  abTestExperiments      ABTestExperiment[]
+
   @@map("pages")
 }
 
@@ -179,6 +197,7 @@ model Block {
 
   page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
   clicks Click[]
+  contentOptimizations ContentOptimization[]
 
   // For extensibility: link to product, analytics, or form if needed
   productId   String?
@@ -245,6 +264,8 @@ model Click {
 
   @@map("clicks")
 }
+
+// Enhancement features relations for Block
 
 model Analytics {
   id     String   @id @default(cuid())
@@ -544,6 +565,7 @@ model Plan {
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  priceId     String?
 
   features      PlanFeature[]
   subscriptions Subscription[]
@@ -759,6 +781,9 @@ enum BlockType {
   CUSTOM
   COURSE
   FUNNEL
+  QUIZ
+  SOCIAL_PROOF
+  SAAS_APP
 }
 
 enum LeadStage {
@@ -1469,8 +1494,24 @@ model PageTemplate {
   featured Boolean  @default(false)
   isPublic Boolean  @default(false)
 
+  // Marketplace fields
+  price         Decimal? @db.Decimal(10, 2)
+  currency      String   @default("USD")
+  isPaid        Boolean  @default(false)
+  commissionRate Decimal? @db.Decimal(5, 2)
+  totalRevenue  Decimal  @default(0) @db.Decimal(10, 2)
+  totalSales    Int      @default(0)
+  licenseType   String   @default("free") // free, paid, premium
+
   // Relations
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customizations TemplateCustomization[]
+  performance    TemplatePerformance[]
+  purchases      TemplatePurchase[]
+  reviews        TemplateReview[]
+  abTestsA       ABTestExperiment[] @relation("TemplateA")
+  abTestsB       ABTestExperiment[] @relation("TemplateB")
+  abTestsWinner  ABTestExperiment[] @relation("WinnerTemplate")
 
   @@index([userId, category])
   @@index([category, featured])
@@ -2271,4 +2312,222 @@ model FunnelConversion {
   @@index([funnelId, createdAt])
   @@index([email])
   @@map("funnel_conversions")
+}
+
+// ============================================
+// ENHANCEMENT FEATURES (5 New Features)
+// ============================================
+
+// 1. Template Customization Studio
+model TemplateCustomization {
+  id         String   @id @default(cuid())
+  templateId String
+  pageId     String?
+  userId     String
+
+  customizations Json   @default("{}")
+  previewData    Json?
+  saved          Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  template PageTemplate? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  page     Page?         @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([userId])
+  @@index([pageId])
+  @@map("template_customizations")
+}
+
+// 2. SEO Performance Tracking
+model SEOPerformance {
+  id            String   @id @default(cuid())
+  pageId        String
+  userId        String
+  date          DateTime
+
+  score         Int
+  errors        Int      @default(0)
+  warnings      Int      @default(0)
+  info          Int      @default(0)
+  issues        Json?
+
+  searchRanking Int?
+  organicTraffic Int     @default(0)
+  impressions   Int      @default(0)
+  clicks        Int      @default(0)
+  ctr           Decimal? @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("seo_performance")
+}
+
+// 3. Content Optimization Suggestions
+model ContentOptimization {
+  id            String   @id @default(cuid())
+  pageId        String
+  blockId       String?
+  userId        String
+
+  suggestionType String
+  field          String
+  currentValue   String?
+  suggestedValue String
+  reason         String?
+  priority       String // high, medium, low
+  impactScore    Int?
+
+  applied   Boolean   @default(false)
+  appliedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  page Page  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  block Block? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([userId])
+  @@index([applied])
+  @@map("content_optimizations")
+}
+
+// 4. Template Performance Analytics
+model TemplatePerformance {
+  id            String   @id @default(cuid())
+  templateId    String
+  pageId       String
+  userId       String
+  date         DateTime
+
+  views         Int      @default(0)
+  clicks        Int      @default(0)
+  conversions   Int      @default(0)
+  conversionRate Decimal? @db.Decimal(5, 2)
+  engagementTime Int?
+  bounceRate    Decimal? @db.Decimal(5, 2)
+  revenue       Decimal  @default(0) @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  template PageTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  page     Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, pageId, date])
+  @@index([templateId])
+  @@index([userId])
+  @@map("template_performance")
+}
+
+// 5. A/B Test Experiments
+model ABTestExperiment {
+  id            String   @id @default(cuid())
+  pageId        String
+  userId        String
+
+  name        String
+  description String?
+  templateAId String
+  templateBId String
+  status      String    @default("draft") // draft, running, completed, paused
+  trafficSplit Int      @default(50) // percentage for template A
+
+  startDate      DateTime?
+  endDate        DateTime?
+  winnerTemplateId String?
+  results        Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page           Page         @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateA      PageTemplate @relation("TemplateA", fields: [templateAId], references: [id])
+  templateB      PageTemplate @relation("TemplateB", fields: [templateBId], references: [id])
+  winnerTemplate PageTemplate? @relation("WinnerTemplate", fields: [winnerTemplateId], references: [id])
+
+  @@index([pageId])
+  @@index([userId])
+  @@index([status])
+  @@map("ab_test_experiments")
+}
+
+// 6. Template Marketplace (Revenue Sharing)
+model TemplatePurchase {
+  id           String   @id @default(cuid())
+  templateId   String
+  buyerId      String
+  sellerId     String
+
+  price         Decimal  @db.Decimal(10, 2)
+  currency      String   @default("USD")
+  commission    Decimal  @db.Decimal(10, 2)
+  platformFee   Decimal  @db.Decimal(10, 2)
+  sellerEarnings Decimal @db.Decimal(10, 2)
+  paymentStatus String   @default("pending") // pending, completed, failed, refunded
+
+  createdAt DateTime @default(now())
+
+  template PageTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  buyer    User         @relation("TemplateBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller   User         @relation("TemplateSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@map("template_purchases")
+}
+
+model TemplateReview {
+  id        String   @id @default(cuid())
+  templateId String
+  userId    String
+
+  rating Int      // 1-5
+  review String?  @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  template PageTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, userId])
+  @@index([templateId])
+  @@index([rating])
+  @@map("template_reviews")
+}
+
+model TemplateCreatorProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+
+  displayName   String?
+  bio           String?  @db.Text
+  avatarUrl     String?
+
+  totalTemplates Int     @default(0)
+  totalSales     Int     @default(0)
+  totalRevenue   Decimal @default(0) @db.Decimal(10, 2)
+  averageRating  Decimal? @db.Decimal(3, 2)
+  verified      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("template_creator_profiles")
 }
