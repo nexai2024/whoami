@@ -64,6 +64,19 @@ model Profile {
   location String?
   timezone String  @default("UTC")
 
+  // Social media links (for creator link-in-bio)
+  socialLinkTwitter    String?
+  socialLinkInstagram  String?
+  socialLinkYouTube    String?
+  socialLinkTikTok     String?
+  socialLinkLinkedIn   String?
+  socialLinkFacebook   String?
+  socialLinkTwitch     String?
+  socialLinkDiscord    String?
+  socialLinkWebsite    String?
+  socialLinkLinktree   String?
+  socialLinkOther      String?
+
   // Subscription and billing
   plan               PlanEnum @default(FREE)
   stripeCustomerId   String?

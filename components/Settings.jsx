@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import * as FiIcons from 'react-icons/fi';
-const { FiUser: FiUserIcon } = FiIcons;
+const { FiUser: FiUserIcon, FiLink } = FiIcons;
 import SafeIcon from '../common/SafeIcon';
 import FileUpload from './FileUpload';
 import DomainSubdomainSetup from './DomainSubdomainSetup';
 import CoachSettings from './CoachSettings';
+import SocialLinksSettings from './SocialLinksSettings';
 import { PageService } from '../lib/database/pages';
 import { logger } from '../lib/utils/logger';
 import { useUser } from '@stackframe/stack';
@@ -69,6 +70,7 @@ const Settings = () => {
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: FiUser },
+    { id: 'social', label: 'Social Links', icon: FiLink },
     { id: 'account', label: 'Account', icon: FiSettings },
     { id: 'billing', label: 'Billing', icon: FiCreditCard },
     { id: 'coach', label: 'Coach', icon: FiUserIcon },
@@ -571,6 +573,7 @@ const Settings = () => {
           <div className="lg:col-span-3">
             <div className="bg-white rounded-2xl shadow-sm border p-6">
               {activeTab === 'profile' && renderProfileTab()}
+              {activeTab === 'social' && <SocialLinksSettings />}
               {activeTab === 'account' && renderAccountTab()}
               {activeTab === 'coach' && <CoachSettings />}
               {activeTab === 'billing' && (
