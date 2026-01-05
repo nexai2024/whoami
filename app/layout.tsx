@@ -31,6 +31,14 @@ export default function RootLayout({
               {children}
             </AppProviders>
             <Analytics />
+                     <Script
+            src="https://zenoassist.com/widget.js"
+            data-zenoassist-v2
+            data-company-id="41753172-432d-4afe-935c-a6b9b406ac7c"
+            data-position="bottom-right"
+            strategy="lazyOnload"
+          />
+ 
           </body>
         </html>
     );
