@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { Geist, Geist_Mono } from 'next/font/google';
 import AppProviders from '../components/AppProviders';
 import { Analytics } from "@vercel/analytics/next"
+import Script from 'next/script';
 export const metadata: Metadata = {
   title: "WhoAmI",
   description: "Ultimate link in bio and personal brand marketing solution.",
@@ -36,7 +37,7 @@ export default function RootLayout({
             data-zenoassist-v2
             data-company-id="41753172-432d-4afe-935c-a6b9b406ac7c"
             data-position="bottom-right"
-            strategy="lazyOnload"
+            strategy="beforeInteractive"
           />
  
           </body>
