@@ -4,11 +4,11 @@
  */
 
 import { notFound } from 'next/navigation';
-import { PrismaClient, MagnetStatus } from '@prisma/client';
+import { MagnetStatus } from '@prisma/client';
 import OptInForm from '@/components/lead-magnets/OptInForm';
 import { Metadata } from 'next';
 import Image from 'next/image';
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 interface PageProps {
   params: {

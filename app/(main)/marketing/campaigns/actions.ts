@@ -1,4 +1,5 @@
 'use server';
+import prisma from '@/lib/prisma';
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
 import { CampaignStatus, Platform } from '@prisma/client';
@@ -11,7 +12,6 @@ import {
   listCampaigns,
   serializeCampaignListFilters,
 } from '@/lib/services/campaignService';
-import prisma from '@/lib/prisma';
 
 type CampaignActionErrorCode = 'validation_error' | 'not_found' | 'rate_limited' | 'unknown_error';
 

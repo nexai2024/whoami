@@ -1,7 +1,7 @@
 import { stripe } from '../../../lib/stripe'
-import prisma from '@/lib/prisma';
 import type { Stripe } from "stripe";
 import { NextResponse } from "next/server";
+import prisma from '@/lib/prisma';
 
 export async function POST(req: Request) {
   let event: Stripe.Event;
@@ -143,8 +143,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         status: subscription.status,
         stripeSubscriptionId: subscription.id,
         stripeCustomerId: subscription.customer as string,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       },
       create: {
@@ -153,8 +153,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         status: subscription.status,
         stripeSubscriptionId: subscription.id,
         stripeCustomerId: subscription.customer as string,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       }
     });
@@ -203,8 +203,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       data: {
         planId: plan.id,
         status: subscription.status,
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
+        currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       }
     });
@@ -273,7 +273,9 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
 // Handle invoice paid
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = typeof (invoice as any).subscription === 'string' 
+    ? (invoice as any).subscription 
+    : ((invoice as any).subscription as Stripe.Subscription)?.id;
   
   if (!subscriptionId) {
     return; // Not a subscription invoice
@@ -285,7 +287,9 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
 // Handle invoice payment failed
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = typeof (invoice as any).subscription === 'string' 
+    ? (invoice as any).subscription 
+    : ((invoice as any).subscription as Stripe.Subscription)?.id;
   const customerId = invoice.customer as string;
 
   if (!subscriptionId) {

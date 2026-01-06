@@ -4,12 +4,11 @@
  * Should run every 5 minutes via cron job
  */
 
-import { PrismaClient, ScheduleStatus, Platform } from '@prisma/client';
+import { ScheduleStatus, Platform } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import { publish } from '@/lib/services/platformPublisher';
 import { PlatformCredentials } from '@/lib/services/platformPublisher';
 import { sendPostFailureNotification } from '@/lib/services/emailService';
-
-const prisma = new PrismaClient();
 
 interface ProcessResult {
   processed: number;

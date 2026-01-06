@@ -3,11 +3,10 @@
  * Analyzes page and provides specific, actionable optimization recommendations
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { auditPageSEO } from '@/lib/seo/seoAudit';
 
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
@@ -68,13 +67,15 @@ export async function POST(
       description: page.description ?? undefined,
       ogImage: page.ogImage ?? undefined,
       url: pageUrl,
-      customDomain: page.customDomain || undefined,
-      subdomain: page.subdomain || undefined,
-      blocks: page.blocks.map(({ type, title, description }) => ({
-        type,
-        title: title ?? undefined,
-        description: description ?? undefined,
-      })),
+      customDomain: page.customDomain ?? undefined,
+      subdomain: page.subdomain ?? undefined,
+      blocks: page.blocks.map(
+        (block: { type: string; title?: string; description?: string }) => ({
+          type: block.type,
+          title: block.title ?? undefined,
+          description: block.description ?? undefined,
+        })
+      ),
       user: {
         profile: {
           displayName: page.user.profile?.displayName || undefined,

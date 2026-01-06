@@ -6,9 +6,9 @@
  * Update an existing asset
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
-import prisma from '@/lib/prisma';
 import { AssetType, AssetStatus, Platform } from '@prisma/client';
 
 interface RouteParams {

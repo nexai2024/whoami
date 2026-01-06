@@ -6,10 +6,11 @@
  * Get all scheduled posts for the authenticated user
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Platform, PostType, ScheduleStatus } from '@prisma/client';
+import { Platform, PostType, ScheduleStatus } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -171,7 +172,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      posts: posts.map((post) => ({
+      posts: posts.map((post: any) => ({
         id: post.id,
         content: post.content,
         mediaUrls: post.mediaUrls,

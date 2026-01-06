@@ -1,5 +1,5 @@
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '../../../lib/prisma';
 import { logger } from '@/lib/utils/logger';
 import { generateSlug } from '@/lib/utils/slug';
 import { requireAuth, requireFeature } from '@/lib/auth/serverAuth';

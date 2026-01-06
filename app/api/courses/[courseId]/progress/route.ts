@@ -3,10 +3,9 @@
  * POST /api/courses/[courseId]/progress - Update progress
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -72,8 +71,8 @@ export async function GET(
 
     // Format response for compatibility with frontend
     const lessonsCompleted = enrollment.lessonProgress
-      .filter(p => p.status === 'COMPLETED')
-      .map(p => p.lessonId);
+      .filter((p: { status: string; }) => p.status === 'COMPLETED')
+      .map((p: { lessonId: any; }) => p.lessonId);
 
     return NextResponse.json({
       enrolledAt: enrollment.createdAt,
@@ -176,7 +175,7 @@ export async function POST(
       where: { enrollmentId: enrollment.id }
     });
 
-    const completedCount = allProgress.filter(p => p.status === 'COMPLETED').length;
+    const completedCount = allProgress.filter((p: { status: string; }) => p.status === 'COMPLETED').length;
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       select: { lessons: { select: { id: true } } }

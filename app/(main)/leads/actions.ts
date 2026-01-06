@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache';
-import prisma from '@/lib/prisma';
 
 import {
   deleteLead,
@@ -19,6 +18,7 @@ import {
   upsertLead,
 } from '@/lib/services/leadService';
 import type { LeadResponse } from '@/app/api/leads/utils';
+import prisma from '@/lib/prisma';
 
 type LeadActionErrorCode = 'validation_error' | 'conflict_error' | 'not_found' | 'unknown_error';
 

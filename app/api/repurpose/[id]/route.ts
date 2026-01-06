@@ -3,10 +3,10 @@
  * Get repurposed content with all assets
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, RepurposedAsset as RepurposedAssetModel } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 interface RouteParams {
   params: Promise<{
@@ -64,7 +64,7 @@ export async function GET(
         status: repurposedContent.status,
         error: repurposedContent.error,
         createdAt: repurposedContent.createdAt.toISOString(),
-        assets: repurposedContent.assets.map((asset: RepurposedAssetModel) => ({
+        assets: repurposedContent.assets.map((asset: any) => ({
           id: asset.id,
           type: asset.type,
           platform: asset.platform,

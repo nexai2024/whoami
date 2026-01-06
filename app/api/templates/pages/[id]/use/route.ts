@@ -2,11 +2,11 @@
  * POST /api/templates/pages/[id]/use - Apply template to user's page
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+
 import { block } from 'sharp';
 
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,
@@ -74,7 +74,7 @@ export async function POST(
     }
 
     // Apply template to page in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Update or create page header
       const headerData = template.headerData as any;
 

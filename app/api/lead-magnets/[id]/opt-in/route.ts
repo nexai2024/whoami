@@ -3,12 +3,12 @@
  * Handle lead magnet opt-in form submissions
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, MagnetStatus, Prisma } from '@prisma/client';
+import { MagnetStatus, Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { sendLeadMagnetDelivery } from '@/lib/services/emailService';
 
-const prisma = new PrismaClient();
 
 interface OptInRequest {
   email: string;

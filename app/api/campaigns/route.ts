@@ -6,11 +6,11 @@
  * Create a new campaign manually (without AI generation)
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { CampaignStatus } from '@prisma/client';
 import { logger } from '@/lib/utils/logger';
 import { listCampaigns } from '@/lib/services/campaignService';
-import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     logger.info('Campaigns list returned', {
       userId,
       count: campaigns.length,
-      campaignIds: campaigns.map(c => c.id),
+      campaignIds: campaigns.map((c: any) => c.id),
     });
 
     return NextResponse.json({

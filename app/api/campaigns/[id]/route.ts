@@ -3,10 +3,10 @@
  * Get full campaign with all assets
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
 import { getCampaign } from '@/lib/services/campaignService';
-import prisma from '@/lib/prisma';
 
 interface RouteParams {
   params: Promise<{

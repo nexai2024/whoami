@@ -2,11 +2,11 @@
  * POST /api/templates/pages/generate - Generate template using AI
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+
 import { generatePageTemplate } from '@/lib/services/aiService';
 
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {

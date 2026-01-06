@@ -5,11 +5,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, MagnetType, DeliveryMethod, MagnetStatus } from '@prisma/client';
+import prisma from '@/lib/prisma';
+import { MagnetType, DeliveryMethod, MagnetStatus } from '@prisma/client';
 import { requireResourceOwnership } from '@/lib/auth/serverAuth';
 import { logger } from '@/lib/utils/logger';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -79,7 +79,7 @@ export async function GET(
       publishedAt: leadMagnet.publishedAt?.toISOString() || null,
       createdAt: leadMagnet.createdAt.toISOString(),
       updatedAt: leadMagnet.updatedAt.toISOString(),
-      assets: leadMagnet.assets.map(asset => ({
+      assets: leadMagnet.assets.map((asset: { id: any; name: any; description: any; fileUrl: any; fileSize: any; mimeType: any; order: any; dripDay: any; }) => ({
         id: asset.id,
         name: asset.name,
         description: asset.description,

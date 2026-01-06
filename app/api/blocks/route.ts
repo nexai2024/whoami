@@ -4,9 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, BlockType } from '@prisma/client';
+import prisma from '@/lib/prisma';
+import { BlockType } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({
-      blocks: blocks.map(block => ({
+      blocks: blocks.map((block: any) => ({
         id: block.id,
         pageId: block.pageId,
         type: block.type,

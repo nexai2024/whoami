@@ -3,10 +3,9 @@
  * POST /api/courses/[courseId]/reviews - Submit a course review
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -43,15 +42,15 @@ export async function GET(
     });
 
     const averageRating = allApprovedReviews.length > 0
-      ? allApprovedReviews.reduce((sum, r) => sum + r.rating, 0) / allApprovedReviews.length
+      ? allApprovedReviews.reduce((sum: any, r: { rating: any; }) => sum + r.rating, 0) / allApprovedReviews.length
       : 0;
 
     const ratingDistribution = {
-      5: allApprovedReviews.filter(r => r.rating === 5).length,
-      4: allApprovedReviews.filter(r => r.rating === 4).length,
-      3: allApprovedReviews.filter(r => r.rating === 3).length,
-      2: allApprovedReviews.filter(r => r.rating === 2).length,
-      1: allApprovedReviews.filter(r => r.rating === 1).length,
+      5: allApprovedReviews.filter((r: { rating: number; }) => r.rating === 5).length,
+      4: allApprovedReviews.filter((r: { rating: number; }) => r.rating === 4).length,
+      3: allApprovedReviews.filter((r: { rating: number; }) => r.rating === 3).length,
+      2: allApprovedReviews.filter((r: { rating: number; }) => r.rating === 2).length,
+      1: allApprovedReviews.filter((r: { rating: number; }) => r.rating === 1).length,
     };
 
     return NextResponse.json({
@@ -126,7 +125,7 @@ export async function POST(
     });
 
     const averageRating = allApprovedReviews.length > 0
-      ? allApprovedReviews.reduce((sum, r) => sum + r.rating, 0) / allApprovedReviews.length
+      ? allApprovedReviews.reduce((sum: any, r: { rating: any; }) => sum + r.rating, 0) / allApprovedReviews.length
       : rating;
 
     await prisma.course.update({

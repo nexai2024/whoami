@@ -1,6 +1,6 @@
 // app/api/admin/features/route.ts
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 import { stackServerApp } from '@/stack/server';
 import { isSuperAdmin } from '@/lib/utils/adminUtils';
 

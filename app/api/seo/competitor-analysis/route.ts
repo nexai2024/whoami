@@ -3,11 +3,11 @@
  * Compares your page SEO against competitor URLs
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+
 import { auditPageSEO } from '@/lib/seo/seoAudit';
 
-const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -74,10 +74,10 @@ export async function POST(request: NextRequest) {
       url: yourPageUrl,
       customDomain: yourPage.customDomain || undefined,
       subdomain: yourPage.subdomain || undefined,
-      blocks: yourPage.blocks.map(({ type, title, description }) => ({
-        type,
-        title: title || undefined,
-        description: description || undefined,
+      blocks: yourPage.blocks.map((block: { type: any; title: any; description: any }) => ({
+        type: block.type,
+        title: block.title || undefined,
+        description: block.description || undefined,
       })),
       user: {
         profile: {

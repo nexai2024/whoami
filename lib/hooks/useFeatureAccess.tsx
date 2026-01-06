@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import Link from 'next/link';
 
 /**
  * Hook for checking feature access based on subscription
@@ -143,12 +144,12 @@ export function UpgradePrompt({
           >
             Maybe Later
           </button>
-          <a
+          <Link
             href="/settings/billing"
             className="flex-1 bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-medium transition text-center"
           >
             View Plans
-          </a>
+          </Link>
         </div>
       </div>
     </div>

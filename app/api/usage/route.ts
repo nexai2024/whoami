@@ -1,6 +1,6 @@
 // app/api/usage/route.ts
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
 import { logger } from '@/lib/utils/logger'
 
 // GET /api/usage?userId=xxx

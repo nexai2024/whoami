@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import CheckoutForm from '@/components/CheckoutForm';
+import CheckoutForm from '@/components/payments/CheckoutForm';
 
 export default function CheckoutPage() {
   const [planId, setPlanId] = useState<string | null>(null);
@@ -21,7 +21,7 @@ export default function CheckoutPage() {
 
   return (      
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-12 px-4">
-        <CheckoutForm uiMode="hosted" />
+        <CheckoutForm />
     </div>
   );
 }

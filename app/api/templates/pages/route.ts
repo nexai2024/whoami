@@ -3,10 +3,11 @@
  * POST /api/templates/pages - Create custom template (authenticated)
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, TemplateType } from '@prisma/client';
+import { TemplateType } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     const industry = searchParams.get('industry');
     const templateType = searchParams.get('templateType') as TemplateType | null;
     const featured = searchParams.get('featured');
-    const tags = searchParams.get('tags')?.split(',').filter(Boolean);
+    const tags = searchParams.get('tags')?.split(',').filter((tag: string) => Boolean(tag));
     const search = searchParams.get('search');
     const sortBy = searchParams.get('sortBy') || 'popular'; // popular, newest, rating
     const limit = parseInt(searchParams.get('limit') || '50');
@@ -121,7 +122,7 @@ export async function GET(request: NextRequest) {
     ]);
 console.log('templates', templates);
     return NextResponse.json({
-      templates: templates.map(t => ({
+      templates: templates.map((t: any) => ({
         ...t,
         createdAt: t.createdAt.toISOString()
       })),

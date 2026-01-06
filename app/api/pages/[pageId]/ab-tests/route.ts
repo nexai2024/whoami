@@ -3,10 +3,9 @@
  * POST /api/pages/[pageId]/ab-tests - Create new A/B test
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -50,7 +49,7 @@ export async function GET(
     });
 
     return NextResponse.json({
-      tests: tests.map(t => ({
+      tests: tests.map((t: { id: any; name: any; description: any; templateAId: any; templateBId: any; trafficSplit: any; status: any; createdAt: { toISOString: () => any; }; updatedAt: { toISOString: () => any; }; startDate: { toISOString: () => any; }; endDate: { toISOString: () => any; }; }) => ({
         ...t,
         createdAt: t.createdAt.toISOString(),
         updatedAt: t.updatedAt.toISOString(),

@@ -2,10 +2,10 @@
  * GET /api/templates/pages/marketplace - Get marketplace templates with pricing
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate average rating and format response
-    const formattedTemplates = templates.map(template => {
+    const formattedTemplates = templates.map((template: any) => {
       const reviews = template.reviews || [];
       const avgRating = reviews.length > 0
         ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length

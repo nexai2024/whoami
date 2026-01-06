@@ -3,11 +3,12 @@
  * Analyze source URL and extract content for repurposing
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, SourceType, RepurposeStatus, RepurposeAssetType } from '@prisma/client';
+import { RepurposeAssetType, SourceType, RepurposeStatus } from '@prisma/client';
+
 import { generateContent, extractKeyPoints, summarizeForPlatform } from '@/lib/services/aiService';
 
-const prisma = new PrismaClient();
 
 interface RepurposeConfig {
   outputFormats: RepurposeAssetType[];

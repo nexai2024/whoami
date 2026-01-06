@@ -3,10 +3,11 @@
  * Schedule multiple posts with smart timing
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Platform, PostType, ScheduleStatus } from '@prisma/client';
+import { Platform, PostType, ScheduleStatus } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 type SpreadMode = 'OPTIMAL' | 'EVENLY' | 'MANUAL';
 
@@ -114,10 +115,10 @@ export async function POST(request: NextRequest) {
         const start = new Date(startDate);
         const usedSlots = new Set<string>();
 
-        scheduleTimes = posts.map((post) => {
+        scheduleTimes = posts.map((post: BulkPost) => {
           // Find best unused slot for this platform
           const platformSlots = optimalSlots.filter(
-            (slot) =>
+            (slot: any) =>
               !slot.platform || slot.platform === post.platform
           );
 
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest) {
 
     // Create scheduled posts
     const scheduledPosts = await Promise.all(
-      posts.map(async (post, index) => {
+      posts.map(async (post: BulkPost, index: number) => {
         return prisma.scheduledPost.create({
           data: {
             userId,
@@ -188,7 +189,7 @@ export async function POST(request: NextRequest) {
     );
 
     return NextResponse.json({
-      scheduledPosts: scheduledPosts.map((post) => ({
+      scheduledPosts: scheduledPosts.map((post: any) => ({
         id: post.id,
         content: post.content,
         platform: post.platform,

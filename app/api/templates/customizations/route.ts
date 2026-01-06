@@ -3,10 +3,10 @@
  * GET /api/templates/customizations - Get user's saved customizations
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      customizations: customizations.map(c => ({
+      customizations: customizations.map((c: any) => ({
         ...c,
         createdAt: c.createdAt.toISOString(),
         updatedAt: c.updatedAt.toISOString()

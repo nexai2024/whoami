@@ -2,10 +2,10 @@
  * GET /api/sitemap.xml - Generate sitemap for all public pages
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Build sitemap XML
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${pages.map(page => {
+${pages.map((page: any) => {
   const url = page.customDomain
     ? `https://${page.customDomain}`
     : page.subdomain
@@ -60,7 +60,7 @@ ${pages.map(page => {
     <priority>0.8</priority>
   </url>`;
 }).join('\n')}
-${courses.map(course => {
+${courses.map((course: any) => {
   const url = `${baseUrl}/c/${course.slug}`;
   const lastmod = course.updatedAt.toISOString().split('T')[0];
   

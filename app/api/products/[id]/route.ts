@@ -4,12 +4,13 @@
  * DELETE /api/products/[id] - Delete product (soft or hard delete)
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { Sale } from '@prisma/client';
+
 import { logger } from '@/lib/utils/logger';
 import { requireResourceOwnership } from '@/lib/auth/serverAuth';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -50,7 +51,10 @@ export async function GET(
     });
 
     const totalSales = allSales.length;
-    const totalRevenue = allSales.reduce((sum, sale) => sum + sale.amount, 0);
+    const totalRevenue = allSales.reduce((sum: number, sale: Sale) => {
+      const amount = typeof sale.amount === 'number' ? sale.amount : Number(sale.amount || 0);
+      return sum + amount;
+    }, 0);
 
     return NextResponse.json({
       id: product.id,
@@ -64,7 +68,7 @@ export async function GET(
       isActive: product.isActive,
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
-      sales: product.sales.map(sale => ({
+      sales: product.sales.map((sale: Sale) => ({
         id: sale.id,
         buyerEmail: sale.buyerEmail,
         amount: sale.amount,

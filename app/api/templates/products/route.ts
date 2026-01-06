@@ -3,10 +3,10 @@
  * POST /api/templates/products - Create product template from existing product
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      templates: templates.map(template => ({
+      templates: templates.map((template: any) => ({
         id: template.id,
         name: template.name,
         description: template.description,

@@ -2,11 +2,10 @@
  * GET /api/pages/[pageId]/seo/performance - Get SEO performance history
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { auditPageSEO } from '@/lib/seo/seoAudit';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -98,12 +97,12 @@ export async function GET(
       description: page.description ?? undefined,
       ogImage: page.ogImage ?? undefined,
       url: pageUrl,
-      customDomain: page.customDomain || undefined,
-      subdomain: page.subdomain || undefined,
-      blocks: page.blocks.map(({ type, title, description }) => ({
-        type,
-        title: title ?? undefined,
-        description: description ?? undefined,
+      customDomain: page.customDomain ?? undefined,
+      subdomain: page.subdomain ?? undefined,
+      blocks: page.blocks.map((block: { type: string; title?: string; description?: string }) => ({
+        type: block.type,
+        title: block.title ?? undefined,
+        description: block.description ?? undefined,
       })),
       user: {
         profile: {
@@ -144,7 +143,7 @@ export async function GET(
     });
 
     // Format response
-    const performance = historicalData.map(p => ({
+    const performance = historicalData.map((p: { date: any; score: any; errors: any; warnings: any; info: any; organicTraffic: any; impressions: any; clicks: any; ctr: any; }) => ({
       date: p.date.toISOString().split('T')[0],
       score: p.score,
       errors: p.errors,
@@ -158,7 +157,7 @@ export async function GET(
 
     // Add today's data if not in historical
     const todayStr = today.toISOString().split('T')[0];
-    if (!performance.some(p => p.date === todayStr)) {
+    if (!performance.some((p: { date: any; }) => p.date === todayStr)) {
       performance.push({
         date: todayStr,
         score: currentAudit.score,
@@ -173,7 +172,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      performance: performance.sort((a, b) => 
+      performance: performance.sort((a: { date: any; }, b: { date: any; }) => 
         new Date(a.date).getTime() - new Date(b.date).getTime()
       ),
       currentScore: currentAudit.score

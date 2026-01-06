@@ -3,11 +3,10 @@
  * Download certificate PDF
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { logger } from '@/lib/utils/logger';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,

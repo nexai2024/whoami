@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { Geist, Geist_Mono } from 'next/font/google';
 import AppProviders from '../components/AppProviders';
 import { Analytics } from "@vercel/analytics/next"
-
+import Script from 'next/script';
 import {CheckoutProvider} from '@stripe/react-stripe-js/checkout';
 import {loadStripe} from '@stripe/stripe-js';
 
@@ -34,12 +34,32 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" suppressHydrationWarning>
+          
           <body className={classNames(geistSans.variable, geistMono.variable, 'antialiased')}>
             <AppProviders>
               {children}
             </AppProviders>
             <Analytics />
+            <Script id="anychat-script" strategy="beforeInteractive">
+            {`
+              (function(d, s, id){
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = 'https://api.anychat.one/widget2/load?id=a821498e-fbfc-304d-b067-32a9693aab95&r=' + encodeURIComponent(window.location);
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'anw2-sdk-jkkhqPz7TTCwZzKpaTqrlQ'));
+            `}
+          </Script>
+          <Script
+            src="https://zenoassist.com/widget.js"
+            data-zenoassist-v2
+            data-company-id="41753172-432d-4afe-935c-a6b9b406ac7c"
+            data-position="bottom-right"
+            strategy="lazyOnload"
+          />
           </body>
+ 
         </html>
     );
 }

@@ -3,8 +3,8 @@
  * Get coach-specific analytics including bookings, sales, and course enrollments
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
 
 export async function GET(request: NextRequest) {

@@ -2,11 +2,10 @@
  * POST /api/content/optimizations/[id]/apply - Apply a content optimization
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { PageService } from '@/lib/database/pages';
 
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,

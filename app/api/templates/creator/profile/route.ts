@@ -2,10 +2,10 @@
  * GET /api/templates/creator/profile - Get template creator profile and stats
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,10 +45,10 @@ export async function GET(request: NextRequest) {
     // Calculate stats
     const stats = {
       totalTemplates: templates.length,
-      totalSales: templates.reduce((sum, t) => sum + t.totalSales, 0),
-      totalRevenue: templates.reduce((sum, t) => sum + Number(t.totalRevenue || 0), 0),
+      totalSales: templates.reduce((sum: number, t: any) => sum + t.totalSales, 0),
+      totalRevenue: templates.reduce((sum: number, t: any) => sum + Number(t.totalRevenue || 0), 0),
       averageRating: templates.length > 0
-        ? templates.reduce((sum, t) => sum + (t.rating || 0), 0) / templates.length
+        ? templates.reduce((sum: number, t: any) => sum + (t.rating || 0), 0) / templates.length
         : 0
     };
 

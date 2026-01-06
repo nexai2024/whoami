@@ -3,10 +3,10 @@
  * Based on user profile, page content, and industry
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     const pageBlocks = pageData?.blocks || [];
     const hasProducts = pageBlocks.some((b: { type?: string }) => b.type === 'PRODUCT');
-    const hasCourses = pageBlocks.some(b => b.type === 'COURSE');
+    const hasCourses = pageBlocks.some((b: { type?: string }) => b.type === 'COURSE');
     const isCoach = profile?.isCoach || false;
     const isCreator = profile?.bio?.toLowerCase().includes('creator') || 
                      profile?.bio?.toLowerCase().includes('influencer') ||
@@ -171,9 +171,9 @@ export async function GET(request: NextRequest) {
 
     // Combine and deduplicate
     const allTemplates = [...recommendedTemplates];
-    const existingIds = new Set(recommendedTemplates.map(t => t.id));
+    const existingIds = new Set(recommendedTemplates.map((t: any) => t.id));
     
-    popularTemplates.forEach(t => {
+    popularTemplates.forEach((t: any) => {
       if (!existingIds.has(t.id)) {
         allTemplates.push(t);
       }

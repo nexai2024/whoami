@@ -2,10 +2,9 @@
  * GET /api/pages/[pageId]/content/optimize - Get AI content optimization suggestions
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -93,7 +92,7 @@ export async function GET(
     });
 
     return NextResponse.json({
-      optimizations: allOptimizations.map(opt => ({
+      optimizations: allOptimizations.map((opt: { id: any; suggestionType: any; field: any; currentValue: any; suggestedValue: any; reason: any; priority: any; impactScore: any; applied: any; }) => ({
         id: opt.id,
         suggestionType: opt.suggestionType,
         field: opt.field,

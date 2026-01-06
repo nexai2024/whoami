@@ -2,11 +2,10 @@
  * GET /api/pages/[pageId]/seo/audit - Get SEO audit results for a page
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { auditPageSEO } from '@/lib/seo/seoAudit';
 
-const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -74,12 +73,12 @@ export async function GET(
       description: page.description ?? undefined,
       ogImage: page.ogImage ?? undefined,
       url: pageUrl,
-      customDomain: page.customDomain || undefined,
-      subdomain: page.subdomain || undefined,
-      blocks: page.blocks.map(({ type, title, description }) => ({
-        type,
-        title: title ?? undefined,
-        description: description ?? undefined,
+      customDomain: page.customDomain ?? undefined,
+      subdomain: page.subdomain ?? undefined,
+      blocks: page.blocks.map((block: { type: string; title?: string | null; description?: string | null }) => ({
+        type: block.type,
+        title: block.title ?? undefined,
+        description: block.description ?? undefined,
       })),
       user: {
         profile: {

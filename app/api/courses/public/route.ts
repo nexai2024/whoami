@@ -2,8 +2,8 @@
  * GET /api/courses/public - List all published courses (public marketplace)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {

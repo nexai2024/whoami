@@ -4,7 +4,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Note: URL moved to prisma.config.ts for Prisma 7 compatibility
+  // For Prisma 6, this line is still required by the CLI
 }
 
 model User {
@@ -46,15 +47,15 @@ model User {
   creatorEarnings        CreatorEarning[]
 
   // Enhancement features relations
-  templateCustomizations TemplateCustomization[]
-  seoPerformance        SEOPerformance[]
-  contentOptimizations   ContentOptimization[]
-  templatePerformance    TemplatePerformance[]
-  abTestExperiments      ABTestExperiment[]
-  templatePurchasesAsBuyer TemplatePurchase[] @relation("TemplateBuyer")
-  templatePurchasesAsSeller TemplatePurchase[] @relation("TemplateSeller")
-  templateReviews        TemplateReview[]
-  templateCreatorProfile TemplateCreatorProfile?
+  templateCustomizations    TemplateCustomization[]
+  seoPerformance            SEOPerformance[]
+  contentOptimizations      ContentOptimization[]
+  templatePerformance       TemplatePerformance[]
+  abTestExperiments         ABTestExperiment[]
+  templatePurchasesAsBuyer  TemplatePurchase[]      @relation("TemplateBuyer")
+  templatePurchasesAsSeller TemplatePurchase[]      @relation("TemplateSeller")
+  templateReviews           TemplateReview[]
+  templateCreatorProfile    TemplateCreatorProfile?
 
   @@map("users")
 }
@@ -118,13 +119,13 @@ model Page {
   textColor       String @default("#000000")
   buttonStyle     String @default("rounded")
   fontFamily      String @default("inter")
-  
+
   // Enhanced styling (JSON for flexibility)
-  theme           Json?  // Theme preset name and colors
-  typography      Json?  // Font settings, sizes, weights
-  layout          Json?  // Container width, spacing, alignment
-  animations      Json?  // Animation preferences
-  customCss       String? @db.Text
+  theme      Json? // Theme preset name and colors
+  typography Json? // Font settings, sizes, weights
+  layout     Json? // Container width, spacing, alignment
+  animations Json? // Animation preferences
+  customCss  String? @db.Text
 
   // Analytics settings
   googleAnalyticsId String?
@@ -142,7 +143,7 @@ model Page {
 
   // Enhancement features relations
   templateCustomizations TemplateCustomization[]
-  seoPerformance        SEOPerformance[]
+  seoPerformance         SEOPerformance[]
   contentOptimizations   ContentOptimization[]
   templatePerformance    TemplatePerformance[]
   abTestExperiments      ABTestExperiment[]
@@ -178,7 +179,7 @@ model Block {
   backgroundColor String?
   textColor       String?
   borderRadius    Int     @default(8)
-  
+
   // Enhanced block styling (JSON for flexibility)
   style Json? // { shadow, border, hoverEffect, layout, colors }
 
@@ -195,8 +196,8 @@ model Block {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  clicks Click[]
+  page                 Page                  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  clicks               Click[]
   contentOptimizations ContentOptimization[]
 
   // For extensibility: link to product, analytics, or form if needed
@@ -1473,7 +1474,7 @@ model PageTemplate {
   name        String
   description String?  @db.Text
   category    String
-  industry    String?  // Industry-specific classification
+  industry    String? // Industry-specific classification
   tags        String[]
 
   // Template type
@@ -1482,36 +1483,36 @@ model PageTemplate {
   // Template data storage
   headerData Json
   blocksData Json
-  theme      Json?    // Theme configuration (colors, fonts, spacing)
+  theme      Json? // Theme configuration (colors, fonts, spacing)
 
   // Preview assets
   thumbnailUrl String
   previewUrl   String?
 
   // Popularity tracking
-  useCount Int      @default(0)
-  rating   Float?   @default(0)
-  featured Boolean  @default(false)
-  isPublic Boolean  @default(false)
+  useCount Int     @default(0)
+  rating   Float?  @default(0)
+  featured Boolean @default(false)
+  isPublic Boolean @default(false)
 
   // Marketplace fields
-  price         Decimal? @db.Decimal(10, 2)
-  currency      String   @default("USD")
-  isPaid        Boolean  @default(false)
+  price          Decimal? @db.Decimal(10, 2)
+  currency       String   @default("USD")
+  isPaid         Boolean  @default(false)
   commissionRate Decimal? @db.Decimal(5, 2)
-  totalRevenue  Decimal  @default(0) @db.Decimal(10, 2)
-  totalSales    Int      @default(0)
-  licenseType   String   @default("free") // free, paid, premium
+  totalRevenue   Decimal  @default(0) @db.Decimal(10, 2)
+  totalSales     Int      @default(0)
+  licenseType    String   @default("free") // free, paid, premium
 
   // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   customizations TemplateCustomization[]
   performance    TemplatePerformance[]
   purchases      TemplatePurchase[]
   reviews        TemplateReview[]
-  abTestsA       ABTestExperiment[] @relation("TemplateA")
-  abTestsB       ABTestExperiment[] @relation("TemplateB")
-  abTestsWinner  ABTestExperiment[] @relation("WinnerTemplate")
+  abTestsA       ABTestExperiment[]      @relation("TemplateA")
+  abTestsB       ABTestExperiment[]      @relation("TemplateB")
+  abTestsWinner  ABTestExperiment[]      @relation("WinnerTemplate")
 
   @@index([userId, category])
   @@index([category, featured])
@@ -2320,12 +2321,12 @@ model FunnelConversion {
 
 // 1. Template Customization Studio
 model TemplateCustomization {
-  id         String   @id @default(cuid())
+  id         String  @id @default(cuid())
   templateId String
   pageId     String?
   userId     String
 
-  customizations Json   @default("{}")
+  customizations Json    @default("{}")
   previewData    Json?
   saved          Boolean @default(false)
 
@@ -2344,22 +2345,22 @@ model TemplateCustomization {
 
 // 2. SEO Performance Tracking
 model SEOPerformance {
-  id            String   @id @default(cuid())
-  pageId        String
-  userId        String
-  date          DateTime
+  id     String   @id @default(cuid())
+  pageId String
+  userId String
+  date   DateTime
 
-  score         Int
-  errors        Int      @default(0)
-  warnings      Int      @default(0)
-  info          Int      @default(0)
-  issues        Json?
+  score    Int
+  errors   Int   @default(0)
+  warnings Int   @default(0)
+  info     Int   @default(0)
+  issues   Json?
 
-  searchRanking Int?
-  organicTraffic Int     @default(0)
-  impressions   Int      @default(0)
-  clicks        Int      @default(0)
-  ctr           Decimal? @db.Decimal(5, 2)
+  searchRanking  Int?
+  organicTraffic Int      @default(0)
+  impressions    Int      @default(0)
+  clicks         Int      @default(0)
+  ctr            Decimal? @db.Decimal(5, 2)
 
   createdAt DateTime @default(now())
 
@@ -2374,10 +2375,10 @@ model SEOPerformance {
 
 // 3. Content Optimization Suggestions
 model ContentOptimization {
-  id            String   @id @default(cuid())
-  pageId        String
-  blockId       String?
-  userId        String
+  id      String  @id @default(cuid())
+  pageId  String
+  blockId String?
+  userId  String
 
   suggestionType String
   field          String
@@ -2392,9 +2393,9 @@ model ContentOptimization {
 
   createdAt DateTime @default(now())
 
-  page Page  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  page  Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
   block Block? @relation(fields: [blockId], references: [id], onDelete: SetNull)
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([pageId])
   @@index([userId])
@@ -2404,25 +2405,25 @@ model ContentOptimization {
 
 // 4. Template Performance Analytics
 model TemplatePerformance {
-  id            String   @id @default(cuid())
-  templateId    String
-  pageId       String
-  userId       String
-  date         DateTime
+  id         String   @id @default(cuid())
+  templateId String
+  pageId     String
+  userId     String
+  date       DateTime
 
-  views         Int      @default(0)
-  clicks        Int      @default(0)
-  conversions   Int      @default(0)
+  views          Int      @default(0)
+  clicks         Int      @default(0)
+  conversions    Int      @default(0)
   conversionRate Decimal? @db.Decimal(5, 2)
   engagementTime Int?
-  bounceRate    Decimal? @db.Decimal(5, 2)
-  revenue       Decimal  @default(0) @db.Decimal(10, 2)
+  bounceRate     Decimal? @db.Decimal(5, 2)
+  revenue        Decimal  @default(0) @db.Decimal(10, 2)
 
   createdAt DateTime @default(now())
 
   template PageTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  page     Page        @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page     Page         @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([templateId, pageId, date])
   @@index([templateId])
@@ -2432,29 +2433,29 @@ model TemplatePerformance {
 
 // 5. A/B Test Experiments
 model ABTestExperiment {
-  id            String   @id @default(cuid())
-  pageId        String
-  userId        String
+  id     String @id @default(cuid())
+  pageId String
+  userId String
 
-  name        String
-  description String?
-  templateAId String
-  templateBId String
-  status      String    @default("draft") // draft, running, completed, paused
-  trafficSplit Int      @default(50) // percentage for template A
+  name         String
+  description  String?
+  templateAId  String
+  templateBId  String
+  status       String  @default("draft") // draft, running, completed, paused
+  trafficSplit Int     @default(50) // percentage for template A
 
-  startDate      DateTime?
-  endDate        DateTime?
+  startDate        DateTime?
+  endDate          DateTime?
   winnerTemplateId String?
-  results        Json?
+  results          Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  page           Page         @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  templateA      PageTemplate @relation("TemplateA", fields: [templateAId], references: [id])
-  templateB      PageTemplate @relation("TemplateB", fields: [templateBId], references: [id])
+  page           Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateA      PageTemplate  @relation("TemplateA", fields: [templateAId], references: [id])
+  templateB      PageTemplate  @relation("TemplateB", fields: [templateBId], references: [id])
   winnerTemplate PageTemplate? @relation("WinnerTemplate", fields: [winnerTemplateId], references: [id])
 
   @@index([pageId])
@@ -2465,17 +2466,17 @@ model ABTestExperiment {
 
 // 6. Template Marketplace (Revenue Sharing)
 model TemplatePurchase {
-  id           String   @id @default(cuid())
-  templateId   String
-  buyerId      String
-  sellerId     String
+  id         String @id @default(cuid())
+  templateId String
+  buyerId    String
+  sellerId   String
 
-  price         Decimal  @db.Decimal(10, 2)
-  currency      String   @default("USD")
-  commission    Decimal  @db.Decimal(10, 2)
-  platformFee   Decimal  @db.Decimal(10, 2)
+  price          Decimal @db.Decimal(10, 2)
+  currency       String  @default("USD")
+  commission     Decimal @db.Decimal(10, 2)
+  platformFee    Decimal @db.Decimal(10, 2)
   sellerEarnings Decimal @db.Decimal(10, 2)
-  paymentStatus String   @default("pending") // pending, completed, failed, refunded
+  paymentStatus  String  @default("pending") // pending, completed, failed, refunded
 
   createdAt DateTime @default(now())
 
@@ -2490,12 +2491,12 @@ model TemplatePurchase {
 }
 
 model TemplateReview {
-  id        String   @id @default(cuid())
+  id         String @id @default(cuid())
   templateId String
-  userId    String
+  userId     String
 
-  rating Int      // 1-5
-  review String?  @db.Text
+  rating Int // 1-5
+  review String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -2510,18 +2511,18 @@ model TemplateReview {
 }
 
 model TemplateCreatorProfile {
-  id            String   @id @default(cuid())
-  userId        String   @unique
+  id     String @id @default(cuid())
+  userId String @unique
 
-  displayName   String?
-  bio           String?  @db.Text
-  avatarUrl     String?
+  displayName String?
+  bio         String? @db.Text
+  avatarUrl   String?
 
-  totalTemplates Int     @default(0)
-  totalSales     Int     @default(0)
-  totalRevenue   Decimal @default(0) @db.Decimal(10, 2)
+  totalTemplates Int      @default(0)
+  totalSales     Int      @default(0)
+  totalRevenue   Decimal  @default(0) @db.Decimal(10, 2)
   averageRating  Decimal? @db.Decimal(3, 2)
-  verified      Boolean  @default(false)
+  verified       Boolean  @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

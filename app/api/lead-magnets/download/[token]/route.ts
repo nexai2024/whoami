@@ -3,11 +3,9 @@
  * Download lead magnet file (public, token-based)
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { generateDownloadUrl } from '@/lib/services/storageService';
-
-const prisma = new PrismaClient();
 
 interface RouteParams {
   params: Promise<{

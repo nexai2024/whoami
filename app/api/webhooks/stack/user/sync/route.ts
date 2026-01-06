@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
+import prisma from '@/lib/prisma';
 import { Webhook } from "svix";
 import { z } from "zod";
-import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { logger } from '@/lib/utils/logger';

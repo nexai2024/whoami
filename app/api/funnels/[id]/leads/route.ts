@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
+import prisma from '@/lib/prisma';
 
 /**
  * GET /api/funnels/[id]/leads

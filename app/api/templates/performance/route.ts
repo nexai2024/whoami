@@ -2,10 +2,10 @@
  * GET /api/templates/performance - Get template performance analytics
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Format response
-    const performance = performanceData.map(p => ({
+    const performance = performanceData.map((p: any) => ({
       date: p.date.toISOString().split('T')[0],
       templateId: p.templateId,
       templateName: p.template.name,
@@ -81,15 +81,15 @@ export async function GET(request: NextRequest) {
 
     // Calculate summary
     const summary = {
-      totalViews: performance.reduce((sum, p) => sum + p.views, 0),
-      totalClicks: performance.reduce((sum, p) => sum + p.clicks, 0),
-      totalConversions: performance.reduce((sum, p) => sum + p.conversions, 0),
-      totalRevenue: performance.reduce((sum, p) => sum + p.revenue, 0),
+      totalViews: performance.reduce((sum: number, p: any) => sum + p.views, 0),
+      totalClicks: performance.reduce((sum: number, p: any) => sum + p.clicks, 0),
+      totalConversions: performance.reduce((sum: number, p: any) => sum + p.conversions, 0),
+      totalRevenue: performance.reduce((sum: number, p: any) => sum + p.revenue, 0),
       avgConversionRate: performance.length > 0
-        ? performance.reduce((sum, p) => sum + (p.conversionRate || 0), 0) / performance.length
+        ? performance.reduce((sum: number, p: any) => sum + (p.conversionRate || 0), 0) / performance.length
         : 0,
       avgEngagementTime: performance.length > 0
-        ? Math.round(performance.reduce((sum, p) => sum + (p.engagementTime || 0), 0) / performance.length)
+        ? Math.round(performance.reduce((sum: number, p: any) => sum + (p.engagementTime || 0), 0) / performance.length)
         : 0
     };
 

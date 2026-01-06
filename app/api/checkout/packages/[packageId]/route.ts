@@ -3,8 +3,8 @@
  * Create checkout session for a package (bundle of products)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
 
 export async function POST(

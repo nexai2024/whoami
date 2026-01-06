@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import Link from 'next/link';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -526,12 +527,12 @@ const CourseBuilder: React.FC<CourseBuilderProps> = ({ courseId, onSave }) => {
             <p className="text-red-700 mb-4">
               You do not have permission to edit this course. You can only edit courses that you own.
             </p>
-            <a
+            <Link
               href="/courses"
               className="inline-flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
             >
               Back to My Courses
-            </a>
+            </Link>
           </div>
         </div>
       ) : (
