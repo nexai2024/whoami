@@ -1,0 +1,4 @@
+ // Pass the auth token
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  // Upload a larger set of source maps for prettier stack traces
+  widenClientFileUpload: true,
