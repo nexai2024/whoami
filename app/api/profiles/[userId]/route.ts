@@ -95,6 +95,19 @@ export async function PATCH(
     if (body.bookingEnabled !== undefined) updateData.bookingEnabled = body.bookingEnabled;
     if (body.productsEnabled !== undefined) updateData.productsEnabled = body.productsEnabled;
 
+    // Social media links
+    if (body.socialLinkTwitter !== undefined) updateData.socialLinkTwitter = body.socialLinkTwitter || null;
+    if (body.socialLinkInstagram !== undefined) updateData.socialLinkInstagram = body.socialLinkInstagram || null;
+    if (body.socialLinkYouTube !== undefined) updateData.socialLinkYouTube = body.socialLinkYouTube || null;
+    if (body.socialLinkTikTok !== undefined) updateData.socialLinkTikTok = body.socialLinkTikTok || null;
+    if (body.socialLinkLinkedIn !== undefined) updateData.socialLinkLinkedIn = body.socialLinkLinkedIn || null;
+    if (body.socialLinkFacebook !== undefined) updateData.socialLinkFacebook = body.socialLinkFacebook || null;
+    if (body.socialLinkTwitch !== undefined) updateData.socialLinkTwitch = body.socialLinkTwitch || null;
+    if (body.socialLinkDiscord !== undefined) updateData.socialLinkDiscord = body.socialLinkDiscord || null;
+    if (body.socialLinkWebsite !== undefined) updateData.socialLinkWebsite = body.socialLinkWebsite || null;
+    if (body.socialLinkLinktree !== undefined) updateData.socialLinkLinktree = body.socialLinkLinktree || null;
+    if (body.socialLinkOther !== undefined) updateData.socialLinkOther = body.socialLinkOther || null;
+
     const profile = await prisma.profile.update({
       where: { userId },
       data: updateData,
