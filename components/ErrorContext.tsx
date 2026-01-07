@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import * as Sentry from "@sentry/nextjs";
 
 export type AppError = {
   id: string;
@@ -96,6 +97,31 @@ export const ErrorProvider = ({ children }: { children: ReactNode }) => {
       componentStack: err instanceof Error && 'componentStack' in err ? (err as any).componentStack : undefined,
       errorType: determineErrorType(err, context),
     };
+    
+    // Capture to Sentry with context
+    try {
+      const errorToCapture = err instanceof Error ? err : new Error(errorObj.message);
+      Sentry.captureException(errorToCapture, {
+        tags: {
+          errorType: errorObj.errorType,
+          source: 'ErrorContext',
+        },
+        extra: {
+          context: errorObj.context,
+          url: errorObj.url,
+          pathname: errorObj.pathname,
+          componentStack: errorObj.componentStack,
+        },
+        contexts: {
+          react: {
+            componentStack: errorObj.componentStack,
+          },
+        },
+      });
+    } catch (sentryError) {
+      // Silently fail - don't break error handling
+      console.warn('Failed to capture error to Sentry:', sentryError);
+    }
     
     setErrors((prev) => {
       // Add new error and limit to MAX_ERRORS
