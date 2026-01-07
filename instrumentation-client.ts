@@ -4,7 +4,9 @@ Sentry.init({
   dsn: "https://a3b764402b0be6f74bc502ed9b3f057e@o4510662650363904.ingest.us.sentry.io/4510664669986816",
   // Adds request headers and IP for users
   sendDefaultPii: true,
+  tracePropagationTargets: ["localhost", /^https:\/\/yourserver\.io\/api/],
   integrations: [
+    Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),
     Sentry.feedbackIntegration({
       colorScheme: "system",
