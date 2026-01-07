@@ -3,13 +3,13 @@
  * GET /api/lead-magnets - List all lead magnets for user
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, MagnetType, DeliveryMethod, MagnetStatus } from '@prisma/client';
+import { MagnetType, DeliveryMethod, MagnetStatus } from '@prisma/client';
 import { requireAuth, requireFeature } from '@/lib/auth/serverAuth';
 import { RateLimitService } from '@/lib/rate-limit';
 import { logger } from '@/lib/utils/logger';
 
-const prisma = new PrismaClient();
 
 type CreationMethod = 'UPLOAD' | 'TEMPLATE' | 'AI_GENERATE';
 
@@ -295,7 +295,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      leadMagnets: leadMagnets.map((magnet) => ({
+      leadMagnets: leadMagnets.map((magnet: { id: any; name: any; slug: any; type: any; headline: any; status: any; deliveryMethod: any; coverImageUrl: any; views: any; optIns: any; downloads: any; conversionRate: { toString: () => string; }; assets: string | any[]; deliveries: string | any[]; createdAt: { toISOString: () => any; }; }) => ({
         id: magnet.id,
         name: magnet.name,
         slug: magnet.slug,

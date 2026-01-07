@@ -3,10 +3,11 @@
  * Get optimal posting times for the authenticated user
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Platform } from '@prisma/client';
+import { Platform } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 // Industry default optimal times (fallback when insufficient data)
 const INDUSTRY_DEFAULTS = [
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate data quality metrics
     const totalSampleSize = optimalSlots.reduce(
-      (sum, slot) => sum + slot.sampleSize,
+      (sum: number, slot: any) => sum + slot.sampleSize,
       0
     );
     const avgSampleSize = optimalSlots.length > 0
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
 
       // Find best slots for this day of week
       const daySlots = optimalSlots.filter(
-        (slot) => slot.dayOfWeek === dayOfWeek
+        (slot: any) => slot.dayOfWeek === dayOfWeek
       );
 
       for (const slot of daySlots.slice(0, Math.ceil(count / days))) {
@@ -134,7 +135,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate days analyzed (from oldest slot)
     const oldestSlot = optimalSlots.reduce(
-      (oldest, slot) =>
+      (oldest: any, slot: any) =>
         slot.analyzedFrom < oldest.analyzedFrom ? slot : oldest,
       optimalSlots[0]
     );

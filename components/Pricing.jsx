@@ -26,7 +26,10 @@ const Pricing = () => {
         "Limited to 3 page blocks",
         "No custom domain",
         "Standard templates only"
-      ]
+      ],
+      onClick: () => {
+        window.open(`/checkout/free`, '_blank');
+      },
     },
     {
       name: "Creator",
@@ -47,7 +50,11 @@ const Pricing = () => {
         "Priority email support",
         "Custom themes & fonts"
       ]
+    ,
+    onClick: () => {
+      window.open(`/checkout/creator`, '_blank');
     },
+  },
     {
       name: "Pro",
       price: "$25",
@@ -66,7 +73,10 @@ const Pricing = () => {
         "Revenue analytics",
         "Push notifications",
         "AMA blocks"
-      ]
+      ],
+      onClick: () => {
+        window.open(`/checkout/pro`, '_blank');
+      },
     },
     {
       name: "Business",
@@ -86,7 +96,10 @@ const Pricing = () => {
         "Dedicated account manager",
         "Priority phone support",
         "Advanced security features"
-      ]
+        ],
+      onClick: () => {
+        window.open(`/checkout/business`, '_blank');
+      },
     }
   ];
 
@@ -175,7 +188,7 @@ const Pricing = () => {
                   <span className="text-gray-600">/{plan.period}</span>
                 </div>
                 
-                <button className={`w-full py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
+                <button onClick={handleClick} className={`w-full py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
                   plan.popular 
                     ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600' 
                     : 'bg-gray-100 text-gray-900 hover:bg-gray-200'

@@ -3,11 +3,10 @@
  * POST /api/courses/[courseId]/certificate - Issue certificate for completed course
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { logger } from '@/lib/utils/logger';
 
-const prisma = new PrismaClient();
 
 /**
  * Generate a simple certificate PDF

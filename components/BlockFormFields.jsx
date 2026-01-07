@@ -694,6 +694,155 @@ const BlockFormFields = ({ selectedBlock, updateBlockData }) => {
     );
   }
 
+  // SAAS_APP Block
+  if (blockType === 'saas_app' || blockType === 'app' || blockType === 'saas') {
+    return (
+      <div className="space-y-4 max-h-[600px] overflow-y-auto">
+        <div className="border-b pb-4">
+          <h3 className="font-semibold text-gray-900 mb-2">Basic Information</h3>
+          {renderTextField('App Name', 'appName', 'My Awesome App')}
+          {renderTextField('App URL', 'appUrl', 'https://myapp.com', 'url')}
+          {renderTextField('Sign Up URL', 'signUpUrl', 'https://myapp.com/signup', 'url')}
+          {renderTextArea('Short Description', 'shortDescription', 'A brief one-line description of your app', 2)}
+          {renderRichTextEditor('Full Description', 'description', 'Detailed description of your app, features, and benefits', 200)}
+          {renderTextField('Category', 'category', 'Productivity, Design, Marketing, etc.')}
+          {renderStringArray('Tags', 'tags', 'tag1, tag2')}
+        </div>
+
+        <div className="border-b pb-4">
+          <h3 className="font-semibold text-gray-900 mb-2">Visual Assets</h3>
+          {renderTextField('Logo URL', 'logoUrl', 'https://example.com/logo.png', 'url')}
+          {renderTextField('Cover Image URL', 'coverImageUrl', 'https://example.com/cover.jpg', 'url')}
+          {renderStringArray('Screenshots (URLs)', 'screenshots', 'https://example.com/screenshot1.jpg')}
+        </div>
+
+        <div className="border-b pb-4">
+          <h3 className="font-semibold text-gray-900 mb-2">Features</h3>
+          {renderStringArray('Key Features', 'features', 'Feature description')}
+          {renderCheckbox('Show Features List', 'showFeatures')}
+        </div>
+
+        <div className="border-b pb-4">
+          <h3 className="font-semibold text-gray-900 mb-2">Pricing</h3>
+          {renderCheckbox('Show Pricing', 'showPricing')}
+          {selectedBlock.data?.showPricing && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Plan Name</label>
+                <input
+                  type="text"
+                  value={selectedBlock.data?.pricing?.plan || ''}
+                  placeholder="Pro Plan"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={(e) => {
+                    const currentPricing = selectedBlock.data?.pricing || {};
+                    updateBlockData('pricing', { ...currentPricing, plan: e.target.value });
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Price</label>
+                <input
+                  type="number"
+                  value={selectedBlock.data?.pricing?.price || ''}
+                  min={0}
+                  step={0.01}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={(e) => {
+                    const currentPricing = selectedBlock.data?.pricing || {};
+                    updateBlockData('pricing', { ...currentPricing, price: parseFloat(e.target.value) || 0 });
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+                <input
+                  type="text"
+                  value={selectedBlock.data?.pricing?.currency || 'USD'}
+                  placeholder="USD"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={(e) => {
+                    const currentPricing = selectedBlock.data?.pricing || {};
+                    updateBlockData('pricing', { ...currentPricing, currency: e.target.value });
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Billing Period</label>
+                <select
+                  value={selectedBlock.data?.pricing?.period || 'month'}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  onChange={(e) => {
+                    const currentPricing = selectedBlock.data?.pricing || {};
+                    updateBlockData('pricing', { ...currentPricing, period: e.target.value });
+                  }}
+                >
+                  <option value="month">Per Month</option>
+                  <option value="year">Per Year</option>
+                  <option value="one-time">One-Time</option>
+                </select>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={selectedBlock.data?.pricing?.freeTrial || false}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  onChange={(e) => {
+                    const currentPricing = selectedBlock.data?.pricing || {};
+                    updateBlockData('pricing', { ...currentPricing, freeTrial: e.target.checked });
+                  }}
+                />
+                <label className="ml-2 block text-sm text-gray-700">Free Trial Available</label>
+              </div>
+              {selectedBlock.data?.pricing?.freeTrial && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Trial Days</label>
+                  <input
+                    type="number"
+                    value={selectedBlock.data?.pricing?.trialDays || 0}
+                    min={0}
+                    max={90}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    onChange={(e) => {
+                      const currentPricing = selectedBlock.data?.pricing || {};
+                      updateBlockData('pricing', { ...currentPricing, trialDays: parseInt(e.target.value) || 0 });
+                    }}
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="border-b pb-4">
+          <h3 className="font-semibold text-gray-900 mb-2">Social Proof</h3>
+          {renderNumberField('Rating', 'rating', 0, 5, 0.1)}
+          {renderNumberField('Review Count', 'reviewCount', 0)}
+          {renderTextField('Badge', 'badge', 'New, Popular, Featured')}
+          {renderCheckbox('Show Testimonials', 'showTestimonials')}
+        </div>
+
+        <div className="border-b pb-4">
+          <h3 className="font-semibold text-gray-900 mb-2">Call to Action</h3>
+          {renderTextField('Primary Button Text', 'buttonText', 'Get Started')}
+          {renderTextField('Secondary Button Text', 'secondaryButtonText', 'Learn More')}
+          {renderTextField('Secondary Button URL', 'secondaryButtonUrl', 'https://myapp.com/about', 'url')}
+        </div>
+
+        <div className="border-b pb-4">
+          <h3 className="font-semibold text-gray-900 mb-2">Display Options</h3>
+          {renderSelect('Layout Style', 'layout', [
+            { value: 'card', label: 'Card (Compact)' },
+            { value: 'detailed', label: 'Detailed (Full Featured)' },
+            { value: 'minimal', label: 'Minimal (Simple)' }
+          ])}
+          {renderTextField('Accent Color', 'accentColor', '#6366f1', 'color')}
+          {renderCheckbox('Show Screenshots', 'showScreenshots')}
+        </div>
+      </div>
+    );
+  }
+
   // CUSTOM Block
   if (blockType === 'custom') {
     return (

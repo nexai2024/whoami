@@ -1,6 +1,6 @@
 // app/api/subscriptions/[id]/route.ts
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
 import { logger } from '@/lib/utils/logger'
 
 // PATCH /api/subscriptions/[id]

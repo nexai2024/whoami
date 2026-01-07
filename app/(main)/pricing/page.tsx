@@ -35,6 +35,7 @@ interface Plan {
   isActive: boolean;
   planEnum?: string; // FREE, CREATOR, PRO, BUSINESS, SUPER_ADMIN
   description?: string;
+  priceId?: string
   features: Array<{
     feature: {
       name: string;
@@ -122,6 +123,7 @@ export default function PricingPage() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isYearly, setIsYearly] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   const userId = user?.id;
 
@@ -202,41 +204,65 @@ export default function PricingPage() {
       router.push('/handler/sign-in');
       return;
     }
-
-    if (!subscription) {
-      // Create new subscription
+    if (subscription) {
+      // Upgrade existing subscription
       handleCheckout(plan);
     } else {
-      // Upgrade existing subscription
       router.push('/settings/billing');
       toast.success('Redirecting to billing page to upgrade...');
     }
   };
 
   const handleCheckout = async (plan: Plan) => {
-    if (!userId) return;
+    if (!userId) {
+      toast.error('Please sign in to continue');
+      router.push('/handler/sign-in');
+      return;
+    }
 
+    if (!plan.priceId) {
+      toast.error('This plan is not available for checkout. Please contact support.');
+      return;
+    }
+
+    setCheckoutLoading(plan.id);
     try {
-      const response = await fetch('/api/subscriptions/checkout', {
+      const response = await fetch('/api/checkout/plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-user-id': userId
         } as HeadersInit,
         body: JSON.stringify({
-          planId: plan.id
+          planId: plan.id,
+          priceId: plan.priceId
         })
       });
 
-      if (response.ok) {
-        const { url } = await response.json();
-        window.location.href = url;
-      } else {
-        const error = await response.json();
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to start checkout' }));
         toast.error(error.error || 'Failed to start checkout');
+        setCheckoutLoading(null);
+        return;
       }
+
+      const session = await response.json();
+      
+      // Extract URL from session object
+      const checkoutUrl = session.url;
+      
+      if (!checkoutUrl) {
+        toast.error('Checkout session created but no URL returned. Please contact support.');
+        setCheckoutLoading(null);
+        return;
+      }
+
+      // Redirect to Stripe checkout
+      window.location.href = checkoutUrl;
     } catch (error) {
-      toast.error('Failed to start checkout. Please try again.');
+      console.error('Checkout error:', error);
+      toast.error('Failed to start checkout. Please try again or contact support.');
+      setCheckoutLoading(null);
     }
   };
 
@@ -460,11 +486,23 @@ export default function PricingPage() {
                     }
                     handleUpgradeClick(plan);
                   }}
-                  disabled={isCurrentPlan || (isSuperAdminPlan && !isSuperAdmin)}
-                  className={`w-full py-3 rounded-xl font-semibold transition-colors duration-200 shadow-md mb-8 ${buttonClass}`}
+                  disabled={isCurrentPlan || (isSuperAdminPlan && !isSuperAdmin) || checkoutLoading === plan.id}
+                  className={`w-full py-3 rounded-xl font-semibold transition-colors duration-200 shadow-md mb-8 ${buttonClass} ${
+                    checkoutLoading === plan.id ? 'opacity-50 cursor-wait' : ''
+                  }`}
                   title={isSuperAdminPlan && !isSuperAdmin ? 'This plan must be assigned by a super admin' : undefined}
                 >
-                  {buttonText}
+                  {checkoutLoading === plan.id ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    buttonText
+                  )}
                 </button>
 
                 <ul className="space-y-4">

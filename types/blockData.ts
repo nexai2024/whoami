@@ -336,6 +336,47 @@ export interface FunnelBlockData {
   coverImageUrl?: string;
 }
 
+export interface AppBlockData {
+  appName?: string;
+  appUrl?: string;
+  signUpUrl?: string;
+  description?: string;
+  shortDescription?: string;
+  features?: string[];
+  logoUrl?: string;
+  coverImageUrl?: string;
+  screenshots?: string[];
+  pricing?: {
+    plan?: string;
+    price?: number;
+    currency?: string;
+    period?: 'month' | 'year' | 'one-time';
+    freeTrial?: boolean;
+    trialDays?: number;
+  };
+  category?: string;
+  tags?: string[];
+  buttonText?: string;
+  secondaryButtonText?: string;
+  secondaryButtonUrl?: string;
+  showTestimonials?: boolean;
+  testimonials?: Array<{
+    name: string;
+    role: string;
+    quote: string;
+    avatar?: string;
+    rating?: number;
+  }>;
+  showPricing?: boolean;
+  showFeatures?: boolean;
+  showScreenshots?: boolean;
+  layout?: 'card' | 'detailed' | 'minimal';
+  accentColor?: string;
+  badge?: string;
+  rating?: number;
+  reviewCount?: number;
+}
+
 // Union type for all block data types
 export type BlockData =
   | ProductBlockData

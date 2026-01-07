@@ -2,8 +2,8 @@
  * GET /api/courses/access/[token] - Validate access token and get enrollment info
  */
 
-import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 import { isTokenExpired } from '@/lib/utils/courseAccess';
 
 export async function GET(

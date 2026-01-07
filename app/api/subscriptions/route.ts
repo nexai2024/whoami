@@ -1,6 +1,6 @@
 // app/api/subscriptions/route.ts
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
 
 // GET /api/subscriptions?userId=xxx
 export async function GET(request: NextRequest) {

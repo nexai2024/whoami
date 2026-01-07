@@ -1,6 +1,6 @@
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { stackServerApp } from '@/stack/server';
-import prisma from '@/lib/prisma';
 import { checkUserFeature } from '@/lib/features/checkFeature';
 
 /**

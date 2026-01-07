@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import CheckoutForm from '@/components/CheckoutForm';
+import CheckoutForm from '@/components/payments/CheckoutForm';
 import { logger } from '@/lib/utils/logger';
 
 export default function CheckoutPage() {
@@ -96,7 +96,7 @@ export default function CheckoutPage() {
         {/* Checkout Form */}
         <div className="bg-white rounded-2xl shadow-lg p-8">
           <h2 className="text-xl font-semibold text-gray-800 mb-6">Complete Your Purchase</h2>
-          <CheckoutForm blockId={blockId} productTitle={product.title} />
+          <CheckoutForm />
         </div>
       </div>
     </div>

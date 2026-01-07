@@ -12,16 +12,42 @@ interface CoachBioPageProps {
   }>;
 }
 
-export default async function CoachBioPage({ params }: CoachBioPageProps) {
-  const { coachSlug } = await params;
+export default function CoachBioPage({ params }: CoachBioPageProps) {
   const router = useRouter();
+  const [coachSlug, setCoachSlug] = useState<string>('');
   const [coach, setCoach] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Resolve params promise - params is a Promise in Next.js 15+
   useEffect(() => {
+    let isMounted = true;
+    
+    async function loadParams() {
+      try {
+        const resolvedParams = await params;
+        if (isMounted) {
+          setCoachSlug(resolvedParams.coachSlug);
+        }
+      } catch (error) {
+        console.error('Error resolving params:', error);
+        if (isMounted) {
+          setError('Failed to load page');
+        }
+      }
+    }
+    
+    loadParams();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [params]);
+
+  useEffect(() => {
+    if (!coachSlug) return;
     loadCoachData();
   }, [coachSlug]);
 

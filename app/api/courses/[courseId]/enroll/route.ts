@@ -2,12 +2,12 @@
  * POST /api/courses/[courseId]/enroll - Enroll in course
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { generateAccessToken, getTokenExpiration } from '@/lib/utils/courseAccess';
 import { sendCourseEnrollmentConfirmation, sendCoachNewEnrollmentNotification } from '@/lib/services/emailService';
 
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,

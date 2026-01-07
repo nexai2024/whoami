@@ -7,12 +7,12 @@ import toast from 'react-hot-toast';
 import Image from 'next/image';
 import SafeIcon from '@/common/SafeIcon';
 import BlockRenderer from './BlockRenderer';
+import TemplateRecommendations from './TemplateRecommendations';
 const {
-  FiSearch, FiX, FiEye, FiDownload, FiGrid, FiFilter, FiStar,
-  FiTrendingUp, FiZap, FiLayout, FiFileText, FiChevronDown,
+  FiSearch, FiX, FiEye, FiDownload, FiGrid, FiStar,
+  FiTrendingUp, FiZap, FiLayout, FiFileText, 
   FiShoppingBag, FiUsers, FiBriefcase, FiMusic, FiCamera,
-  FiCode, FiHeart, FiBook, FiCoffee, FiDroplet, FiUser
-} = FiIcons;
+  FiCode, FiHeart, FiBook, FiCoffee, FiDroplet, FiUser} = FiIcons;
 
 interface TemplateMarketplaceProps {
   onApply?: (templateId: string) => void;
@@ -239,10 +239,20 @@ const TemplateMarketplace: React.FC<TemplateMarketplaceProps> = ({
     }
   };
 
-  const selectedCategoryData = templateCategories.find(c => c.id === selectedCategory);
 
   return (
     <div className="space-y-6">
+      {/* AI Recommendations Section */}
+      {pageId && userId && (
+        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200 p-6">
+          <TemplateRecommendations
+            pageId={pageId}
+            userId={userId}
+            onApply={onApply}
+          />
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>

@@ -27,6 +27,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en" suppressHydrationWarning>
+          
           <body className={classNames(geistSans.variable, geistMono.variable, 'antialiased')}>
             <AppProviders>
               {children}
@@ -41,6 +42,7 @@ export default function RootLayout({
           />
  
           </body>
+ 
         </html>
     );
 }

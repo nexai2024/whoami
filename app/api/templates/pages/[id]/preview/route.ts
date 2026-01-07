@@ -2,10 +2,10 @@
  * GET /api/templates/pages/[id]/preview - Get template preview data
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+
 
 export async function GET(
   request: NextRequest,

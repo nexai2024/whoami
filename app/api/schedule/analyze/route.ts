@@ -4,10 +4,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient, Platform } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
-
-const prisma = new PrismaClient();
+import { Platform } from '@prisma/client';
+import { Decimal } from '@prisma/client-runtime-utils';
+import prisma from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {

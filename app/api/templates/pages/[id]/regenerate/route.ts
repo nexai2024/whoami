@@ -2,11 +2,11 @@
  * POST /api/templates/pages/[id]/regenerate - Regenerate specific template section using AI
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+
 import { regenerateTemplateSection } from '@/lib/services/aiService';
 
-const prisma = new PrismaClient();
 
 export async function POST(
   request: NextRequest,

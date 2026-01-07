@@ -9,7 +9,8 @@ import { applyBlockStyle } from '../lib/themes/blockStyles';
 
 const {
   FiExternalLink, FiShoppingBag, FiMail, FiImage, FiMusic, FiVideo,
-  FiCalendar, FiLink, FiDollarSign, FiShare2, FiStar, FiHeart, FiSettings
+  FiCalendar, FiLink, FiDollarSign, FiShare2, FiStar, FiHeart, FiSettings,
+  FiCheck, FiZap, FiCheckCircle
 } = FiIcons;
 
 /**
@@ -1091,6 +1092,411 @@ const BlockRenderer = ({ block, onBlockClick, themeColors }) => {
             )}
           </div>
         )}
+      </div>
+    );
+  }
+
+  // SAAS_APP Block - Visually appealing app showcase
+  if (block.type === 'SAAS_APP') {
+    const appData = block.data || {};
+    const layout = appData.layout || 'card';
+    const accentColor = appData.accentColor || themeColors?.primary || '#6366f1';
+    const appName = appData.appName || block.title || 'App Name';
+    const appUrl = appData.appUrl || block.url || '#';
+    const signUpUrl = appData.signUpUrl || appUrl;
+    const description = appData.shortDescription || appData.description || block.description || '';
+    const features = appData.features || [];
+    const screenshots = appData.screenshots || [];
+    const pricing = appData.pricing || {};
+    const showPricing = appData.showPricing !== false && pricing.price;
+    const showFeatures = appData.showFeatures !== false && features.length > 0;
+    const showScreenshots = appData.showScreenshots !== false && screenshots.length > 0;
+    const buttonText = appData.buttonText || 'Get Started';
+    const secondaryButtonText = appData.secondaryButtonText;
+    const secondaryButtonUrl = appData.secondaryButtonUrl;
+    const rating = appData.rating;
+    const reviewCount = appData.reviewCount;
+    const badge = appData.badge;
+    const category = appData.category;
+    const tags = appData.tags || [];
+
+    // Format price
+    const formatPrice = () => {
+      if (!pricing.price) return null;
+      const currency = pricing.currency || '$';
+      const period = pricing.period === 'year' ? '/yr' : pricing.period === 'one-time' ? ' one-time' : '/mo';
+      return `${currency}${pricing.price}${period}`;
+    };
+
+    // Minimal layout
+    if (layout === 'minimal') {
+      return (
+        <div 
+          className={`${baseClasses} relative overflow-hidden`} 
+          style={{ ...baseStyles, borderColor: accentColor + '40' }}
+          onClick={() => onBlockClick(block)}
+        >
+          <div className="flex items-center gap-4">
+            {appData.logoUrl && (
+              <Image
+                src={appData.logoUrl}
+                alt={appName}
+                width={64}
+                height={64}
+                className="w-16 h-16 rounded-xl object-cover flex-shrink-0"
+                onError={(e) => e.target.style.display = 'none'}
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="font-bold text-gray-900 truncate">{appName}</h3>
+                {badge && (
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: accentColor + '20', color: accentColor }}>
+                    {badge}
+                  </span>
+                )}
+              </div>
+              {description && (
+                <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
+              )}
+            </div>
+            <a
+              href={signUpUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="px-4 py-2 rounded-lg font-medium text-white transition-all hover:scale-105"
+              style={{ backgroundColor: accentColor }}
+            >
+              {buttonText}
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    // Card layout (default)
+    if (layout === 'card') {
+      return (
+        <div 
+          className={`${baseClasses} relative overflow-hidden group`} 
+          style={{ ...baseStyles, borderColor: accentColor + '30' }}
+          onClick={() => onBlockClick(block)}
+        >
+          {/* Badge */}
+          {badge && (
+            <div className="absolute top-4 right-4 z-10">
+              <span className="px-3 py-1 text-xs font-bold rounded-full text-white shadow-lg" style={{ backgroundColor: accentColor }}>
+                {badge}
+              </span>
+            </div>
+          )}
+
+          {/* Cover Image or Logo */}
+          <div className="relative mb-4 -mx-6 -mt-6 h-48 bg-gradient-to-br" style={{ 
+            background: appData.coverImageUrl 
+              ? `linear-gradient(135deg, ${accentColor}15 0%, ${accentColor}05 100%), url(${appData.coverImageUrl})`
+              : `linear-gradient(135deg, ${accentColor}20 0%, ${accentColor}10 100%)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}>
+            {appData.logoUrl && !appData.coverImageUrl && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <Image
+                  src={appData.logoUrl}
+                  alt={appName}
+                  width={120}
+                  height={120}
+                  className="w-30 h-30 rounded-2xl object-cover shadow-xl"
+                  onError={(e) => e.target.style.display = 'none'}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+            {/* Header */}
+            <div>
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">{appName}</h3>
+                  {category && (
+                    <p className="text-sm text-gray-500">{category}</p>
+                  )}
+                </div>
+                {rating && (
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <SafeIcon name={undefined} icon={FiStar} className="text-yellow-500 fill-current" />
+                    <span className="font-semibold text-gray-900">{rating}</span>
+                    {reviewCount && (
+                      <span className="text-sm text-gray-500">({reviewCount})</span>
+                    )}
+                  </div>
+                )}
+              </div>
+              {description && (
+                <p className="text-gray-600 leading-relaxed">{description}</p>
+              )}
+            </div>
+
+            {/* Features */}
+            {showFeatures && features.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-2">Key Features</h4>
+                <ul className="grid grid-cols-2 gap-2">
+                  {features.slice(0, 4).map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-700">
+                      <SafeIcon name={undefined} icon={FiCheckCircle} className="mt-0.5 flex-shrink-0" style={{ color: accentColor }} />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                {features.length > 4 && (
+                  <p className="text-xs text-gray-500 mt-2">+{features.length - 4} more features</p>
+                )}
+              </div>
+            )}
+
+            {/* Pricing */}
+            {showPricing && (
+              <div className="p-4 rounded-xl" style={{ backgroundColor: accentColor + '10' }}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600">Starting at</p>
+                    <p className="text-2xl font-bold" style={{ color: accentColor }}>
+                      {formatPrice()}
+                    </p>
+                    {pricing.plan && (
+                      <p className="text-xs text-gray-500 mt-1">{pricing.plan}</p>
+                    )}
+                  </div>
+                  {pricing.freeTrial && (
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-green-600">
+                        {pricing.trialDays ? `${pricing.trialDays}-day` : 'Free'} Trial
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tags */}
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.slice(0, 5).map((tag, idx) => (
+                  <span 
+                    key={idx} 
+                    className="px-2 py-1 text-xs font-medium rounded-full"
+                    style={{ backgroundColor: accentColor + '15', color: accentColor }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* CTA Buttons */}
+            <div className="flex gap-3 pt-2">
+              <a
+                href={signUpUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 px-6 py-3 rounded-xl font-semibold text-white text-center transition-all hover:scale-105 hover:shadow-lg"
+                style={{ backgroundColor: accentColor }}
+              >
+                {buttonText}
+              </a>
+              {secondaryButtonText && secondaryButtonUrl && (
+                <a
+                  href={secondaryButtonUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="px-6 py-3 rounded-xl font-semibold border-2 text-center transition-all hover:bg-gray-50"
+                  style={{ borderColor: accentColor, color: accentColor }}
+                >
+                  {secondaryButtonText}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Detailed layout (full featured)
+    return (
+      <div 
+        className={`${baseClasses} relative overflow-hidden`} 
+        style={{ ...baseStyles, borderColor: accentColor + '30' }}
+        onClick={() => onBlockClick(block)}
+      >
+        {/* Hero Section with Cover Image */}
+        <div className="relative mb-6 -mx-6 -mt-6 h-64 bg-gradient-to-br overflow-hidden" style={{ 
+          background: appData.coverImageUrl 
+            ? `linear-gradient(135deg, ${accentColor}20 0%, ${accentColor}10 100%), url(${appData.coverImageUrl})`
+            : `linear-gradient(135deg, ${accentColor}30 0%, ${accentColor}15 100%)`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}>
+          {appData.logoUrl && (
+            <div className="absolute top-4 left-4">
+              <Image
+                src={appData.logoUrl}
+                alt={appName}
+                width={80}
+                height={80}
+                className="w-20 h-20 rounded-2xl object-cover bg-white p-2 shadow-xl"
+                onError={(e) => e.target.style.display = 'none'}
+              />
+            </div>
+          )}
+          {badge && (
+            <div className="absolute top-4 right-4">
+              <span className="px-4 py-2 text-sm font-bold rounded-full text-white shadow-lg" style={{ backgroundColor: accentColor }}>
+                {badge}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-6">
+          {/* Header */}
+          <div>
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="text-3xl font-bold text-gray-900 mb-2">{appName}</h3>
+                {category && (
+                  <p className="text-sm font-medium" style={{ color: accentColor }}>{category}</p>
+                )}
+              </div>
+              {rating && (
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-1">
+                    <SafeIcon name={undefined} icon={FiStar} className="text-yellow-500 fill-current text-lg" />
+                    <span className="text-lg font-bold text-gray-900">{rating}</span>
+                  </div>
+                  {reviewCount && (
+                    <span className="text-sm text-gray-500">({reviewCount} reviews)</span>
+                  )}
+                </div>
+              )}
+            </div>
+            {description && (
+              <p className="text-lg text-gray-600 leading-relaxed">{description}</p>
+            )}
+          </div>
+
+          {/* Features Grid */}
+          {showFeatures && features.length > 0 && (
+            <div>
+              <h4 className="text-lg font-bold text-gray-900 mb-3">Features</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {features.map((feature, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
+                    <SafeIcon name={undefined} icon={FiCheckCircle} className="text-lg mt-0.5 flex-shrink-0" style={{ color: accentColor }} />
+                    <span className="text-sm text-gray-700">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Screenshots */}
+          {showScreenshots && screenshots.length > 0 && (
+            <div>
+              <h4 className="text-lg font-bold text-gray-900 mb-3">Screenshots</h4>
+              <div className="grid grid-cols-3 gap-3">
+                {screenshots.slice(0, 3).map((screenshot, idx) => (
+                  <div key={idx} className="aspect-video rounded-lg overflow-hidden border-2 border-gray-200">
+                    <Image
+                      src={screenshot}
+                      alt={`${appName} screenshot ${idx + 1}`}
+                      width={300}
+                      height={200}
+                      className="w-full h-full object-cover"
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Pricing Card */}
+          {showPricing && (
+            <div className="p-6 rounded-2xl border-2" style={{ 
+              backgroundColor: accentColor + '08',
+              borderColor: accentColor + '30'
+            }}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Pricing</p>
+                  <p className="text-4xl font-bold" style={{ color: accentColor }}>
+                    {formatPrice()}
+                  </p>
+                  {pricing.plan && (
+                    <p className="text-sm text-gray-500 mt-1">{pricing.plan}</p>
+                  )}
+                </div>
+                {pricing.freeTrial && (
+                  <div className="text-right">
+                    <div className="px-4 py-2 rounded-lg bg-green-100">
+                      <p className="text-sm font-bold text-green-800">
+                        {pricing.trialDays ? `${pricing.trialDays}-day` : 'Free'} Trial
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag, idx) => (
+                  <span 
+                    key={idx} 
+                    className="px-3 py-1.5 text-sm font-medium rounded-full"
+                    style={{ backgroundColor: accentColor + '15', color: accentColor }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* CTA Buttons */}
+          <div className="flex gap-4 pt-2">
+            <a
+              href={signUpUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex-1 px-8 py-4 rounded-xl font-bold text-white text-center text-lg transition-all hover:scale-105 hover:shadow-xl"
+              style={{ backgroundColor: accentColor }}
+            >
+              {buttonText}
+            </a>
+            {secondaryButtonText && secondaryButtonUrl && (
+              <a
+                href={secondaryButtonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="px-8 py-4 rounded-xl font-bold border-2 text-center text-lg transition-all hover:bg-gray-50"
+                style={{ borderColor: accentColor, color: accentColor }}
+              >
+                {secondaryButtonText}
+              </a>
+            )}
+          </div>
+        </div>
       </div>
     );
   }

@@ -10,3 +10,10 @@ ALTER TABLE "blocks" ADD COLUMN IF NOT EXISTS "style" JSONB;
 
 
 
+
+
+
+
+
+
+

@@ -3,11 +3,12 @@
  * POST /api/products - Create new product
  */
 
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { Product } from '@prisma/client';
+
 import { logger } from '@/lib/utils/logger';
 
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
     ]);
 
     return NextResponse.json({
-      products: products.map(product => ({
+      products: products.map((product: Product & { _count?: { sales: number } }) => ({
         id: product.id,
         name: product.name,
         description: product.description,
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
         isActive: product.isActive,
         createdAt: product.createdAt.toISOString(),
         updatedAt: product.updatedAt.toISOString(),
-        salesCount: product._count.sales
+        salesCount: product._count?.sales || 0
       })),
       pagination: {
         total,

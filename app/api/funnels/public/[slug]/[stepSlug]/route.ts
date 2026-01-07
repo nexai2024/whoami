@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 
+import prisma from '@/lib/prisma';
 /**
  * GET /api/funnels/public/[slug]/[stepSlug]
  * Public endpoint to fetch funnel step data for visitors

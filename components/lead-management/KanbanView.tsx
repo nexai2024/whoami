@@ -26,6 +26,77 @@ interface KanbanViewProps {
   sourceLabels?: Record<string, string>;
 }
 
+interface StageColumnProps {
+  stage: PipelineStage;
+  leads: Lead[];
+  activeId: string | null;
+  overId: string | null;
+  onLeadSelect: (leadId: string) => void;
+  onLeadContextMenu: (lead: Lead, position: { x: number; y: number }) => void;
+  sourceLabels?: Record<string, string>;
+}
+
+// Separate component to use useDroppable hook properly
+const StageColumn: React.FC<StageColumnProps> = ({
+  stage,
+  leads,
+  activeId,
+  overId,
+  onLeadSelect,
+  onLeadContextMenu,
+  sourceLabels,
+}) => {
+  const { setNodeRef: setStageRef, isOver: isStageOver } = useDroppable({
+    id: stage.id,
+    data: { type: 'column', stageId: stage.id },
+  });
+  const isDraggingOver = isStageOver || overId === stage.id;
+
+  return (
+    <div className={styles.stageColumn}>
+      <div className={styles.stageHeader}>
+        <h3 className={styles.stageTitle}>{stage.title}</h3>
+        <div className={styles.leadCount}>{leads.length} leads</div>
+      </div>
+
+      <div className={styles.stageContent}>
+        <SortableContext
+          id={stage.id}
+          items={leads.map((l) => l.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div
+            ref={setStageRef}
+            className={`${styles.dropzone} ${isDraggingOver ? styles.isDraggingOver : ''}`}
+          >
+            {leads.map((lead) => (
+              <LeadCard
+                key={lead.id}
+                lead={lead}
+                isDragging={activeId === lead.id}
+                onClick={() => onLeadSelect(lead.id)}
+                onContextMenu={(event) =>
+                  onLeadContextMenu(lead, { x: event.clientX, y: event.clientY })
+                }
+                sourceLabel={
+                  lead.source ? sourceLabels?.[lead.source] ?? lead.source : undefined
+                }
+              />
+            ))}
+
+            {/* Empty state */}
+            {leads.length === 0 && !isDraggingOver && (
+              <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>
+                No leads in this stage
+              </div>
+            )}
+          </div>
+        </SortableContext>
+      </div>
+    </div>
+  );
+};
+
 /**
  * Kanban board view with drag-and-drop functionality
  * Uses @dnd-kit for modern, accessible drag-and-drop
@@ -151,54 +222,17 @@ const KanbanView: React.FC<KanbanViewProps> = ({
       <div className={styles.kanbanContainer}>
         {stages.map((stage) => {
           const stageLeads = leadsByStage.get(stage.id) || [];
-          const { setNodeRef: setStageRef, isOver: isStageOver } = useDroppable({
-            id: stage.id,
-            data: { type: 'column', stageId: stage.id },
-          });
-          const isDraggingOver = isStageOver || overId === stage.id;
-
           return (
-            <div key={stage.id} className={styles.stageColumn}>
-              <div className={styles.stageHeader}>
-                <h3 className={styles.stageTitle}>{stage.title}</h3>
-                <div className={styles.leadCount}>{stageLeads.length} leads</div>
-              </div>
-
-              <div className={styles.stageContent}>
-                <SortableContext
-                  id={stage.id}
-                  items={stageLeads.map((l) => l.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div
-                    ref={setStageRef}
-                    className={`${styles.dropzone} ${isDraggingOver ? styles.isDraggingOver : ''}`}
-                  >
-                    {stageLeads.map((lead) => (
-                      <LeadCard
-                        key={lead.id}
-                        lead={lead}
-                        isDragging={activeId === lead.id}
-                        onClick={() => onLeadSelect(lead.id)}
-                        onContextMenu={(event) =>
-                          onLeadContextMenu(lead, { x: event.clientX, y: event.clientY })
-                        }
-                        sourceLabel={
-                          lead.source ? sourceLabels?.[lead.source] ?? lead.source : undefined
-                        }
-                      />
-                    ))}
-
-                    {/* Empty state */}
-                    {stageLeads.length === 0 && !isDraggingOver && (
-                      <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>
-                        No leads in this stage
-                      </div>
-                    )}
-                  </div>
-                </SortableContext>
-              </div>
-            </div>
+            <StageColumn
+              key={stage.id}
+              stage={stage}
+              leads={stageLeads}
+              activeId={activeId}
+              overId={overId}
+              onLeadSelect={onLeadSelect}
+              onLeadContextMenu={onLeadContextMenu}
+              sourceLabels={sourceLabels}
+            />
           );
         })}
       </div>
