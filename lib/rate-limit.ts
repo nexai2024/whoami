@@ -1,15 +1,12 @@
 // lib/rate-limit.ts
+import 'server-only'
 import prisma from './prisma'
 import { getLimitForFeature, getPlanKeyFromStrings, type PlanKey } from './billing/planConfig'
 import { logger } from './utils/logger'
+import type { RateLimitResult } from './rate-limit-types'
 
-export type RateLimitResult = {
-  allowed: boolean
-  limit?: number
-  remaining?: number
-  resetAt?: Date
-  message?: string
-}
+// Re-export the type for backward compatibility
+export type { RateLimitResult } from './rate-limit-types'
 
 export class RateLimitService {
   /**

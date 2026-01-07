@@ -46,7 +46,7 @@
     "framer-motion": "^12.23.18",
     "isomorphic-dompurify": "^2.3.6",
     "lucide-react": "^0.544.0",
-    "next": "^16.0.7",
+    "next": "16.0.10",
     "nodemailer": "^7.0.10",
     "openai": "^4.58.0",
     "qrcode.react": "^4.2.0",

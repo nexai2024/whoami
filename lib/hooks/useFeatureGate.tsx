@@ -1,7 +1,7 @@
 "use client"
 import { useUserContext } from '../contexts/UserContext';
 import { useState, useEffect, useCallback } from 'react';
-import { RateLimitResult } from '../rate-limit';
+import type { RateLimitResult } from '../rate-limit-types';
 
 /**
  * Hook for feature gating with automatic checking
