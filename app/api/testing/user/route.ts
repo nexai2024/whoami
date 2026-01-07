@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Use database transaction to ensure both user and profile are created atomically
-    const result = await prisma.$transaction(async (tx: PrismaClient) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Check if email already exists
       const existingUserByEmail = await tx.user.findUnique({
         where: { email }
@@ -258,8 +258,7 @@ export async function GET(req: NextRequest) {
         data: {
           user: {
             ...userWithoutPassword,
-            createdAt: userWithoutPassword.createdAt.toISOString(),
-            updatedAt: userWithoutPassword.updatedAt.toISOString()
+            createdAt: userWithoutPassword.createdAt.toISOString()
           }
         }
       },

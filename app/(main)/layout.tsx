@@ -19,7 +19,7 @@ import { usePathname } from 'next/navigation';
 import React from 'react';
 import { useAuthorization } from "@/lib/hooks/useAuthorization";
 
-keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
+// keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const user = useUser();

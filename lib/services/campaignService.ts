@@ -45,7 +45,7 @@ export interface CampaignDetail {
   product: {
     id: string;
     name: string;
-    price: Prisma.Decimal | null;
+    price: number | null;
   } | null;
   assets: Array<{
     id: string;
@@ -202,12 +202,12 @@ export async function listCampaigns({
     campaigns = validCampaigns;
   }
 
-  return await Promise.all(campaigns.map(async (campaign: { assets: { map: (arg0: (asset: any) => any) => any[]; length: any; filter: (arg0: (asset: any) => boolean) => { (): any; new(): any; length: any; }; }; id: any; name: any; status: any; goal: any; productId: any; blockId: any; createdAt: { toISOString: () => any; }; product: any; userId: any; }) => {
+  return await Promise.all(campaigns.map(async (campaign) => {
     const platforms = Array.from(
       new Set(
         campaign.assets
-          .map((asset: { platform: any; }) => asset.platform)
-          .filter((platform: any): platform is Platform => !!platform)
+          .map((asset) => asset.platform)
+          .filter((platform): platform is Platform => !!platform)
       )
     );
 
@@ -351,10 +351,10 @@ export async function getCampaign({
       ? {
           id: campaign.product.id,
           name: campaign.product.name,
-          price: campaign.product.price,
+          price: campaign.product.price ?? null,
         }
       : null,
-    assets: assets.map((asset: { id: any; type: any; platform: any; content: any; mediaUrl: any; status: any; scheduledAt: { toISOString: () => any; } | null; publishedAt: { toISOString: () => any; } | null; views: any; clicks: any; conversions: any; }) => ({
+    assets: assets.map((asset) => ({
       id: asset.id,
       type: asset.type,
       platform: asset.platform,

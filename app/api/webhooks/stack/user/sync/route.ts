@@ -139,7 +139,7 @@ export async function POST(request: Request) {
       const hashedPassword = await bcrypt.hash(randomPassword, 12);
 
       // Use transaction to ensure both User and Profile are created atomically
-      const result = await prisma.$transaction(async (tx: PrismaClient) => {
+      const result = await prisma.$transaction(async (tx) => {
         // Check if user already exists
         const existingUser = await tx.user.findUnique({
           where: { id: data.id }

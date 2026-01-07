@@ -25,7 +25,11 @@ export async function GET(
         },
         enrollments: {
           include: {
-            courseProgress: true
+            lessonProgress: {
+              include: {
+                lesson: true
+              }
+            }
           }
         }
       }
@@ -49,27 +53,33 @@ export async function GET(
     const enrollmentCount = course.enrollments.length;
 
     // Completion rate: students with 100% progress
-    const completedCount = course.enrollments.filter((enrollment: { courseProgress: { overallProgress: number; }; }) =>
-      enrollment.courseProgress && enrollment.courseProgress.overallProgress === 100
+    // Use progressPercentage from enrollment (0-100) instead of courseProgress.overallProgress
+    const completedCount = course.enrollments.filter((enrollment) =>
+      enrollment.progressPercentage === 100
     ).length;
     const completionRate = enrollmentCount > 0 ? (completedCount / enrollmentCount) * 100 : 0;
 
     // Average progress across all students
-    const totalProgress = course.enrollments.reduce((sum: number, enrollment: { courseProgress: { overallProgress: number; }; }) =>
-      sum + (enrollment.courseProgress?.overallProgress || 0), 0
+    const totalProgress = course.enrollments.reduce((sum, enrollment) =>
+      sum + (enrollment.progressPercentage || 0), 0
     );
     const averageProgress = enrollmentCount > 0 ? totalProgress / enrollmentCount : 0;
 
     // Revenue calculation (for paid courses)
+    // course.price is a Decimal type from Prisma, convert to number
     const revenue = course.accessType === 'PAID' && course.price
-      ? enrollmentCount * course.price
+      ? enrollmentCount * Number(course.price)
       : 0;
 
     // Lesson completion breakdown
-    const lessonBreakdown = course.lessons.map((lesson: { title: any; id: any; }) => {
-      const completedInLesson = course.enrollments.filter((enrollment: { courseProgress: { lessonsCompleted: any; }; }) =>
-        enrollment.courseProgress?.lessonsCompleted?.includes(lesson.id)
-      ).length;
+    // Count enrollments that have completed this specific lesson
+    const lessonBreakdown = course.lessons.map((lesson) => {
+      const completedInLesson = course.enrollments.filter((enrollment) => {
+        // Check if this enrollment has completed this lesson
+        return enrollment.lessonProgress.some(
+          (progress) => progress.lessonId === lesson.id && progress.status === 'COMPLETED'
+        );
+      }).length;
 
       return {
         title: lesson.title,

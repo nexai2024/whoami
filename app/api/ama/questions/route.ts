@@ -78,7 +78,9 @@ export async function POST(req: NextRequest) {
 
     const ownerEmail = page.user?.email;
     const ownerName = page.user?.profile?.displayName || page.user?.profile?.username || 'Page Owner';
-    const moderationEmail = block.data?.moderationEmail || ownerEmail;
+    // block.data is a JSON field, so we need to type it properly
+    const blockData = block.data as { moderationEmail?: string } | null;
+    const moderationEmail = blockData?.moderationEmail || ownerEmail;
 
     // Send notification email to page owner/moderation email
     if (moderationEmail) {

@@ -19,14 +19,7 @@ export async function POST(
 
     // Get package
     const packageProduct = await prisma.product.findUnique({
-      where: { id: packageId },
-      include: {
-        user: {
-          include: {
-            profile: true
-          }
-        }
-      }
+      where: { id: packageId }
     });
 
     if (!packageProduct) {
@@ -35,6 +28,14 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    // Get user and profile separately since Product doesn't have a user relation
+    const user = await prisma.user.findUnique({
+      where: { id: packageProduct.userId },
+      include: {
+        profile: true
+      }
+    });
 
     if (packageProduct.type !== 'PACKAGE') {
       return NextResponse.json(

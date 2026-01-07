@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
-import { prisma } from '@/lib/utils/prisma';
+import prisma from '@/lib/prisma';
 
 /**
  * GET /api/creators/[username]
@@ -35,7 +35,13 @@ export async function GET(
     }
 
     // Build social links array
-    const socialLinks: any[] = [];
+    type SocialLink = {
+      platform: string;
+      url: string;
+      icon: React.ComponentType;
+      color: string;
+    };
+    const socialLinks: SocialLink[] = [];
 
     // Import icons dynamically
     const {
@@ -49,7 +55,12 @@ export async function GET(
       FiGlobe
     } = await import('react-icons/fi');
 
-    const SOCIAL_PLATFORM_CONFIG: Record<string, any> = {
+    type PlatformConfig = {
+      icon: React.ComponentType;
+      color: string;
+      pattern: RegExp;
+    };
+    const SOCIAL_PLATFORM_CONFIG: Record<string, PlatformConfig> = {
       twitter: { icon: FiTwitter, color: 'bg-black hover:bg-gray-800', pattern: /(?:https?:\/\/)?(?:www\.)?(?:twitter\.com|x\.com)\/@?([^\/]+)/ },
       instagram: { icon: FiInstagram, color: 'bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500', pattern: /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([^\/]+)/ },
       youtube: { icon: FiYoutube, color: 'bg-red-600 hover:bg-red-700', pattern: /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/(?:channel\/|c\/|user\/|@)?([^\/]+)/ },
@@ -76,8 +87,24 @@ export async function GET(
     };
 
     // Build social links from profile
+    // Type-safe access to profile social link fields
+    type ProfileWithSocialLinks = typeof profile & {
+      socialLinkTwitter?: string | null;
+      socialLinkInstagram?: string | null;
+      socialLinkYouTube?: string | null;
+      socialLinkTikTok?: string | null;
+      socialLinkLinkedIn?: string | null;
+      socialLinkFacebook?: string | null;
+      socialLinkTwitch?: string | null;
+      socialLinkDiscord?: string | null;
+      socialLinkWebsite?: string | null;
+      socialLinkLinktree?: string | null;
+      socialLinkOther?: string | null;
+    };
+    
+    const profileWithSocial = profile as ProfileWithSocialLinks;
     for (const [field, platform] of Object.entries(socialFieldMap)) {
-      const url = (profile as any)[field];
+      const url = profileWithSocial[field as keyof ProfileWithSocialLinks] as string | null | undefined;
       if (url) {
         const config = SOCIAL_PLATFORM_CONFIG[platform];
         socialLinks.push({
@@ -105,7 +132,7 @@ export async function GET(
     const courses = await prisma.course.findMany({
       where: {
         userId: profile.userId,
-        published: true,
+        status: 'PUBLISHED',
       },
       orderBy: {
         createdAt: 'desc',
@@ -117,7 +144,7 @@ export async function GET(
     const leadMagnets = await prisma.leadMagnet.findMany({
       where: {
         userId: profile.userId,
-        isActive: true,
+        status: 'ACTIVE',
       },
       orderBy: {
         createdAt: 'desc',

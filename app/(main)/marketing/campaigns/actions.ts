@@ -228,7 +228,11 @@ export async function fetchCampaignBlocksAction({
 
   try {
     const blocks = await prisma.block.findMany({
-      where: { userId },
+      where: { 
+        page: { 
+          userId 
+        } 
+      },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -239,7 +243,7 @@ export async function fetchCampaignBlocksAction({
 
     return {
       success: true,
-      data: blocks.map((block: { id: any; type: any; data: Record<string, unknown> | null; }) => ({
+      data: blocks.map((block) => ({
         id: block.id,
         type: block.type,
         data: block.data as Record<string, unknown> | null,

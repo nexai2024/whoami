@@ -5,7 +5,7 @@ import { checkFeatureClient } from '@/lib/features/checkFeature';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiX, FiChevronDown, FiChevronUp, FiMaximize2, FiMinimize2, FiClock, FiFilter, FiSearch, FiCheck, FiEdit3 } = FiIcons;
+const { FiX, FiChevronDown, FiChevronUp, FiMaximize2, FiMinimize2, FiSearch, FiCheck, FiEdit3 } = FiIcons;
 
 const ErrorConsole: React.FC = () => {
   const { errors: sessionErrors, clearErrors } = useErrorContext();

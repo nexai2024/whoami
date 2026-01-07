@@ -8,7 +8,7 @@ import ErrorConsole from '@/components/ErrorConsole';
 
 import { HelmetProvider } from "react-helmet-async";
 
-keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
+// keepSessionAlive: true // Set to true to keep user sessions active; set to false if you want sessions to expire automatically
 
 export default function BioPageLayout({
   children,

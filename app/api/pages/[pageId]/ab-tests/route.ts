@@ -49,7 +49,7 @@ export async function GET(
     });
 
     return NextResponse.json({
-      tests: tests.map((t: { id: any; name: any; description: any; templateAId: any; templateBId: any; trafficSplit: any; status: any; createdAt: { toISOString: () => any; }; updatedAt: { toISOString: () => any; }; startDate: { toISOString: () => any; }; endDate: { toISOString: () => any; }; }) => ({
+      tests: tests.map((t) => ({
         ...t,
         createdAt: t.createdAt.toISOString(),
         updatedAt: t.updatedAt.toISOString(),

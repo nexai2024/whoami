@@ -82,9 +82,9 @@ const SOCIAL_PLATFORMS = {
   }
 };
 
-export default async function CreatorBioPage({ params }: CreatorBioPageProps) {
-  const { username } = await params;
+export default function CreatorBioPage({ params }: CreatorBioPageProps) {
   const router = useRouter();
+  const [username, setUsername] = React.useState<string>('');
   const [creator, setCreator] = useState<any>(null);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [products, setProducts] = useState<any[]>([]);
@@ -93,8 +93,17 @@ export default async function CreatorBioPage({ params }: CreatorBioPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Resolve params promise
+  React.useEffect(() => {
+    params.then(({ username: resolvedUsername }) => {
+      setUsername(resolvedUsername);
+    });
+  }, [params]);
+
   useEffect(() => {
-    loadCreatorData();
+    if (username) {
+      loadCreatorData();
+    }
   }, [username]);
 
   const loadCreatorData = async () => {

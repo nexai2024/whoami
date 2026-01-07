@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       url: yourPageUrl,
       customDomain: yourPage.customDomain || undefined,
       subdomain: yourPage.subdomain || undefined,
-      blocks: yourPage.blocks.map((block: { type: any; title: any; description: any }) => ({
+      blocks: yourPage.blocks.map((block) => ({
         type: block.type,
         title: block.title || undefined,
         description: block.description || undefined,

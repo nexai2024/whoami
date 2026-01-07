@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
     logger.info('Campaigns list returned', {
       userId,
       count: campaigns.length,
-      campaignIds: campaigns.map((c: any) => c.id),
+      campaignIds: campaigns.map((c) => c.id),
     });
 
     return NextResponse.json({

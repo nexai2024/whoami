@@ -85,7 +85,6 @@ export async function POST(request: NextRequest) {
           currentPeriodStart: new Date(),
           currentPeriodEnd: new Date(),
           stripeCustomerId: customer.id,
-          priceId: priceId,
           stripeSubscriptionId: planId
         }
       });

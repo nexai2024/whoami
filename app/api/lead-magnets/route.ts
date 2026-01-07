@@ -295,7 +295,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      leadMagnets: leadMagnets.map((magnet: { id: any; name: any; slug: any; type: any; headline: any; status: any; deliveryMethod: any; coverImageUrl: any; views: any; optIns: any; downloads: any; conversionRate: { toString: () => string; }; assets: string | any[]; deliveries: string | any[]; createdAt: { toISOString: () => any; }; }) => ({
+      leadMagnets: leadMagnets.map((magnet) => ({
         id: magnet.id,
         name: magnet.name,
         slug: magnet.slug,

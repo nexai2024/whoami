@@ -19,14 +19,40 @@ export function withSentry<T extends any[], R>(
       return await handler(...args);
     } catch (error) {
       // Capture exception to Sentry
-      Sentry.captureException(error, {
-        tags: {
-          component: "api-route",
-        },
-        extra: {
-          args: args.length > 0 ? JSON.stringify(args[0]) : undefined,
-        },
-      });
+      try {
+        // Safely serialize args for Sentry (handle circular references)
+        const serializedArgs = args.length > 0 
+          ? (() => {
+              try {
+                return JSON.stringify(args[0], (key, value) => {
+                  // Filter out non-serializable values
+                  if (typeof value === 'function' || typeof value === 'symbol') {
+                    return undefined;
+                  }
+                  // Limit depth to prevent huge objects
+                  if (key && key.includes('__') && key.includes('circular')) {
+                    return '[Circular]';
+                  }
+                  return value;
+                });
+              } catch {
+                return '[Unable to serialize]';
+              }
+            })()
+          : undefined;
+        
+        Sentry.captureException(error, {
+          tags: {
+            component: "api-route",
+          },
+          extra: {
+            args: serializedArgs,
+          },
+        });
+      } catch (sentryError) {
+        // Don't let Sentry errors break error handling
+        console.warn('Failed to capture error to Sentry:', sentryError);
+      }
       
       // Re-throw to allow Next.js error handling
       throw error;

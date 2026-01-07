@@ -39,7 +39,7 @@ export async function POST(
       data: {
         workflowId: id,
         status: 'RUNNING',
-        triggerData: body.testData || {},
+        triggerData: (body.testData || {}) as Record<string, any>,
         subscriberEmail: body.testData?.email || 'test@example.com',
       },
     });
@@ -62,9 +62,10 @@ export async function POST(
         // Add type-specific test output
         switch (step.type) {
           case 'SEND_EMAIL':
+            const emailConfig = step.config as { subject?: string; body?: string; to?: string } | null;
             output.emailDetails = {
               to: body.testData?.email || 'test@example.com',
-              subject: step.config?.subject || 'Test Email',
+              subject: emailConfig?.subject || 'Test Email',
               sent: false,
               testMode: true,
             };
@@ -77,10 +78,11 @@ export async function POST(
               reason: 'Test mode skips delays',
             };
             break;
-          case 'TAG':
+          case 'ADD_TAG':
+          case 'REMOVE_TAG':
             output.tags = {
-              action: step.config?.action || 'add',
-              tags: step.config?.tags || [],
+              action: step.type === 'ADD_TAG' ? 'add' : 'remove',
+              tags: (step.config as { tags?: string[] } | null)?.tags || [],
               applied: false,
               testMode: true,
             };
@@ -103,8 +105,8 @@ export async function POST(
             status: 'COMPLETED',
             startedAt: stepStartTime,
             completedAt: new Date(),
-            input: step.config,
-            output,
+            input: step.config as Record<string, any>,
+            output: output as Record<string, any>,
           },
         });
 
@@ -126,7 +128,7 @@ export async function POST(
             status: 'FAILED',
             startedAt: new Date(),
             completedAt: new Date(),
-            input: step.config,
+            input: (step.config ?? {}) as Record<string, any>,
             error: stepError.message,
           },
         });
@@ -171,7 +173,7 @@ export async function POST(
         : 'Test execution completed successfully',
       note: 'This was a test run. No real actions were taken (emails not sent, tags not applied, etc.)',
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error testing workflow:', error);
     return NextResponse.json(
       { error: 'Failed to test workflow', details: error instanceof Error ? error.message : 'Unknown error' },

@@ -173,7 +173,7 @@ export async function POST(
     const updatedPage = await prisma.page.update({
       where: { id: pageId },
       data: updateData
-    }) as Prisma.PageSelect;
+    });
 
     logger.info(`Page updated successfully: ${pageId} by user ${userId}`);
     

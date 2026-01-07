@@ -140,7 +140,11 @@ export async function GET(request: NextRequest) {
           limit: null, // No limit if not in current plan
           resetDate: currentPeriodEnd.toISOString(),
           feature: featureUsage.feature,
-          planFeature: null,
+          planFeature: {
+            enabled: false,
+            rateLimit: null,
+            ratePeriod: null,
+          },
         })
       }
     }

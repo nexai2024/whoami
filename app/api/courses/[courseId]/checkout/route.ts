@@ -38,7 +38,7 @@ export async function POST(
     }
 
     // Check if already enrolled
-    const existingEnrollment = await prisma.enrollment.findFirst({
+    const existingEnrollment = await prisma.courseEnrollment.findFirst({
       where: {
         userId,
         courseId

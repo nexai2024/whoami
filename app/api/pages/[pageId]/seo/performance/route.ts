@@ -99,7 +99,7 @@ export async function GET(
       url: pageUrl,
       customDomain: page.customDomain ?? undefined,
       subdomain: page.subdomain ?? undefined,
-      blocks: page.blocks.map((block: { type: string; title?: string; description?: string }) => ({
+      blocks: page.blocks.map((block) => ({
         type: block.type,
         title: block.title ?? undefined,
         description: block.description ?? undefined,

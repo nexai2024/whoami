@@ -187,9 +187,10 @@ const SocialLinksSettings = () => {
 
       logger.info('Social links saved successfully');
       toast.success('Social links saved successfully!');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error saving social links:', error);
-      toast.error(error.message || 'Failed to save social links. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save social links. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
