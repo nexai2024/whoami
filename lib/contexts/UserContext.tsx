@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useUser } from "@stackframe/stack";
 import { logger } from '../utils/logger';
 import { onboardingComplete, initOnboardingUser } from '@/app/(main)/onboarding-functions';
-import { RateLimitResult } from '../rate-limit';
+import type { RateLimitResult } from '../rate-limit-types';
 
 /**
  * User Context - Centralized authorization, feature gating, and rate limiting
