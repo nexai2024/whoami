@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/utils/logger';
 import { sendBookingConfirmation, sendBookingNotification } from '@/lib/services/emailService';
+import { captureError } from '@/lib/utils/sentry';
 
 /**
  * GET /api/bookings?userId=xxx
@@ -49,6 +50,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ bookings });
   } catch (error) {
     logger.error('Error fetching bookings:', error);
+    captureError(error, {
+      tags: { route: '/api/bookings', method: 'GET' },
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -278,6 +282,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ booking }, { status: 201 });
   } catch (error) {
     logger.error('Error creating booking:', error);
+    captureError(error, {
+      tags: { route: '/api/bookings', method: 'POST' },
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

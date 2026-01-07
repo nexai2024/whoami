@@ -1,6 +1,7 @@
 "use client"
 import React from 'react';
 import Link from 'next/link';
+import * as Sentry from "@sentry/nextjs";
 import { useErrorContext, AppError } from './ErrorContext';
 
 interface ErrorBoundaryState {
@@ -24,6 +25,22 @@ class ErrorBoundaryInner extends React.Component<{
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     try {
+      // Capture to Sentry with React context
+      Sentry.captureException(error, {
+        tags: {
+          errorBoundary: true,
+          component: "ErrorBoundary",
+        },
+        contexts: {
+          react: {
+            componentStack: errorInfo.componentStack,
+          },
+        },
+        extra: {
+          errorBoundary: true,
+        },
+      });
+      
       // Attach componentStack to error object for state capture
       const errorWithStack = {
         ...error,

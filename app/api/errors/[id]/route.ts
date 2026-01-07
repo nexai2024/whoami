@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { stackServerApp } from '@/stack/server';
 import { checkUserFeature } from '@/lib/features/checkFeature';
+import { captureError } from '@/lib/utils/sentry';
 
 /**
  * PATCH /api/errors/[id]
@@ -74,6 +75,9 @@ export async function PATCH(
     return NextResponse.json(updatedError);
   } catch (error) {
     console.error('Error updating error log:', error);
+    captureError(error, {
+      tags: { route: '/api/errors/[id]', method: 'PATCH' },
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

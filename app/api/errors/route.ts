@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stackServerApp } from '@/stack/server';
 import { checkUserFeature } from '@/lib/features/checkFeature';
 import { checkFeatureGate } from '@/lib/gating/contentGate';
+import { captureError } from '@/lib/utils/sentry';
 
 /**
  * POST /api/errors
@@ -72,7 +73,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
-    // Don't create error loop - just log to console
+    // Don't create error loop - capture to Sentry but don't throw
+    captureError(error, {
+      tags: { route: '/api/errors', method: 'POST', errorHandler: 'true' },
+    });
     console.error('Failed to persist error:', error);
     // Return 200 anyway to prevent client-side error loop
     return NextResponse.json({ success: false }, { status: 200 });
@@ -175,6 +179,9 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching error logs:', error);
+    captureError(error, {
+      tags: { route: '/api/errors', method: 'GET' },
+    });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
