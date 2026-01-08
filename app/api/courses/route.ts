@@ -3,18 +3,31 @@
  * POST /api/courses - Create new course
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-
+import { requireAuth } from '@/lib/auth/serverAuth';
+import { handleApiError, successResponse } from '@/lib/utils/apiError';
+import { validateRequest, courseSchema } from '@/lib/utils/validation';
+import { CourseStatus } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = request.headers.get('x-user-id');
+    
+    // Try to get authenticated user (optional for public access)
+    // For GET requests, we allow public access, so we use getAuthenticatedUser instead
+    const { getAuthenticatedUser } = await import('@/lib/auth/serverAuth');
+    const auth = await getAuthenticatedUser(request);
+    const userId = auth?.userId || null;
+    
     const status = searchParams.get('status');
     const isLeadMagnet = searchParams.get('isLeadMagnet');
 
-    const where: any = {};
+    const where: {
+      userId?: string;
+      status?: CourseStatus;
+      isLeadMagnet?: boolean;
+    } = {};
 
     // For authenticated users in admin/management area, only show their own courses
     // Public marketplace should use /api/courses/public endpoint
@@ -22,12 +35,15 @@ export async function GET(request: NextRequest) {
       where.userId = userId; // Only show courses owned by the user
     } else {
       // If no userId, only show published courses (for public access)
-      where.status = 'PUBLISHED';
+      where.status = CourseStatus.PUBLISHED;
     }
 
     // Apply status filter if provided (only applies to user's own courses)
     if (status && userId) {
-      where.status = status;
+      // Validate status is a valid CourseStatus enum value
+      if (Object.values(CourseStatus).includes(status as CourseStatus)) {
+        where.status = status as CourseStatus;
+      }
     }
 
     if (isLeadMagnet === 'true') {
@@ -58,91 +74,82 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     });
 
-    return NextResponse.json({ courses });
+    return successResponse({ courses });
   } catch (error) {
-    console.error('Error fetching courses:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch courses' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'GET /api/courses');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.headers.get('x-user-id');
+    const auth = await requireAuth(request);
+    
+    if ('authorized' in auth && !auth.authorized) {
+      return handleApiError(new Error(auth.error || 'Unauthorized'), 'POST /api/courses');
+    }
 
+    const userId = 'userId' in auth ? auth.userId : null;
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return handleApiError(new Error('Unauthorized'), 'POST /api/courses');
     }
 
-    const body = await request.json();
-    const {
-      title,
-      description,
-      slug,
-      category,
-      tags,
-      level,
-      estimatedTime,
-      coverImageUrl,
-      accessType,
-      price,
-      isLeadMagnet,
-      requiresEmail
-    } = body;
-
-    // Validate required fields
-    if (!title || !slug) {
-      return NextResponse.json(
-        { error: 'Missing required fields: title, slug' },
-        { status: 400 }
-      );
+    // Validate request body
+    const validation = await validateRequest(request, courseSchema.extend({
+      slug: courseSchema.shape.slug.optional()
+    }));
+    
+    if (!validation.success) {
+      return handleApiError(validation.error, 'POST /api/courses');
     }
 
-    // Check slug uniqueness
-    const existing = await prisma.course.findUnique({
-      where: { slug }
-    });
+    const courseData = validation.data;
 
-    if (existing) {
-      return NextResponse.json(
-        { error: 'Slug already exists' },
-        { status: 400 }
-      );
+    // Check slug uniqueness if provided
+    if (courseData.slug) {
+      const existing = await prisma.course.findUnique({
+        where: { slug: courseData.slug }
+      });
+
+      if (existing) {
+        return handleApiError(new Error('Slug already exists'), 'POST /api/courses');
+      }
+    }
+
+    // Prepare course data for Prisma
+    // Only include slug if it's provided (not undefined)
+    const createData: any = {
+      userId,
+      title: courseData.title,
+      description: courseData.description || null,
+      category: courseData.category || null,
+      tags: courseData.tags || [],
+      level: courseData.level,
+      estimatedTime: courseData.estimatedTime || null,
+      language: courseData.language,
+      coverImageUrl: courseData.coverImageUrl || null,
+      promoVideoUrl: courseData.promoVideoUrl || null,
+      accessType: courseData.accessType,
+      price: courseData.price || null,
+      currency: courseData.currency,
+      isLeadMagnet: courseData.isLeadMagnet,
+      requiresEmail: courseData.requiresEmail,
+      status: CourseStatus.DRAFT
+    };
+
+    // Only add slug if it's provided
+    if (courseData.slug) {
+      createData.slug = courseData.slug;
     }
 
     const course = await prisma.course.create({
-      data: {
-        userId,
-        title,
-        description,
-        slug,
-        category,
-        tags: tags || [],
-        level: level || 'BEGINNER',
-        estimatedTime,
-        coverImageUrl,
-        accessType: accessType || 'FREE',
-        price: price ? parseFloat(price) : null,
-        isLeadMagnet: isLeadMagnet || false,
-        requiresEmail: requiresEmail || false,
-        status: 'DRAFT'
-      },
+      data: createData,
       include: {
         lessons: true
       }
     });
 
-    return NextResponse.json({ course }, { status: 201 });
+    return successResponse({ course }, 201);
   } catch (error) {
-    console.error('Error creating course:', error);
-    return NextResponse.json(
-      { error: 'Failed to create course' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'POST /api/courses');
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { stackServerApp } from "@/stack/server";
 import prisma from "@/lib/prisma";
+import { domainCache } from "@/lib/utils/domainCache";
 
 export const config = {
   matcher: [
@@ -93,6 +94,12 @@ export default async function middleware(req: Request) {
   const isAllowedDomain = allowedDomains.some(domain => hostnameLower.includes(domain.toLowerCase()));
 
   try {
+    // Check cache first
+    const cachedSlug = domainCache.get(hostnameLower);
+    if (cachedSlug) {
+      return NextResponse.rewrite(new URL(`/p/${cachedSlug}${url.pathname}`, req.url));
+    }
+
     // Check for custom domain first
     const customDomainPage = await prisma.page.findFirst({
       where: {
@@ -107,6 +114,8 @@ export default async function middleware(req: Request) {
     });
 
     if (customDomainPage) {
+      // Cache the result
+      domainCache.set(hostnameLower, customDomainPage.slug);
       // Rewrite to the page slug route
       return NextResponse.rewrite(new URL(`/p/${customDomainPage.slug}${url.pathname}`, req.url));
     }
@@ -141,6 +150,8 @@ export default async function middleware(req: Request) {
       });
 
       if (subdomainPage) {
+        // Cache the result
+        domainCache.set(hostnameLower, subdomainPage.slug);
         // Rewrite to the page slug route
         return NextResponse.rewrite(new URL(`/p/${subdomainPage.slug}${url.pathname}`, req.url));
       }

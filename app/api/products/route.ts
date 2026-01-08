@@ -4,31 +4,39 @@
  */
 
 import prisma from '@/lib/prisma';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { Product } from '@prisma/client';
-
 import { logger } from '@/lib/utils/logger';
-
+import { requireAuth } from '@/lib/auth/serverAuth';
+import { handleApiError, successResponse } from '@/lib/utils/apiError';
+import { validateQuery, validateRequest, paginationSchema, productSchema } from '@/lib/utils/validation';
 
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
+    const auth = await requireAuth(request);
+    
+    if ('authorized' in auth && !auth.authorized) {
+      return handleApiError(new Error(auth.error || 'Unauthorized'), 'GET /api/products');
+    }
 
+    const userId = 'userId' in auth ? auth.userId : null;
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return handleApiError(new Error('Unauthorized'), 'GET /api/products');
     }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    
+    // Validate pagination
+    const pagination = validateQuery(searchParams, paginationSchema);
+    if (!pagination.success) {
+      return handleApiError(pagination.error, 'GET /api/products');
+    }
+    
+    const { limit, offset = 0 } = pagination.data;
 
     // Build where clause
-    const where: any = { userId };
+    const where: { userId: string; isActive?: boolean } = { userId };
     if (status === 'active') {
       where.isActive = true;
     } else if (status === 'inactive') {
@@ -51,7 +59,7 @@ export async function GET(request: NextRequest) {
       prisma.product.count({ where })
     ]);
 
-    return NextResponse.json({
+    return successResponse({
       products: products.map((product: Product & { _count?: { sales: number } }) => ({
         id: product.id,
         name: product.name,
@@ -73,112 +81,44 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    logger.error('Error fetching products:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'GET /api/products');
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // TODO: Replace with actual auth middleware
-    const userId = request.headers.get('x-user-id');
+    const auth = await requireAuth(request);
+    
+    if ('authorized' in auth && !auth.authorized) {
+      return handleApiError(new Error(auth.error || 'Unauthorized'), 'POST /api/products');
+    }
 
+    const userId = 'userId' in auth ? auth.userId : null;
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return handleApiError(new Error('Unauthorized'), 'POST /api/products');
     }
 
-    const body = await request.json();
-    const {
-      name,
-      description,
-      price,
-      currency = 'USD',
-      fileUrl,
-      downloadLimit,
-      isActive = true,
-    } = body;
-
-    // Validate required fields
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Product name is required' },
-        { status: 400 }
-      );
+    // Validate request body
+    const validation = await validateRequest(request, productSchema);
+    if (!validation.success) {
+      return handleApiError(validation.error, 'POST /api/products');
     }
 
-    if (!price || price < 0) {
-      return NextResponse.json(
-        { error: 'Price must be at least $0' },
-        { status: 400 }
-      );
-    }
-
-    // Validate name length
-    if (name.length < 3 || name.length > 100) {
-      return NextResponse.json(
-        { error: 'Product name must be 3-100 characters' },
-        { status: 400 }
-      );
-    }
-
-    // Validate description length
-    if (description && description.length > 1000) {
-      return NextResponse.json(
-        { error: 'Description must be less than 1000 characters' },
-        { status: 400 }
-      );
-    }
-
-    // Validate fileUrl format if provided
-    if (fileUrl) {
-      try {
-        new URL(fileUrl);
-      } catch {
-        return NextResponse.json(
-          { error: 'Invalid file URL format' },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Validate downloadLimit
-    if (downloadLimit && downloadLimit < 1) {
-      return NextResponse.json(
-        { error: 'Download limit must be at least 1' },
-        { status: 400 }
-      );
-    }
-
+    const productData = validation.data;
 
     // Create product in database
     const product = await prisma.product.create({
       data: {
         userId,
-        name,
-        description,
-        price,
-        currency,
-        fileUrl,
-        downloadLimit,
-        isActive,
+        ...productData
       }
     });
 
-    return NextResponse.json({
+    return successResponse({
       productId: product.id,
       message: 'Product created successfully'
-    });
+    }, 201);
   } catch (error) {
-    logger.error('Error creating product:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'POST /api/products');
   }
 }
