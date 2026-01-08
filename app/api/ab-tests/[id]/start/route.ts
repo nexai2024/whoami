@@ -2,10 +2,10 @@
  * POST /api/ab-tests/[id]/start - Start an A/B test
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-
-
+import { requireAuth } from '@/lib/auth/serverAuth';
+import { handleApiError, successResponse } from '@/lib/utils/apiError';
 
 export async function POST(
   request: NextRequest,
@@ -13,13 +13,16 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const userId = request.headers.get('x-user-id');
+    
+    const auth = await requireAuth(request);
+    
+    if ('authorized' in auth && !auth.authorized) {
+      return handleApiError(new Error(auth.error || 'Unauthorized'), 'POST /api/ab-tests/[id]/start');
+    }
 
+    const userId = 'userId' in auth ? auth.userId : null;
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return handleApiError(new Error('Unauthorized'), 'POST /api/ab-tests/[id]/start');
     }
 
     const test = await prisma.aBTestExperiment.findUnique({
@@ -27,17 +30,11 @@ export async function POST(
     });
 
     if (!test || test.userId !== userId) {
-      return NextResponse.json(
-        { error: 'Test not found or unauthorized' },
-        { status: 404 }
-      );
+      return handleApiError(new Error('Test not found or unauthorized'), 'POST /api/ab-tests/[id]/start');
     }
 
     if (test.status !== 'draft' && test.status !== 'paused') {
-      return NextResponse.json(
-        { error: 'Test cannot be started in current state' },
-        { status: 400 }
-      );
+      return handleApiError(new Error('Test cannot be started in current state'), 'POST /api/ab-tests/[id]/start');
     }
 
     const updated = await prisma.aBTestExperiment.update({
@@ -48,7 +45,7 @@ export async function POST(
       }
     });
 
-    return NextResponse.json({
+    return successResponse({
       test: {
         ...updated,
         createdAt: updated.createdAt.toISOString(),
@@ -57,11 +54,7 @@ export async function POST(
       }
     });
   } catch (error) {
-    console.error('Error starting A/B test:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'POST /api/ab-tests/[id]/start');
   }
 }
 
