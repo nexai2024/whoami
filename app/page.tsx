@@ -1,6 +1,6 @@
 
 export default function MaintenancePage() {
-  returh (
+  return (
 <div className="text-center bg-gray-50">
   <img className="w-52 h-52" src="https://nextjs-demo.tailadmin.com/images/error/maintenance.svg" />
   <h1 className="text-slate-800 text-7xl font-bold">MAINTENANCE</h1>
