@@ -1,10 +1,10 @@
-import crypto from 'crypto';
+import { generateRandomBytesHexSync } from './crypto';
 
 /**
  * Generate a secure access token for course enrollment
  */
 export function generateAccessToken(): string {
-  return crypto.randomBytes(32).toString('hex');
+  return generateRandomBytesHexSync(32);
 }
 
 /**

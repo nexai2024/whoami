@@ -10654,6 +10654,17 @@ export namespace Prisma {
     website: string | null
     location: string | null
     timezone: string | null
+    socialLinkTwitter: string | null
+    socialLinkInstagram: string | null
+    socialLinkYouTube: string | null
+    socialLinkTikTok: string | null
+    socialLinkLinkedIn: string | null
+    socialLinkFacebook: string | null
+    socialLinkTwitch: string | null
+    socialLinkDiscord: string | null
+    socialLinkWebsite: string | null
+    socialLinkLinktree: string | null
+    socialLinkOther: string | null
     plan: $Enums.PlanEnum | null
     stripeCustomerId: string | null
     subscriptionId: string | null
@@ -10676,6 +10687,17 @@ export namespace Prisma {
     website: string | null
     location: string | null
     timezone: string | null
+    socialLinkTwitter: string | null
+    socialLinkInstagram: string | null
+    socialLinkYouTube: string | null
+    socialLinkTikTok: string | null
+    socialLinkLinkedIn: string | null
+    socialLinkFacebook: string | null
+    socialLinkTwitch: string | null
+    socialLinkDiscord: string | null
+    socialLinkWebsite: string | null
+    socialLinkLinktree: string | null
+    socialLinkOther: string | null
     plan: $Enums.PlanEnum | null
     stripeCustomerId: string | null
     subscriptionId: string | null
@@ -10698,6 +10720,17 @@ export namespace Prisma {
     website: number
     location: number
     timezone: number
+    socialLinkTwitter: number
+    socialLinkInstagram: number
+    socialLinkYouTube: number
+    socialLinkTikTok: number
+    socialLinkLinkedIn: number
+    socialLinkFacebook: number
+    socialLinkTwitch: number
+    socialLinkDiscord: number
+    socialLinkWebsite: number
+    socialLinkLinktree: number
+    socialLinkOther: number
     plan: number
     stripeCustomerId: number
     subscriptionId: number
@@ -10722,6 +10755,17 @@ export namespace Prisma {
     website?: true
     location?: true
     timezone?: true
+    socialLinkTwitter?: true
+    socialLinkInstagram?: true
+    socialLinkYouTube?: true
+    socialLinkTikTok?: true
+    socialLinkLinkedIn?: true
+    socialLinkFacebook?: true
+    socialLinkTwitch?: true
+    socialLinkDiscord?: true
+    socialLinkWebsite?: true
+    socialLinkLinktree?: true
+    socialLinkOther?: true
     plan?: true
     stripeCustomerId?: true
     subscriptionId?: true
@@ -10744,6 +10788,17 @@ export namespace Prisma {
     website?: true
     location?: true
     timezone?: true
+    socialLinkTwitter?: true
+    socialLinkInstagram?: true
+    socialLinkYouTube?: true
+    socialLinkTikTok?: true
+    socialLinkLinkedIn?: true
+    socialLinkFacebook?: true
+    socialLinkTwitch?: true
+    socialLinkDiscord?: true
+    socialLinkWebsite?: true
+    socialLinkLinktree?: true
+    socialLinkOther?: true
     plan?: true
     stripeCustomerId?: true
     subscriptionId?: true
@@ -10766,6 +10821,17 @@ export namespace Prisma {
     website?: true
     location?: true
     timezone?: true
+    socialLinkTwitter?: true
+    socialLinkInstagram?: true
+    socialLinkYouTube?: true
+    socialLinkTikTok?: true
+    socialLinkLinkedIn?: true
+    socialLinkFacebook?: true
+    socialLinkTwitch?: true
+    socialLinkDiscord?: true
+    socialLinkWebsite?: true
+    socialLinkLinktree?: true
+    socialLinkOther?: true
     plan?: true
     stripeCustomerId?: true
     subscriptionId?: true
@@ -10861,6 +10927,17 @@ export namespace Prisma {
     website: string | null
     location: string | null
     timezone: string
+    socialLinkTwitter: string | null
+    socialLinkInstagram: string | null
+    socialLinkYouTube: string | null
+    socialLinkTikTok: string | null
+    socialLinkLinkedIn: string | null
+    socialLinkFacebook: string | null
+    socialLinkTwitch: string | null
+    socialLinkDiscord: string | null
+    socialLinkWebsite: string | null
+    socialLinkLinktree: string | null
+    socialLinkOther: string | null
     plan: $Enums.PlanEnum
     stripeCustomerId: string | null
     subscriptionId: string | null
@@ -10900,6 +10977,17 @@ export namespace Prisma {
     website?: boolean
     location?: boolean
     timezone?: boolean
+    socialLinkTwitter?: boolean
+    socialLinkInstagram?: boolean
+    socialLinkYouTube?: boolean
+    socialLinkTikTok?: boolean
+    socialLinkLinkedIn?: boolean
+    socialLinkFacebook?: boolean
+    socialLinkTwitch?: boolean
+    socialLinkDiscord?: boolean
+    socialLinkWebsite?: boolean
+    socialLinkLinktree?: boolean
+    socialLinkOther?: boolean
     plan?: boolean
     stripeCustomerId?: boolean
     subscriptionId?: boolean
@@ -10923,6 +11011,17 @@ export namespace Prisma {
     website?: boolean
     location?: boolean
     timezone?: boolean
+    socialLinkTwitter?: boolean
+    socialLinkInstagram?: boolean
+    socialLinkYouTube?: boolean
+    socialLinkTikTok?: boolean
+    socialLinkLinkedIn?: boolean
+    socialLinkFacebook?: boolean
+    socialLinkTwitch?: boolean
+    socialLinkDiscord?: boolean
+    socialLinkWebsite?: boolean
+    socialLinkLinktree?: boolean
+    socialLinkOther?: boolean
     plan?: boolean
     stripeCustomerId?: boolean
     subscriptionId?: boolean
@@ -10946,6 +11045,17 @@ export namespace Prisma {
     website?: boolean
     location?: boolean
     timezone?: boolean
+    socialLinkTwitter?: boolean
+    socialLinkInstagram?: boolean
+    socialLinkYouTube?: boolean
+    socialLinkTikTok?: boolean
+    socialLinkLinkedIn?: boolean
+    socialLinkFacebook?: boolean
+    socialLinkTwitch?: boolean
+    socialLinkDiscord?: boolean
+    socialLinkWebsite?: boolean
+    socialLinkLinktree?: boolean
+    socialLinkOther?: boolean
     plan?: boolean
     stripeCustomerId?: boolean
     subscriptionId?: boolean
@@ -10969,6 +11079,17 @@ export namespace Prisma {
     website?: boolean
     location?: boolean
     timezone?: boolean
+    socialLinkTwitter?: boolean
+    socialLinkInstagram?: boolean
+    socialLinkYouTube?: boolean
+    socialLinkTikTok?: boolean
+    socialLinkLinkedIn?: boolean
+    socialLinkFacebook?: boolean
+    socialLinkTwitch?: boolean
+    socialLinkDiscord?: boolean
+    socialLinkWebsite?: boolean
+    socialLinkLinktree?: boolean
+    socialLinkOther?: boolean
     plan?: boolean
     stripeCustomerId?: boolean
     subscriptionId?: boolean
@@ -10979,7 +11100,7 @@ export namespace Prisma {
     productsEnabled?: boolean
   }
 
-  export type ProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "username" | "displayName" | "bio" | "avatar" | "theme" | "phone" | "website" | "location" | "timezone" | "plan" | "stripeCustomerId" | "subscriptionId" | "subscriptionStatus" | "isCoach" | "coachSlug" | "bookingEnabled" | "productsEnabled", ExtArgs["result"]["profile"]>
+  export type ProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "username" | "displayName" | "bio" | "avatar" | "theme" | "phone" | "website" | "location" | "timezone" | "socialLinkTwitter" | "socialLinkInstagram" | "socialLinkYouTube" | "socialLinkTikTok" | "socialLinkLinkedIn" | "socialLinkFacebook" | "socialLinkTwitch" | "socialLinkDiscord" | "socialLinkWebsite" | "socialLinkLinktree" | "socialLinkOther" | "plan" | "stripeCustomerId" | "subscriptionId" | "subscriptionStatus" | "isCoach" | "coachSlug" | "bookingEnabled" | "productsEnabled", ExtArgs["result"]["profile"]>
   export type ProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -11007,6 +11128,17 @@ export namespace Prisma {
       website: string | null
       location: string | null
       timezone: string
+      socialLinkTwitter: string | null
+      socialLinkInstagram: string | null
+      socialLinkYouTube: string | null
+      socialLinkTikTok: string | null
+      socialLinkLinkedIn: string | null
+      socialLinkFacebook: string | null
+      socialLinkTwitch: string | null
+      socialLinkDiscord: string | null
+      socialLinkWebsite: string | null
+      socialLinkLinktree: string | null
+      socialLinkOther: string | null
       plan: $Enums.PlanEnum
       stripeCustomerId: string | null
       subscriptionId: string | null
@@ -11450,6 +11582,17 @@ export namespace Prisma {
     readonly website: FieldRef<"Profile", 'String'>
     readonly location: FieldRef<"Profile", 'String'>
     readonly timezone: FieldRef<"Profile", 'String'>
+    readonly socialLinkTwitter: FieldRef<"Profile", 'String'>
+    readonly socialLinkInstagram: FieldRef<"Profile", 'String'>
+    readonly socialLinkYouTube: FieldRef<"Profile", 'String'>
+    readonly socialLinkTikTok: FieldRef<"Profile", 'String'>
+    readonly socialLinkLinkedIn: FieldRef<"Profile", 'String'>
+    readonly socialLinkFacebook: FieldRef<"Profile", 'String'>
+    readonly socialLinkTwitch: FieldRef<"Profile", 'String'>
+    readonly socialLinkDiscord: FieldRef<"Profile", 'String'>
+    readonly socialLinkWebsite: FieldRef<"Profile", 'String'>
+    readonly socialLinkLinktree: FieldRef<"Profile", 'String'>
+    readonly socialLinkOther: FieldRef<"Profile", 'String'>
     readonly plan: FieldRef<"Profile", 'PlanEnum'>
     readonly stripeCustomerId: FieldRef<"Profile", 'String'>
     readonly subscriptionId: FieldRef<"Profile", 'String'>
@@ -90540,6 +90683,17 @@ export namespace Prisma {
     website: 'website',
     location: 'location',
     timezone: 'timezone',
+    socialLinkTwitter: 'socialLinkTwitter',
+    socialLinkInstagram: 'socialLinkInstagram',
+    socialLinkYouTube: 'socialLinkYouTube',
+    socialLinkTikTok: 'socialLinkTikTok',
+    socialLinkLinkedIn: 'socialLinkLinkedIn',
+    socialLinkFacebook: 'socialLinkFacebook',
+    socialLinkTwitch: 'socialLinkTwitch',
+    socialLinkDiscord: 'socialLinkDiscord',
+    socialLinkWebsite: 'socialLinkWebsite',
+    socialLinkLinktree: 'socialLinkLinktree',
+    socialLinkOther: 'socialLinkOther',
     plan: 'plan',
     stripeCustomerId: 'stripeCustomerId',
     subscriptionId: 'subscriptionId',
@@ -92734,6 +92888,17 @@ export namespace Prisma {
     website?: StringNullableFilter<"Profile"> | string | null
     location?: StringNullableFilter<"Profile"> | string | null
     timezone?: StringFilter<"Profile"> | string
+    socialLinkTwitter?: StringNullableFilter<"Profile"> | string | null
+    socialLinkInstagram?: StringNullableFilter<"Profile"> | string | null
+    socialLinkYouTube?: StringNullableFilter<"Profile"> | string | null
+    socialLinkTikTok?: StringNullableFilter<"Profile"> | string | null
+    socialLinkLinkedIn?: StringNullableFilter<"Profile"> | string | null
+    socialLinkFacebook?: StringNullableFilter<"Profile"> | string | null
+    socialLinkTwitch?: StringNullableFilter<"Profile"> | string | null
+    socialLinkDiscord?: StringNullableFilter<"Profile"> | string | null
+    socialLinkWebsite?: StringNullableFilter<"Profile"> | string | null
+    socialLinkLinktree?: StringNullableFilter<"Profile"> | string | null
+    socialLinkOther?: StringNullableFilter<"Profile"> | string | null
     plan?: EnumPlanEnumFilter<"Profile"> | $Enums.PlanEnum
     stripeCustomerId?: StringNullableFilter<"Profile"> | string | null
     subscriptionId?: StringNullableFilter<"Profile"> | string | null
@@ -92757,6 +92922,17 @@ export namespace Prisma {
     website?: SortOrderInput | SortOrder
     location?: SortOrderInput | SortOrder
     timezone?: SortOrder
+    socialLinkTwitter?: SortOrderInput | SortOrder
+    socialLinkInstagram?: SortOrderInput | SortOrder
+    socialLinkYouTube?: SortOrderInput | SortOrder
+    socialLinkTikTok?: SortOrderInput | SortOrder
+    socialLinkLinkedIn?: SortOrderInput | SortOrder
+    socialLinkFacebook?: SortOrderInput | SortOrder
+    socialLinkTwitch?: SortOrderInput | SortOrder
+    socialLinkDiscord?: SortOrderInput | SortOrder
+    socialLinkWebsite?: SortOrderInput | SortOrder
+    socialLinkLinktree?: SortOrderInput | SortOrder
+    socialLinkOther?: SortOrderInput | SortOrder
     plan?: SortOrder
     stripeCustomerId?: SortOrderInput | SortOrder
     subscriptionId?: SortOrderInput | SortOrder
@@ -92784,6 +92960,17 @@ export namespace Prisma {
     website?: StringNullableFilter<"Profile"> | string | null
     location?: StringNullableFilter<"Profile"> | string | null
     timezone?: StringFilter<"Profile"> | string
+    socialLinkTwitter?: StringNullableFilter<"Profile"> | string | null
+    socialLinkInstagram?: StringNullableFilter<"Profile"> | string | null
+    socialLinkYouTube?: StringNullableFilter<"Profile"> | string | null
+    socialLinkTikTok?: StringNullableFilter<"Profile"> | string | null
+    socialLinkLinkedIn?: StringNullableFilter<"Profile"> | string | null
+    socialLinkFacebook?: StringNullableFilter<"Profile"> | string | null
+    socialLinkTwitch?: StringNullableFilter<"Profile"> | string | null
+    socialLinkDiscord?: StringNullableFilter<"Profile"> | string | null
+    socialLinkWebsite?: StringNullableFilter<"Profile"> | string | null
+    socialLinkLinktree?: StringNullableFilter<"Profile"> | string | null
+    socialLinkOther?: StringNullableFilter<"Profile"> | string | null
     plan?: EnumPlanEnumFilter<"Profile"> | $Enums.PlanEnum
     stripeCustomerId?: StringNullableFilter<"Profile"> | string | null
     subscriptionId?: StringNullableFilter<"Profile"> | string | null
@@ -92806,6 +92993,17 @@ export namespace Prisma {
     website?: SortOrderInput | SortOrder
     location?: SortOrderInput | SortOrder
     timezone?: SortOrder
+    socialLinkTwitter?: SortOrderInput | SortOrder
+    socialLinkInstagram?: SortOrderInput | SortOrder
+    socialLinkYouTube?: SortOrderInput | SortOrder
+    socialLinkTikTok?: SortOrderInput | SortOrder
+    socialLinkLinkedIn?: SortOrderInput | SortOrder
+    socialLinkFacebook?: SortOrderInput | SortOrder
+    socialLinkTwitch?: SortOrderInput | SortOrder
+    socialLinkDiscord?: SortOrderInput | SortOrder
+    socialLinkWebsite?: SortOrderInput | SortOrder
+    socialLinkLinktree?: SortOrderInput | SortOrder
+    socialLinkOther?: SortOrderInput | SortOrder
     plan?: SortOrder
     stripeCustomerId?: SortOrderInput | SortOrder
     subscriptionId?: SortOrderInput | SortOrder
@@ -92834,6 +93032,17 @@ export namespace Prisma {
     website?: StringNullableWithAggregatesFilter<"Profile"> | string | null
     location?: StringNullableWithAggregatesFilter<"Profile"> | string | null
     timezone?: StringWithAggregatesFilter<"Profile"> | string
+    socialLinkTwitter?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkInstagram?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkYouTube?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkTikTok?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkLinkedIn?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkFacebook?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkTwitch?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkDiscord?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkWebsite?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkLinktree?: StringNullableWithAggregatesFilter<"Profile"> | string | null
+    socialLinkOther?: StringNullableWithAggregatesFilter<"Profile"> | string | null
     plan?: EnumPlanEnumWithAggregatesFilter<"Profile"> | $Enums.PlanEnum
     stripeCustomerId?: StringNullableWithAggregatesFilter<"Profile"> | string | null
     subscriptionId?: StringNullableWithAggregatesFilter<"Profile"> | string | null
@@ -99820,6 +100029,17 @@ export namespace Prisma {
     website?: string | null
     location?: string | null
     timezone?: string
+    socialLinkTwitter?: string | null
+    socialLinkInstagram?: string | null
+    socialLinkYouTube?: string | null
+    socialLinkTikTok?: string | null
+    socialLinkLinkedIn?: string | null
+    socialLinkFacebook?: string | null
+    socialLinkTwitch?: string | null
+    socialLinkDiscord?: string | null
+    socialLinkWebsite?: string | null
+    socialLinkLinktree?: string | null
+    socialLinkOther?: string | null
     plan?: $Enums.PlanEnum
     stripeCustomerId?: string | null
     subscriptionId?: string | null
@@ -99843,6 +100063,17 @@ export namespace Prisma {
     website?: string | null
     location?: string | null
     timezone?: string
+    socialLinkTwitter?: string | null
+    socialLinkInstagram?: string | null
+    socialLinkYouTube?: string | null
+    socialLinkTikTok?: string | null
+    socialLinkLinkedIn?: string | null
+    socialLinkFacebook?: string | null
+    socialLinkTwitch?: string | null
+    socialLinkDiscord?: string | null
+    socialLinkWebsite?: string | null
+    socialLinkLinktree?: string | null
+    socialLinkOther?: string | null
     plan?: $Enums.PlanEnum
     stripeCustomerId?: string | null
     subscriptionId?: string | null
@@ -99864,6 +100095,17 @@ export namespace Prisma {
     website?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
+    socialLinkTwitter?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkInstagram?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkYouTube?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTikTok?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinkedIn?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkFacebook?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTwitch?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkDiscord?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkWebsite?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinktree?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkOther?: NullableStringFieldUpdateOperationsInput | string | null
     plan?: EnumPlanEnumFieldUpdateOperationsInput | $Enums.PlanEnum
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -99887,6 +100129,17 @@ export namespace Prisma {
     website?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
+    socialLinkTwitter?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkInstagram?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkYouTube?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTikTok?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinkedIn?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkFacebook?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTwitch?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkDiscord?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkWebsite?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinktree?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkOther?: NullableStringFieldUpdateOperationsInput | string | null
     plan?: EnumPlanEnumFieldUpdateOperationsInput | $Enums.PlanEnum
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -99909,6 +100162,17 @@ export namespace Prisma {
     website?: string | null
     location?: string | null
     timezone?: string
+    socialLinkTwitter?: string | null
+    socialLinkInstagram?: string | null
+    socialLinkYouTube?: string | null
+    socialLinkTikTok?: string | null
+    socialLinkLinkedIn?: string | null
+    socialLinkFacebook?: string | null
+    socialLinkTwitch?: string | null
+    socialLinkDiscord?: string | null
+    socialLinkWebsite?: string | null
+    socialLinkLinktree?: string | null
+    socialLinkOther?: string | null
     plan?: $Enums.PlanEnum
     stripeCustomerId?: string | null
     subscriptionId?: string | null
@@ -99930,6 +100194,17 @@ export namespace Prisma {
     website?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
+    socialLinkTwitter?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkInstagram?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkYouTube?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTikTok?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinkedIn?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkFacebook?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTwitch?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkDiscord?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkWebsite?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinktree?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkOther?: NullableStringFieldUpdateOperationsInput | string | null
     plan?: EnumPlanEnumFieldUpdateOperationsInput | $Enums.PlanEnum
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -99952,6 +100227,17 @@ export namespace Prisma {
     website?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
+    socialLinkTwitter?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkInstagram?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkYouTube?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTikTok?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinkedIn?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkFacebook?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTwitch?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkDiscord?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkWebsite?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinktree?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkOther?: NullableStringFieldUpdateOperationsInput | string | null
     plan?: EnumPlanEnumFieldUpdateOperationsInput | $Enums.PlanEnum
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -108225,6 +108511,17 @@ export namespace Prisma {
     website?: SortOrder
     location?: SortOrder
     timezone?: SortOrder
+    socialLinkTwitter?: SortOrder
+    socialLinkInstagram?: SortOrder
+    socialLinkYouTube?: SortOrder
+    socialLinkTikTok?: SortOrder
+    socialLinkLinkedIn?: SortOrder
+    socialLinkFacebook?: SortOrder
+    socialLinkTwitch?: SortOrder
+    socialLinkDiscord?: SortOrder
+    socialLinkWebsite?: SortOrder
+    socialLinkLinktree?: SortOrder
+    socialLinkOther?: SortOrder
     plan?: SortOrder
     stripeCustomerId?: SortOrder
     subscriptionId?: SortOrder
@@ -108247,6 +108544,17 @@ export namespace Prisma {
     website?: SortOrder
     location?: SortOrder
     timezone?: SortOrder
+    socialLinkTwitter?: SortOrder
+    socialLinkInstagram?: SortOrder
+    socialLinkYouTube?: SortOrder
+    socialLinkTikTok?: SortOrder
+    socialLinkLinkedIn?: SortOrder
+    socialLinkFacebook?: SortOrder
+    socialLinkTwitch?: SortOrder
+    socialLinkDiscord?: SortOrder
+    socialLinkWebsite?: SortOrder
+    socialLinkLinktree?: SortOrder
+    socialLinkOther?: SortOrder
     plan?: SortOrder
     stripeCustomerId?: SortOrder
     subscriptionId?: SortOrder
@@ -108269,6 +108577,17 @@ export namespace Prisma {
     website?: SortOrder
     location?: SortOrder
     timezone?: SortOrder
+    socialLinkTwitter?: SortOrder
+    socialLinkInstagram?: SortOrder
+    socialLinkYouTube?: SortOrder
+    socialLinkTikTok?: SortOrder
+    socialLinkLinkedIn?: SortOrder
+    socialLinkFacebook?: SortOrder
+    socialLinkTwitch?: SortOrder
+    socialLinkDiscord?: SortOrder
+    socialLinkWebsite?: SortOrder
+    socialLinkLinktree?: SortOrder
+    socialLinkOther?: SortOrder
     plan?: SortOrder
     stripeCustomerId?: SortOrder
     subscriptionId?: SortOrder
@@ -119550,6 +119869,17 @@ export namespace Prisma {
     website?: string | null
     location?: string | null
     timezone?: string
+    socialLinkTwitter?: string | null
+    socialLinkInstagram?: string | null
+    socialLinkYouTube?: string | null
+    socialLinkTikTok?: string | null
+    socialLinkLinkedIn?: string | null
+    socialLinkFacebook?: string | null
+    socialLinkTwitch?: string | null
+    socialLinkDiscord?: string | null
+    socialLinkWebsite?: string | null
+    socialLinkLinktree?: string | null
+    socialLinkOther?: string | null
     plan?: $Enums.PlanEnum
     stripeCustomerId?: string | null
     subscriptionId?: string | null
@@ -119571,6 +119901,17 @@ export namespace Prisma {
     website?: string | null
     location?: string | null
     timezone?: string
+    socialLinkTwitter?: string | null
+    socialLinkInstagram?: string | null
+    socialLinkYouTube?: string | null
+    socialLinkTikTok?: string | null
+    socialLinkLinkedIn?: string | null
+    socialLinkFacebook?: string | null
+    socialLinkTwitch?: string | null
+    socialLinkDiscord?: string | null
+    socialLinkWebsite?: string | null
+    socialLinkLinktree?: string | null
+    socialLinkOther?: string | null
     plan?: $Enums.PlanEnum
     stripeCustomerId?: string | null
     subscriptionId?: string | null
@@ -121124,6 +121465,17 @@ export namespace Prisma {
     website?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
+    socialLinkTwitter?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkInstagram?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkYouTube?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTikTok?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinkedIn?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkFacebook?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTwitch?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkDiscord?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkWebsite?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinktree?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkOther?: NullableStringFieldUpdateOperationsInput | string | null
     plan?: EnumPlanEnumFieldUpdateOperationsInput | $Enums.PlanEnum
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -121145,6 +121497,17 @@ export namespace Prisma {
     website?: NullableStringFieldUpdateOperationsInput | string | null
     location?: NullableStringFieldUpdateOperationsInput | string | null
     timezone?: StringFieldUpdateOperationsInput | string
+    socialLinkTwitter?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkInstagram?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkYouTube?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTikTok?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinkedIn?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkFacebook?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkTwitch?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkDiscord?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkWebsite?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkLinktree?: NullableStringFieldUpdateOperationsInput | string | null
+    socialLinkOther?: NullableStringFieldUpdateOperationsInput | string | null
     plan?: EnumPlanEnumFieldUpdateOperationsInput | $Enums.PlanEnum
     stripeCustomerId?: NullableStringFieldUpdateOperationsInput | string | null
     subscriptionId?: NullableStringFieldUpdateOperationsInput | string | null

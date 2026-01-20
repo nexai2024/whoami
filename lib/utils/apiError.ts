@@ -33,9 +33,21 @@ export interface ErrorResponse {
  * @param context - Optional context about where the error occurred
  * @returns NextResponse with appropriate error format
  */
+/**
+ * Generate a UUID compatible with both Node.js and Edge runtime
+ */
+function generateRequestId(): string {
+  // Use Web Crypto API which works in both Node.js and Edge runtime
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+  // Fallback for environments without crypto.randomUUID
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
+}
+
 export function handleApiError(error: unknown, context?: string): NextResponse<ErrorResponse> {
   // Generate request ID for tracking
-  const requestId = crypto.randomUUID()
+  const requestId = generateRequestId()
   
   // Log error with context
   const errorContext = context ? ` in ${context}` : ''
@@ -160,7 +172,7 @@ export function errorResponse(
       error: message,
       code,
       details,
-      requestId: crypto.randomUUID()
+      requestId: generateRequestId()
     },
     { status }
   )

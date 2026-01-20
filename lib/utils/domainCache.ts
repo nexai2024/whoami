@@ -73,9 +73,7 @@ class DomainCache {
 export const domainCache = new DomainCache()
 
 // Cleanup expired entries every 10 minutes
-if (typeof setInterval !== 'undefined') {
-  setInterval(() => {
-    domainCache.cleanup()
-  }, 10 * 60 * 1000)
-}
+// Note: setInterval is not available in Edge runtime
+// Cleanup will happen on-demand when cache is accessed
+// For production, consider using a background job or cron for cleanup
 

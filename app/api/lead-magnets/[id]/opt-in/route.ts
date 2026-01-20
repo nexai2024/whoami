@@ -6,8 +6,17 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { MagnetStatus, Prisma } from '@prisma/client';
-import { randomBytes } from 'crypto';
 import { sendLeadMagnetDelivery } from '@/lib/services/emailService';
+
+/**
+ * Generate random bytes compatible with both Node.js and Edge runtime
+ */
+async function generateRandomBytes(length: number): Promise<string> {
+  // Use Web Crypto API which works in both Node.js and Edge runtime
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
 
 
 interface OptInRequest {
@@ -99,7 +108,7 @@ export async function POST(
     let delivery;
     const tokenExpiresAt = new Date();
     tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 30);
-    const deliveryToken = randomBytes(16).toString('hex');
+    const deliveryToken = await generateRandomBytes(16);
 
     if (existingDelivery) {
       // Resend email to existing subscriber (don't create new record)

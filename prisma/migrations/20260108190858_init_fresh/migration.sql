@@ -2,10 +2,22 @@
 CREATE TYPE "FormType" AS ENUM ('EMAIL_CAPTURE', 'WAITLIST', 'CONTACT', 'CUSTOM');
 
 -- CreateEnum
+CREATE TYPE "ProductType" AS ENUM ('PRODUCT', 'PACKAGE');
+
+-- CreateEnum
 CREATE TYPE "PlanEnum" AS ENUM ('FREE', 'CREATOR', 'PRO', 'BUSINESS', 'SUPER_ADMIN');
 
 -- CreateEnum
-CREATE TYPE "BlockType" AS ENUM ('LINK', 'PRODUCT', 'EMAIL_CAPTURE', 'IMAGE_GALLERY', 'MUSIC_PLAYER', 'VIDEO_EMBED', 'BOOKING_CALENDAR', 'TIP_JAR', 'SOCIAL_FEED', 'AMA_BLOCK', 'GATED_CONTENT', 'RSS_FEED', 'PORTFOLIO', 'CONTACT_FORM', 'DIVIDER', 'TEXT_BLOCK', 'ANALYTICS', 'PROMO', 'DISCOUNT', 'SOCIAL_SHARE', 'WAITLIST', 'NEWSLETTER', 'CUSTOM');
+CREATE TYPE "DomainStatus" AS ENUM ('PENDING', 'VERIFIED', 'FAILED');
+
+-- CreateEnum
+CREATE TYPE "BookingStatus" AS ENUM ('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW');
+
+-- CreateEnum
+CREATE TYPE "BlockType" AS ENUM ('LINK', 'DEEP_LINK', 'PRODUCT', 'EMAIL_CAPTURE', 'IMAGE_GALLERY', 'MUSIC_PLAYER', 'VIDEO_EMBED', 'BOOKING_CALENDAR', 'TIP_JAR', 'SOCIAL_FEED', 'AMA_BLOCK', 'GATED_CONTENT', 'RSS_FEED', 'PORTFOLIO', 'CONTACT_FORM', 'DIVIDER', 'TEXT_BLOCK', 'ANALYTICS', 'PROMO', 'DISCOUNT', 'SOCIAL_SHARE', 'WAITLIST', 'NEWSLETTER', 'CUSTOM', 'COURSE', 'FUNNEL', 'QUIZ', 'SOCIAL_PROOF', 'SAAS_APP');
+
+-- CreateEnum
+CREATE TYPE "LeadStage" AS ENUM ('NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'NEGOTIATION', 'WON', 'LOST');
 
 -- CreateEnum
 CREATE TYPE "TestStatus" AS ENUM ('DRAFT', 'RUNNING', 'PAUSED', 'COMPLETED');
@@ -97,13 +109,24 @@ CREATE TYPE "ExecutionStatus" AS ENUM ('PENDING', 'RUNNING', 'WAITING', 'COMPLET
 -- CreateEnum
 CREATE TYPE "StepExecutionStatus" AS ENUM ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'SKIPPED');
 
+-- CreateEnum
+CREATE TYPE "FunnelGoalType" AS ENUM ('LEAD_CAPTURE', 'PRODUCT_SALE', 'COURSE_ENROLLMENT', 'BOOKING', 'CUSTOM');
+
+-- CreateEnum
+CREATE TYPE "FunnelStatus" AS ENUM ('DRAFT', 'ACTIVE', 'PAUSED', 'ARCHIVED');
+
+-- CreateEnum
+CREATE TYPE "FunnelStepType" AS ENUM ('LANDING_PAGE', 'LEAD_CAPTURE', 'SALES_PAGE', 'ORDER_FORM', 'UPSELL', 'DOWNSELL', 'THANK_YOU', 'VIDEO_SALES', 'WEBINAR_REG', 'SURVEY', 'CUSTOM');
+
+-- CreateEnum
+CREATE TYPE "FunnelStepStatus" AS ENUM ('VIEWED', 'ENGAGED', 'COMPLETED', 'ABANDONED', 'CONVERTED');
+
 -- CreateTable
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -113,14 +136,33 @@ CREATE TABLE "profiles" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "username" TEXT NOT NULL,
-    "displayName" TEXT,
+    "displayName" TEXT NOT NULL,
     "bio" TEXT,
     "avatar" TEXT,
     "theme" TEXT NOT NULL DEFAULT 'default',
+    "phone" TEXT,
+    "website" TEXT,
+    "location" TEXT,
+    "timezone" TEXT NOT NULL DEFAULT 'UTC',
+    "socialLinkTwitter" TEXT,
+    "socialLinkInstagram" TEXT,
+    "socialLinkYouTube" TEXT,
+    "socialLinkTikTok" TEXT,
+    "socialLinkLinkedIn" TEXT,
+    "socialLinkFacebook" TEXT,
+    "socialLinkTwitch" TEXT,
+    "socialLinkDiscord" TEXT,
+    "socialLinkWebsite" TEXT,
+    "socialLinkLinktree" TEXT,
+    "socialLinkOther" TEXT,
     "plan" "PlanEnum" NOT NULL DEFAULT 'FREE',
     "stripeCustomerId" TEXT,
     "subscriptionId" TEXT,
     "subscriptionStatus" TEXT,
+    "isCoach" BOOLEAN NOT NULL DEFAULT false,
+    "coachSlug" TEXT,
+    "bookingEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "productsEnabled" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "profiles_pkey" PRIMARY KEY ("id")
 );
@@ -134,13 +176,23 @@ CREATE TABLE "pages" (
     "description" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "customDomain" TEXT,
+    "customDomainStatus" "DomainStatus" DEFAULT 'PENDING',
+    "customDomainVerifiedAt" TIMESTAMP(3),
+    "customDomainVerificationToken" TEXT,
+    "subdomain" TEXT,
     "metaTitle" TEXT,
     "metaDescription" TEXT,
+    "metaKeywords" TEXT,
     "ogImage" TEXT,
     "backgroundColor" TEXT NOT NULL DEFAULT '#ffffff',
     "textColor" TEXT NOT NULL DEFAULT '#000000',
     "buttonStyle" TEXT NOT NULL DEFAULT 'rounded',
     "fontFamily" TEXT NOT NULL DEFAULT 'inter',
+    "theme" JSONB,
+    "typography" JSONB,
+    "layout" JSONB,
+    "animations" JSONB,
+    "customCss" TEXT,
     "googleAnalyticsId" TEXT,
     "facebookPixelId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -174,6 +226,7 @@ CREATE TABLE "blocks" (
     "backgroundColor" TEXT,
     "textColor" TEXT,
     "borderRadius" INTEGER NOT NULL DEFAULT 8,
+    "style" JSONB,
     "data" JSONB NOT NULL DEFAULT '{}',
     "scheduledStart" TIMESTAMP(3),
     "scheduledEnd" TIMESTAMP(3),
@@ -251,6 +304,8 @@ CREATE TABLE "products" (
     "description" TEXT,
     "price" DOUBLE PRECISION NOT NULL,
     "currency" TEXT NOT NULL DEFAULT 'USD',
+    "type" "ProductType" NOT NULL DEFAULT 'PRODUCT',
+    "packageProducts" TEXT[],
     "fileUrl" TEXT,
     "downloadLimit" INTEGER,
     "stripeProductId" TEXT,
@@ -280,10 +335,19 @@ CREATE TABLE "sales" (
 CREATE TABLE "email_subscribers" (
     "id" TEXT NOT NULL,
     "pageId" TEXT NOT NULL,
+    "pageType" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT,
     "source" TEXT,
+    "phone" TEXT,
+    "company" TEXT,
+    "notes" TEXT,
     "tags" TEXT[],
+    "pipelineStage" "LeadStage" NOT NULL DEFAULT 'NEW',
+    "lastContactedAt" TIMESTAMP(3),
+    "lastActivityAt" TIMESTAMP(3),
+    "estimatedValue" INTEGER,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -376,6 +440,54 @@ CREATE TABLE "error_logs" (
 );
 
 -- CreateTable
+CREATE TABLE "availability_windows" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "dayOfWeek" INTEGER NOT NULL,
+    "startTime" TEXT NOT NULL,
+    "endTime" TEXT NOT NULL,
+    "timezone" TEXT NOT NULL DEFAULT 'UTC',
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "availability_windows_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "blackout_dates" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "reason" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "blackout_dates_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "bookings" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "customerEmail" TEXT NOT NULL,
+    "customerName" TEXT,
+    "startTime" TIMESTAMP(3) NOT NULL,
+    "endTime" TIMESTAMP(3) NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "price" DECIMAL(10,2),
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "status" "BookingStatus" NOT NULL DEFAULT 'PENDING',
+    "notes" TEXT,
+    "stripePaymentId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "bookings_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Plan" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -386,6 +498,7 @@ CREATE TABLE "Plan" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "priceId" TEXT,
 
     CONSTRAINT "Plan_pkey" PRIMARY KEY ("id")
 );
@@ -432,6 +545,49 @@ CREATE TABLE "Subscription" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "stripe_connected_accounts" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "chargesEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "payoutsEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "detailsSubmitted" BOOLEAN NOT NULL DEFAULT false,
+    "country" TEXT,
+    "defaultCurrency" TEXT DEFAULT 'USD',
+    "businessType" TEXT,
+    "applicationFeePercent" INTEGER,
+    "requirements" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "stripe_connected_accounts_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "creator_earnings" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "productId" TEXT,
+    "saleId" TEXT,
+    "bookingId" TEXT,
+    "grossAmount" DECIMAL(10,2) NOT NULL,
+    "stripeFees" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "applicationFees" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "netAmount" DECIMAL(10,2) NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "chargeId" TEXT,
+    "transferId" TEXT,
+    "payoutId" TEXT,
+    "connectedAccountId" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "availableAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "creator_earnings_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -759,15 +915,25 @@ CREATE TABLE "page_templates" (
     "name" TEXT NOT NULL,
     "description" TEXT,
     "category" TEXT NOT NULL,
+    "industry" TEXT,
     "tags" TEXT[],
     "templateType" "TemplateType" NOT NULL,
     "headerData" JSONB NOT NULL,
     "blocksData" JSONB NOT NULL,
+    "theme" JSONB,
     "thumbnailUrl" TEXT NOT NULL,
     "previewUrl" TEXT,
     "useCount" INTEGER NOT NULL DEFAULT 0,
+    "rating" DOUBLE PRECISION DEFAULT 0,
     "featured" BOOLEAN NOT NULL DEFAULT false,
     "isPublic" BOOLEAN NOT NULL DEFAULT false,
+    "price" DECIMAL(10,2),
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "isPaid" BOOLEAN NOT NULL DEFAULT false,
+    "commissionRate" DECIMAL(5,2),
+    "totalRevenue" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "totalSales" INTEGER NOT NULL DEFAULT 0,
+    "licenseType" TEXT NOT NULL DEFAULT 'free',
 
     CONSTRAINT "page_templates_pkey" PRIMARY KEY ("id")
 );
@@ -868,6 +1034,8 @@ CREATE TABLE "course_enrollments" (
     "certificateIssuedAt" TIMESTAMP(3),
     "expiresAt" TIMESTAMP(3),
     "accessRevoked" BOOLEAN NOT NULL DEFAULT false,
+    "accessToken" TEXT,
+    "accessTokenExpiresAt" TIMESTAMP(3),
     "lastAccessedAt" TIMESTAMP(3),
     "totalTimeSpent" INTEGER NOT NULL DEFAULT 0,
 
@@ -1011,6 +1179,287 @@ CREATE TABLE "user_onboarding" (
     CONSTRAINT "user_onboarding_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "funnels" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "userId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "slug" TEXT NOT NULL,
+    "goalType" "FunnelGoalType" NOT NULL,
+    "goalValue" TEXT,
+    "conversionGoal" TEXT NOT NULL,
+    "theme" JSONB,
+    "brandColors" JSONB,
+    "customCss" TEXT,
+    "metaTitle" TEXT,
+    "metaDescription" TEXT,
+    "ogImage" TEXT,
+    "trackingEnabled" BOOLEAN NOT NULL DEFAULT true,
+    "exitRedirect" TEXT,
+    "totalVisits" INTEGER NOT NULL DEFAULT 0,
+    "totalConversions" INTEGER NOT NULL DEFAULT 0,
+    "conversionRate" DECIMAL(5,2),
+    "status" "FunnelStatus" NOT NULL DEFAULT 'DRAFT',
+    "publishedAt" TIMESTAMP(3),
+
+    CONSTRAINT "funnels_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "funnel_steps" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "funnelId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "slug" TEXT NOT NULL,
+    "type" "FunnelStepType" NOT NULL,
+    "order" INTEGER NOT NULL,
+    "headline" TEXT,
+    "subheadline" TEXT,
+    "content" TEXT,
+    "pageData" JSONB,
+    "backgroundImage" TEXT,
+    "videoUrl" TEXT,
+    "ctaText" TEXT,
+    "ctaUrl" TEXT,
+    "formConfig" JSONB,
+    "isVariant" BOOLEAN NOT NULL DEFAULT false,
+    "variantOf" TEXT,
+    "trafficSplit" INTEGER NOT NULL DEFAULT 50,
+    "views" INTEGER NOT NULL DEFAULT 0,
+    "completions" INTEGER NOT NULL DEFAULT 0,
+    "dropoffRate" DECIMAL(5,2),
+    "rules" JSONB,
+
+    CONSTRAINT "funnel_steps_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "funnel_visits" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "funnelId" TEXT NOT NULL,
+    "visitorId" TEXT NOT NULL,
+    "email" TEXT,
+    "name" TEXT,
+    "entryStepId" TEXT NOT NULL,
+    "entryUrl" TEXT,
+    "referrer" TEXT,
+    "currentStepId" TEXT,
+    "lastStepId" TEXT,
+    "completedSteps" TEXT[],
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "device" TEXT,
+    "browser" TEXT,
+    "os" TEXT,
+    "country" TEXT,
+    "city" TEXT,
+    "utmSource" TEXT,
+    "utmMedium" TEXT,
+    "utmCampaign" TEXT,
+    "utmTerm" TEXT,
+    "utmContent" TEXT,
+    "totalTimeSpent" INTEGER NOT NULL DEFAULT 0,
+    "lastActivityAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "converted" BOOLEAN NOT NULL DEFAULT false,
+    "convertedAt" TIMESTAMP(3),
+    "conversionValue" DECIMAL(10,2),
+
+    CONSTRAINT "funnel_visits_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "funnel_step_progress" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "visitId" TEXT NOT NULL,
+    "stepId" TEXT NOT NULL,
+    "status" "FunnelStepStatus" NOT NULL DEFAULT 'VIEWED',
+    "enteredAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP(3),
+    "timeSpent" INTEGER NOT NULL DEFAULT 0,
+    "formData" JSONB,
+    "scrollDepth" INTEGER,
+    "ctaClicked" BOOLEAN NOT NULL DEFAULT false,
+    "videoWatched" INTEGER,
+    "interactions" JSONB,
+
+    CONSTRAINT "funnel_step_progress_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "funnel_conversions" (
+    "id" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "funnelId" TEXT NOT NULL,
+    "visitId" TEXT NOT NULL,
+    "conversionType" TEXT NOT NULL,
+    "conversionValue" DECIMAL(10,2),
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "entrySource" TEXT,
+    "entryMedium" TEXT,
+    "entryCampaign" TEXT,
+    "email" TEXT NOT NULL,
+    "name" TEXT,
+    "metadata" JSONB,
+    "orderId" TEXT,
+    "productId" TEXT,
+    "courseId" TEXT,
+
+    CONSTRAINT "funnel_conversions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "template_customizations" (
+    "id" TEXT NOT NULL,
+    "templateId" TEXT NOT NULL,
+    "pageId" TEXT,
+    "userId" TEXT NOT NULL,
+    "customizations" JSONB NOT NULL DEFAULT '{}',
+    "previewData" JSONB,
+    "saved" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "template_customizations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "seo_performance" (
+    "id" TEXT NOT NULL,
+    "pageId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "score" INTEGER NOT NULL,
+    "errors" INTEGER NOT NULL DEFAULT 0,
+    "warnings" INTEGER NOT NULL DEFAULT 0,
+    "info" INTEGER NOT NULL DEFAULT 0,
+    "issues" JSONB,
+    "searchRanking" INTEGER,
+    "organicTraffic" INTEGER NOT NULL DEFAULT 0,
+    "impressions" INTEGER NOT NULL DEFAULT 0,
+    "clicks" INTEGER NOT NULL DEFAULT 0,
+    "ctr" DECIMAL(5,2),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "seo_performance_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "content_optimizations" (
+    "id" TEXT NOT NULL,
+    "pageId" TEXT NOT NULL,
+    "blockId" TEXT,
+    "userId" TEXT NOT NULL,
+    "suggestionType" TEXT NOT NULL,
+    "field" TEXT NOT NULL,
+    "currentValue" TEXT,
+    "suggestedValue" TEXT NOT NULL,
+    "reason" TEXT,
+    "priority" TEXT NOT NULL,
+    "impactScore" INTEGER,
+    "applied" BOOLEAN NOT NULL DEFAULT false,
+    "appliedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "content_optimizations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "template_performance" (
+    "id" TEXT NOT NULL,
+    "templateId" TEXT NOT NULL,
+    "pageId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
+    "views" INTEGER NOT NULL DEFAULT 0,
+    "clicks" INTEGER NOT NULL DEFAULT 0,
+    "conversions" INTEGER NOT NULL DEFAULT 0,
+    "conversionRate" DECIMAL(5,2),
+    "engagementTime" INTEGER,
+    "bounceRate" DECIMAL(5,2),
+    "revenue" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "template_performance_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ab_test_experiments" (
+    "id" TEXT NOT NULL,
+    "pageId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "templateAId" TEXT NOT NULL,
+    "templateBId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'draft',
+    "trafficSplit" INTEGER NOT NULL DEFAULT 50,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
+    "winnerTemplateId" TEXT,
+    "results" JSONB,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ab_test_experiments_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "template_purchases" (
+    "id" TEXT NOT NULL,
+    "templateId" TEXT NOT NULL,
+    "buyerId" TEXT NOT NULL,
+    "sellerId" TEXT NOT NULL,
+    "price" DECIMAL(10,2) NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "commission" DECIMAL(10,2) NOT NULL,
+    "platformFee" DECIMAL(10,2) NOT NULL,
+    "sellerEarnings" DECIMAL(10,2) NOT NULL,
+    "paymentStatus" TEXT NOT NULL DEFAULT 'pending',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "template_purchases_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "template_reviews" (
+    "id" TEXT NOT NULL,
+    "templateId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "rating" INTEGER NOT NULL,
+    "review" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "template_reviews_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "template_creator_profiles" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "displayName" TEXT,
+    "bio" TEXT,
+    "avatarUrl" TEXT,
+    "totalTemplates" INTEGER NOT NULL DEFAULT 0,
+    "totalSales" INTEGER NOT NULL DEFAULT 0,
+    "totalRevenue" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "averageRating" DECIMAL(3,2),
+    "verified" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "template_creator_profiles_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
 
@@ -1021,13 +1470,31 @@ CREATE UNIQUE INDEX "profiles_userId_key" ON "profiles"("userId");
 CREATE UNIQUE INDEX "profiles_username_key" ON "profiles"("username");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "profiles_coachSlug_key" ON "profiles"("coachSlug");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "pages_slug_key" ON "pages"("slug");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "pages_subdomain_key" ON "pages"("subdomain");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "pageHeader_pageId_key" ON "pageHeader"("pageId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "analytics_userId_date_key" ON "analytics"("userId", "date");
+
+-- CreateIndex
+CREATE INDEX "email_subscribers_userId_idx" ON "email_subscribers"("userId");
+
+-- CreateIndex
+CREATE INDEX "email_subscribers_userId_pipelineStage_idx" ON "email_subscribers"("userId", "pipelineStage");
+
+-- CreateIndex
+CREATE INDEX "email_subscribers_pipelineStage_idx" ON "email_subscribers"("pipelineStage");
+
+-- CreateIndex
+CREATE INDEX "email_subscribers_pageId_pageType_idx" ON "email_subscribers"("pageId", "pageType");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "email_subscribers_pageId_email_key" ON "email_subscribers"("pageId", "email");
@@ -1043,6 +1510,21 @@ CREATE INDEX "error_logs_resolved_timestamp_idx" ON "error_logs"("resolved", "ti
 
 -- CreateIndex
 CREATE INDEX "error_logs_errorType_timestamp_idx" ON "error_logs"("errorType", "timestamp");
+
+-- CreateIndex
+CREATE INDEX "availability_windows_userId_dayOfWeek_idx" ON "availability_windows"("userId", "dayOfWeek");
+
+-- CreateIndex
+CREATE INDEX "blackout_dates_userId_startDate_endDate_idx" ON "blackout_dates"("userId", "startDate", "endDate");
+
+-- CreateIndex
+CREATE INDEX "bookings_userId_startTime_idx" ON "bookings"("userId", "startTime");
+
+-- CreateIndex
+CREATE INDEX "bookings_customerEmail_idx" ON "bookings"("customerEmail");
+
+-- CreateIndex
+CREATE INDEX "bookings_status_idx" ON "bookings"("status");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Plan_name_key" ON "Plan"("name");
@@ -1079,6 +1561,18 @@ CREATE INDEX "Subscription_planId_idx" ON "Subscription"("planId");
 
 -- CreateIndex
 CREATE INDEX "Subscription_status_idx" ON "Subscription"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "stripe_connected_accounts_userId_key" ON "stripe_connected_accounts"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "stripe_connected_accounts_accountId_key" ON "stripe_connected_accounts"("accountId");
+
+-- CreateIndex
+CREATE INDEX "creator_earnings_userId_status_idx" ON "creator_earnings"("userId", "status");
+
+-- CreateIndex
+CREATE INDEX "creator_earnings_connectedAccountId_status_idx" ON "creator_earnings"("connectedAccountId", "status");
 
 -- CreateIndex
 CREATE INDEX "UsageRecord_userId_featureId_periodStart_idx" ON "UsageRecord"("userId", "featureId", "periodStart");
@@ -1156,6 +1650,15 @@ CREATE INDEX "campaign_templates_featured_useCount_idx" ON "campaign_templates"(
 CREATE INDEX "page_templates_userId_category_idx" ON "page_templates"("userId", "category");
 
 -- CreateIndex
+CREATE INDEX "page_templates_category_featured_idx" ON "page_templates"("category", "featured");
+
+-- CreateIndex
+CREATE INDEX "page_templates_industry_idx" ON "page_templates"("industry");
+
+-- CreateIndex
+CREATE INDEX "page_templates_useCount_idx" ON "page_templates"("useCount");
+
+-- CreateIndex
 CREATE INDEX "page_templates_featured_useCount_idx" ON "page_templates"("featured", "useCount");
 
 -- CreateIndex
@@ -1180,7 +1683,13 @@ CREATE INDEX "course_lessons_courseId_order_idx" ON "course_lessons"("courseId",
 CREATE INDEX "lesson_resources_lessonId_idx" ON "lesson_resources"("lessonId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "course_enrollments_accessToken_key" ON "course_enrollments"("accessToken");
+
+-- CreateIndex
 CREATE INDEX "course_enrollments_courseId_progressPercentage_idx" ON "course_enrollments"("courseId", "progressPercentage");
+
+-- CreateIndex
+CREATE INDEX "course_enrollments_accessToken_idx" ON "course_enrollments"("accessToken");
 
 -- CreateIndex
 CREATE INDEX "course_enrollments_email_idx" ON "course_enrollments"("email");
@@ -1227,6 +1736,111 @@ CREATE INDEX "workflow_step_logs_executionId_stepId_idx" ON "workflow_step_logs"
 -- CreateIndex
 CREATE UNIQUE INDEX "user_onboarding_userId_key" ON "user_onboarding"("userId");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "funnels_slug_key" ON "funnels"("slug");
+
+-- CreateIndex
+CREATE INDEX "funnels_userId_status_idx" ON "funnels"("userId", "status");
+
+-- CreateIndex
+CREATE INDEX "funnels_slug_idx" ON "funnels"("slug");
+
+-- CreateIndex
+CREATE INDEX "funnel_steps_funnelId_order_idx" ON "funnel_steps"("funnelId", "order");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "funnel_steps_funnelId_slug_key" ON "funnel_steps"("funnelId", "slug");
+
+-- CreateIndex
+CREATE INDEX "funnel_visits_funnelId_visitorId_idx" ON "funnel_visits"("funnelId", "visitorId");
+
+-- CreateIndex
+CREATE INDEX "funnel_visits_funnelId_converted_idx" ON "funnel_visits"("funnelId", "converted");
+
+-- CreateIndex
+CREATE INDEX "funnel_visits_email_idx" ON "funnel_visits"("email");
+
+-- CreateIndex
+CREATE INDEX "funnel_step_progress_stepId_status_idx" ON "funnel_step_progress"("stepId", "status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "funnel_step_progress_visitId_stepId_key" ON "funnel_step_progress"("visitId", "stepId");
+
+-- CreateIndex
+CREATE INDEX "funnel_conversions_funnelId_createdAt_idx" ON "funnel_conversions"("funnelId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "funnel_conversions_email_idx" ON "funnel_conversions"("email");
+
+-- CreateIndex
+CREATE INDEX "template_customizations_templateId_idx" ON "template_customizations"("templateId");
+
+-- CreateIndex
+CREATE INDEX "template_customizations_userId_idx" ON "template_customizations"("userId");
+
+-- CreateIndex
+CREATE INDEX "template_customizations_pageId_idx" ON "template_customizations"("pageId");
+
+-- CreateIndex
+CREATE INDEX "seo_performance_userId_idx" ON "seo_performance"("userId");
+
+-- CreateIndex
+CREATE INDEX "seo_performance_date_idx" ON "seo_performance"("date");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "seo_performance_pageId_date_key" ON "seo_performance"("pageId", "date");
+
+-- CreateIndex
+CREATE INDEX "content_optimizations_pageId_idx" ON "content_optimizations"("pageId");
+
+-- CreateIndex
+CREATE INDEX "content_optimizations_userId_idx" ON "content_optimizations"("userId");
+
+-- CreateIndex
+CREATE INDEX "content_optimizations_applied_idx" ON "content_optimizations"("applied");
+
+-- CreateIndex
+CREATE INDEX "template_performance_templateId_idx" ON "template_performance"("templateId");
+
+-- CreateIndex
+CREATE INDEX "template_performance_userId_idx" ON "template_performance"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "template_performance_templateId_pageId_date_key" ON "template_performance"("templateId", "pageId", "date");
+
+-- CreateIndex
+CREATE INDEX "ab_test_experiments_pageId_idx" ON "ab_test_experiments"("pageId");
+
+-- CreateIndex
+CREATE INDEX "ab_test_experiments_userId_idx" ON "ab_test_experiments"("userId");
+
+-- CreateIndex
+CREATE INDEX "ab_test_experiments_status_idx" ON "ab_test_experiments"("status");
+
+-- CreateIndex
+CREATE INDEX "template_purchases_templateId_idx" ON "template_purchases"("templateId");
+
+-- CreateIndex
+CREATE INDEX "template_purchases_buyerId_idx" ON "template_purchases"("buyerId");
+
+-- CreateIndex
+CREATE INDEX "template_purchases_sellerId_idx" ON "template_purchases"("sellerId");
+
+-- CreateIndex
+CREATE INDEX "template_reviews_templateId_idx" ON "template_reviews"("templateId");
+
+-- CreateIndex
+CREATE INDEX "template_reviews_rating_idx" ON "template_reviews"("rating");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "template_reviews_templateId_userId_key" ON "template_reviews"("templateId", "userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "template_creator_profiles_userId_key" ON "template_creator_profiles"("userId");
+
+-- CreateIndex
+CREATE INDEX "template_creator_profiles_userId_idx" ON "template_creator_profiles"("userId");
+
 -- AddForeignKey
 ALTER TABLE "profiles" ADD CONSTRAINT "profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -1267,6 +1881,18 @@ ALTER TABLE "analytics" ADD CONSTRAINT "analytics_userId_fkey" FOREIGN KEY ("use
 ALTER TABLE "sales" ADD CONSTRAINT "sales_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "email_subscribers" ADD CONSTRAINT "email_subscribers_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "availability_windows" ADD CONSTRAINT "availability_windows_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "blackout_dates" ADD CONSTRAINT "blackout_dates_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "bookings" ADD CONSTRAINT "bookings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "PlanFeature" ADD CONSTRAINT "PlanFeature_planId_fkey" FOREIGN KEY ("planId") REFERENCES "Plan"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -1277,6 +1903,18 @@ ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_userId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_planId_fkey" FOREIGN KEY ("planId") REFERENCES "Plan"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "stripe_connected_accounts" ADD CONSTRAINT "stripe_connected_accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "creator_earnings" ADD CONSTRAINT "creator_earnings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "creator_earnings" ADD CONSTRAINT "creator_earnings_productId_fkey" FOREIGN KEY ("productId") REFERENCES "products"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "creator_earnings" ADD CONSTRAINT "creator_earnings_saleId_fkey" FOREIGN KEY ("saleId") REFERENCES "sales"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UsageRecord" ADD CONSTRAINT "UsageRecord_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -1370,3 +2008,87 @@ ALTER TABLE "workflow_step_logs" ADD CONSTRAINT "workflow_step_logs_stepId_fkey"
 
 -- AddForeignKey
 ALTER TABLE "user_onboarding" ADD CONSTRAINT "user_onboarding_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "funnels" ADD CONSTRAINT "funnels_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "funnel_steps" ADD CONSTRAINT "funnel_steps_funnelId_fkey" FOREIGN KEY ("funnelId") REFERENCES "funnels"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "funnel_visits" ADD CONSTRAINT "funnel_visits_funnelId_fkey" FOREIGN KEY ("funnelId") REFERENCES "funnels"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "funnel_step_progress" ADD CONSTRAINT "funnel_step_progress_visitId_fkey" FOREIGN KEY ("visitId") REFERENCES "funnel_visits"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "funnel_step_progress" ADD CONSTRAINT "funnel_step_progress_stepId_fkey" FOREIGN KEY ("stepId") REFERENCES "funnel_steps"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "funnel_conversions" ADD CONSTRAINT "funnel_conversions_funnelId_fkey" FOREIGN KEY ("funnelId") REFERENCES "funnels"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_customizations" ADD CONSTRAINT "template_customizations_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "page_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_customizations" ADD CONSTRAINT "template_customizations_pageId_fkey" FOREIGN KEY ("pageId") REFERENCES "pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_customizations" ADD CONSTRAINT "template_customizations_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "seo_performance" ADD CONSTRAINT "seo_performance_pageId_fkey" FOREIGN KEY ("pageId") REFERENCES "pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "seo_performance" ADD CONSTRAINT "seo_performance_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "content_optimizations" ADD CONSTRAINT "content_optimizations_pageId_fkey" FOREIGN KEY ("pageId") REFERENCES "pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "content_optimizations" ADD CONSTRAINT "content_optimizations_blockId_fkey" FOREIGN KEY ("blockId") REFERENCES "blocks"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "content_optimizations" ADD CONSTRAINT "content_optimizations_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_performance" ADD CONSTRAINT "template_performance_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "page_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_performance" ADD CONSTRAINT "template_performance_pageId_fkey" FOREIGN KEY ("pageId") REFERENCES "pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_performance" ADD CONSTRAINT "template_performance_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ab_test_experiments" ADD CONSTRAINT "ab_test_experiments_pageId_fkey" FOREIGN KEY ("pageId") REFERENCES "pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ab_test_experiments" ADD CONSTRAINT "ab_test_experiments_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ab_test_experiments" ADD CONSTRAINT "ab_test_experiments_templateAId_fkey" FOREIGN KEY ("templateAId") REFERENCES "page_templates"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ab_test_experiments" ADD CONSTRAINT "ab_test_experiments_templateBId_fkey" FOREIGN KEY ("templateBId") REFERENCES "page_templates"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ab_test_experiments" ADD CONSTRAINT "ab_test_experiments_winnerTemplateId_fkey" FOREIGN KEY ("winnerTemplateId") REFERENCES "page_templates"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_purchases" ADD CONSTRAINT "template_purchases_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "page_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_purchases" ADD CONSTRAINT "template_purchases_buyerId_fkey" FOREIGN KEY ("buyerId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_purchases" ADD CONSTRAINT "template_purchases_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_reviews" ADD CONSTRAINT "template_reviews_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "page_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_reviews" ADD CONSTRAINT "template_reviews_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "template_creator_profiles" ADD CONSTRAINT "template_creator_profiles_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

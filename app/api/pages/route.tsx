@@ -24,6 +24,9 @@ export async function GET(req: NextRequest) {
       return handleApiError(new Error('Unauthorized'), 'GET /api/pages');
     }
 
+    // Debug: Log the query being executed
+    logger.info(`Fetching pages for userId: ${userId}`);
+    
     const pages = await prisma.page.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -35,6 +38,12 @@ export async function GET(req: NextRequest) {
         }
       }
     });
+
+    logger.info(`Found ${pages.length} pages for userId: ${userId}`);
+    
+    // Debug: Also check total pages in database (without userId filter)
+    const totalPagesInDb = await prisma.page.count().catch(() => 0);
+    logger.info(`Total pages in database: ${totalPagesInDb}`);
 
     return successResponse(pages);
   } catch (error) {

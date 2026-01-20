@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { logger } from '@/lib/utils/logger';
 import { stackServerApp } from '@/stack/server';
-import crypto from 'crypto';
+import { generateRandomBytesHex } from '@/lib/utils/crypto';
 
 // GET: Get domain configuration for a page
 export async function GET(
@@ -123,10 +123,7 @@ export async function POST(
     }
 
     // Generate verification token
-    const verificationToken = crypto
-      .randomBytes(32)
-      .toString('hex')
-      .substring(0, 64);
+    const verificationToken = (await generateRandomBytesHex(32)).substring(0, 64);
 
     // Update page with custom domain
     const updatedPage = await prisma.page.update({

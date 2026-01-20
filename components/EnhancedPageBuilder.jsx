@@ -257,7 +257,7 @@ const EnhancedPageBuilder = () => {
               headerStyle: 'minimal'
             }
           });
-
+          console.log("New page data added to state:", newPage);
           // Update URL to include the new pageId so refreshing works
           router.replace(`/builder?page=${newPage.id}`);
           toast.success('Page created successfully');

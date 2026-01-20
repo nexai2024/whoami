@@ -150,32 +150,12 @@ export async function validateRequest<T>(
   } catch (error) {
     // If JSON parsing fails, return a validation error
     // Create a simple validation schema to generate a proper ZodError
-    const invalidSchema = z.object({}).strict()
-    const result = invalidSchema.safeParse({})
-    if (!result.success) {
-      // Use the error from the failed parse, but customize the message
-      const zodError = result.error
-      zodError.issues = [{
-        code: 'custom',
-        path: [],
-        message: 'Invalid JSON in request body'
-      }]
-      return { success: false, error: zodError }
-    }
-    // Fallback - create a minimal ZodError
-    const fallbackSchema = z.string()
-    const fallbackResult = fallbackSchema.safeParse(123)
-    if (!fallbackResult.success) {
-      const zodError = fallbackResult.error
-      zodError.issues = [{
-        code: 'custom',
-        path: [],
-        message: 'Invalid JSON in request body'
-      }]
-      return { success: false, error: zodError }
-    }
-    // This should never happen, but TypeScript needs it
-    throw new Error('Failed to create validation error')
+    const issues: z.ZodIssue[] = [{
+      code: 'custom',
+      path: [],
+      message: 'Invalid JSON in request body'
+    }]
+    return { success: false, error: new z.ZodError(issues) }
   }
 }
 

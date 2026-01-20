@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { Webhook } from "svix";
 import { z } from "zod";
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import { generateRandomBytesHex } from '@/lib/utils/crypto';
 import { logger } from '@/lib/utils/logger';
 import { PrismaClient } from '@prisma/client';
 
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       const data = parsedPayload.data;
 
       // Generate a unique username from email or display name
-      const generateUsername = (email?: string | null, displayName?: string | null, userId?: string) => {
+      const generateUsername = async (email?: string | null, displayName?: string | null, userId?: string) => {
         if (displayName) {
           const cleaned = displayName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 20);
           if (cleaned.length > 0) return cleaned;
@@ -127,15 +127,16 @@ export async function POST(request: Request) {
           if (cleaned.length > 0) return cleaned;
         }
         // Fallback to user ID prefix
-        return `user_${userId?.substring(0, 8) || crypto.randomBytes(4).toString('hex')}`;
+        const fallback = userId?.substring(0, 8) || await generateRandomBytesHex(4);
+        return `user_${fallback}`;
       };
 
-      const baseUsername = generateUsername(data.primary_email, data.display_name, data.id);
+      const baseUsername = await generateUsername(data.primary_email, data.display_name, data.id);
       const email = data.primary_email || `stack-user-${data.id}@noemail.local`;
       const displayName = data.display_name || baseUsername;
 
       // Generate a random password for Prisma User (not used for auth)
-      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const randomPassword = await generateRandomBytesHex(32);
       const hashedPassword = await bcrypt.hash(randomPassword, 12);
 
       // Use transaction to ensure both User and Profile are created atomically

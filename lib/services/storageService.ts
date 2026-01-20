@@ -4,12 +4,12 @@
  * Used by Content Repurposing and Lead Magnet features
  */
 
-import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs/promises';
 import { existsSync, mkdirSync } from 'fs';
 import { File as NodeFile } from 'buffer';
 import { UTApi } from 'uploadthing/server';
+import { generateRandomBytesHexSync } from '@/lib/utils/crypto';
 
 const isUploadThingConfigured =
   Boolean(process.env.UPLOADTHING_SECRET) && Boolean(process.env.UPLOADTHING_APP_ID);
@@ -41,7 +41,7 @@ function generateUniqueFilename(originalFilename: string): string {
   const ext = path.extname(originalFilename);
   const basename = path.basename(originalFilename, ext);
   const timestamp = Date.now();
-  const random = crypto.randomBytes(8).toString('hex');
+  const random = generateRandomBytesHexSync(8);
   const sanitized = basename
     .replace(/[^a-z0-9]/gi, '-')
     .toLowerCase()

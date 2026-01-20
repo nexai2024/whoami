@@ -90,10 +90,17 @@ export default async function middleware(req: Request) {
   const hostnameLower = hostname.toLowerCase();
 
   // Define list of allowed base domains (your main domain)
-  const allowedDomains = ["localhost:3000", "whoami.click", "whoami.bio"];
+  const allowedDomains = ["localhost:3000", "whoami.click", "whoami.onl"];
   const isAllowedDomain = allowedDomains.some(domain => hostnameLower.includes(domain.toLowerCase()));
 
   try {
+    // Edge runtime cannot use Prisma without Accelerate in Prisma 7.
+    // If Accelerate isn't configured (or not a prisma:// URL), skip DB lookups.
+    const accelerateUrl = process.env.PRISMA_ACCELERATE_URL;
+    if (!accelerateUrl || !accelerateUrl.startsWith('prisma://')) {
+      return NextResponse.next();
+    }
+
     // Check cache first
     const cachedSlug = domainCache.get(hostnameLower);
     if (cachedSlug) {

@@ -1,0 +1,2548 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Note: URL moved to prisma.config.ts for Prisma 7 compatibility
+  // For Prisma 6, this line is still required by the CLI
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  //updatedAt DateTime @updatedAt
+
+  // Profile information
+  profile       Profile?
+  pages         Page[]
+  analytics     Analytics[]
+  subscriptions Subscription[]
+  usage         UsageRecord[]
+  forms         Form[]
+
+  // New feature relations
+  campaigns              Campaign[]
+  repurposedContents     RepurposedContent[]
+  scheduledPosts         ScheduledPost[]
+  optimalTimeSlots       OptimalTimeSlot[]
+  schedulingPrefs        SchedulingPreferences?
+  leadMagnets            LeadMagnet[]
+  productTemplates       ProductTemplate[]
+  postTemplates          PostTemplate[]
+  campaignTemplates      CampaignTemplate[]
+  onboarding             UserOnboarding?
+  pageTemplates          PageTemplate[]
+  courses                Course[]
+  workflows              Workflow[]
+  funnels                Funnel[]
+  leads                  EmailSubscriber[]
+  // Coach platform relations
+  availabilityWindows    AvailabilityWindow[]
+  blackoutDates          BlackoutDate[]
+  bookings               Booking[]
+  stripeConnectedAccount StripeConnectedAccount?
+  creatorEarnings        CreatorEarning[]
+
+  // Enhancement features relations
+  templateCustomizations    TemplateCustomization[]
+  seoPerformance            SEOPerformance[]
+  contentOptimizations      ContentOptimization[]
+  templatePerformance       TemplatePerformance[]
+  abTestExperiments         ABTestExperiment[]
+  templatePurchasesAsBuyer  TemplatePurchase[]      @relation("TemplateBuyer")
+  templatePurchasesAsSeller TemplatePurchase[]      @relation("TemplateSeller")
+  templateReviews           TemplateReview[]
+  templateCreatorProfile    TemplateCreatorProfile?
+
+  @@map("users")
+}
+
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  username    String  @unique
+  displayName String
+  bio         String?
+  avatar      String?
+  theme       String  @default("default")
+
+  // Contact information
+  phone    String?
+  website  String?
+  location String?
+  timezone String  @default("UTC")
+
+  // Social media links (for creator link-in-bio)
+  socialLinkTwitter   String?
+  socialLinkInstagram String?
+  socialLinkYouTube   String?
+  socialLinkTikTok    String?
+  socialLinkLinkedIn  String?
+  socialLinkFacebook  String?
+  socialLinkTwitch    String?
+  socialLinkDiscord   String?
+  socialLinkWebsite   String?
+  socialLinkLinktree  String?
+  socialLinkOther     String?
+
+  // Subscription and billing
+  plan               PlanEnum @default(FREE)
+  stripeCustomerId   String?
+  subscriptionId     String?
+  subscriptionStatus String?
+
+  // Coach features
+  isCoach         Boolean @default(false)
+  coachSlug       String? @unique
+  bookingEnabled  Boolean @default(false)
+  productsEnabled Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Page {
+  id          String  @id @default(cuid())
+  userId      String
+  slug        String  @unique
+  title       String
+  description String?
+  isActive    Boolean @default(true)
+
+  // Domain configuration
+  customDomain                  String?
+  customDomainStatus            DomainStatus? @default(PENDING)
+  customDomainVerifiedAt        DateTime?
+  customDomainVerificationToken String?
+  subdomain                     String?       @unique
+
+  // SEO and metadata
+  metaTitle       String?
+  metaDescription String?
+  metaKeywords    String?
+  ogImage         String?
+
+  // Styling
+  backgroundColor String @default("#ffffff")
+  textColor       String @default("#000000")
+  buttonStyle     String @default("rounded")
+  fontFamily      String @default("inter")
+
+  // Enhanced styling (JSON for flexibility)
+  theme      Json? // Theme preset name and colors
+  typography Json? // Font settings, sizes, weights
+  layout     Json? // Container width, spacing, alignment
+  animations Json? // Animation preferences
+  customCss  String? @db.Text
+
+  // Analytics settings
+  googleAnalyticsId String?
+  facebookPixelId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  header pageHeader?
+
+  blocks Block[]
+  clicks Click[]
+  forms  Form[]
+
+  // Enhancement features relations
+  templateCustomizations TemplateCustomization[]
+  seoPerformance         SEOPerformance[]
+  contentOptimizations   ContentOptimization[]
+  templatePerformance    TemplatePerformance[]
+  abTestExperiments      ABTestExperiment[]
+
+  @@map("pages")
+}
+
+model pageHeader {
+  id     String @id @default(cuid())
+  pageId String @unique
+
+  data      Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+}
+
+model Block {
+  id       String    @id @default(cuid())
+  pageId   String
+  type     BlockType
+  position Int
+  isActive Boolean   @default(true)
+
+  // Basic properties
+  title       String
+  description String?
+  url         String?
+  imageUrl    String?
+
+  // Styling
+  backgroundColor String?
+  textColor       String?
+  borderRadius    Int     @default(8)
+
+  // Enhanced block styling (JSON for flexibility)
+  style Json? // { shadow, border, hoverEffect, layout, colors }
+
+  // Block-specific data (JSON for flexibility)
+  data Json @default("{}")
+
+  // Scheduling
+  scheduledStart DateTime?
+  scheduledEnd   DateTime?
+
+  // A/B Testing
+  variantId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page                 Page                  @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  clicks               Click[]
+  contentOptimizations ContentOptimization[]
+
+  // For extensibility: link to product, analytics, or form if needed
+  productId   String?
+  analyticsId String?
+  formId      String?
+
+  product   Product?   @relation(fields: [productId], references: [id])
+  analytics Analytics? @relation(fields: [analyticsId], references: [id])
+  form      Form?      @relation(fields: [formId], references: [id])
+
+  @@map("blocks")
+}
+
+// Form model for email capture, waitlist, contact, etc.
+model Form {
+  id        String   @id @default(cuid())
+  userId    String
+  pageId    String
+  type      FormType
+  config    Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blocks Block[]
+
+  @@map("forms")
+}
+
+enum FormType {
+  EMAIL_CAPTURE
+  WAITLIST
+  CONTACT
+  CUSTOM
+}
+
+model Click {
+  id      String  @id @default(cuid())
+  pageId  String
+  blockId String?
+
+  // Analytics data
+  ipAddress String
+  userAgent String
+  referer   String?
+  country   String?
+  city      String?
+  device    String?
+  browser   String?
+  os        String?
+
+  // UTM parameters
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmTerm     String?
+  utmContent  String?
+
+  timestamp DateTime @default(now())
+
+  page  Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  block Block? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+
+  @@map("clicks")
+}
+
+// Enhancement features relations for Block
+
+model Analytics {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime
+
+  // Metrics
+  pageViews      Int   @default(0)
+  uniqueVisitors Int   @default(0)
+  totalClicks    Int   @default(0)
+  revenue        Float @default(0)
+
+  // Device breakdown
+  mobileViews  Int @default(0)
+  desktopViews Int @default(0)
+  tabletViews  Int @default(0)
+
+  // Traffic sources
+  directTraffic   Int @default(0)
+  socialTraffic   Int @default(0)
+  searchTraffic   Int @default(0)
+  referralTraffic Int @default(0)
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocks Block[]
+
+  @@unique([userId, date])
+  @@map("analytics")
+}
+
+model Product {
+  id          String  @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  price       Float
+  currency    String  @default("USD")
+
+  // Product type (PRODUCT or PACKAGE)
+  type ProductType @default(PRODUCT)
+
+  // Package fields (only used if type is PACKAGE)
+  packageProducts String[] // Array of product IDs included in this package
+
+  // Digital product files
+  fileUrl       String?
+  downloadLimit Int?
+
+  // Stripe integration
+  stripeProductId String?
+  stripePriceId   String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sales           Sale[]
+  blocks          Block[]
+  campaigns       Campaign[]
+  creatorEarnings CreatorEarning[]
+
+  @@map("products")
+}
+
+enum ProductType {
+  PRODUCT
+  PACKAGE
+}
+
+model Sale {
+  id         String @id @default(cuid())
+  productId  String
+  buyerEmail String
+  amount     Float
+  currency   String @default("USD")
+
+  // Payment processing
+  stripePaymentIntentId String?
+  status                String  @default("pending")
+
+  createdAt DateTime @default(now())
+
+  product         Product          @relation(fields: [productId], references: [id])
+  creatorEarnings CreatorEarning[]
+
+  @@map("sales")
+}
+
+model EmailSubscriber {
+  id              String    @id @default(cuid())
+  pageId          String
+  pageType        String
+  userId          String
+  email           String
+  name            String?
+  source          String? // Which block they subscribed from
+  phone           String?
+  company         String?
+  notes           String?
+  tags            String[] // For segmentation
+  pipelineStage   LeadStage @default(NEW)
+  lastContactedAt DateTime?
+  lastActivityAt  DateTime?
+  estimatedValue  Int?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@unique([pageId, email])
+  @@index([userId])
+  @@index([userId, pipelineStage])
+  @@index([pipelineStage])
+  @@index([pageId, pageType])
+  @@map("email_subscribers")
+}
+
+model ABTest {
+  id          String  @id @default(cuid())
+  pageId      String
+  name        String
+  description String?
+
+  // Test configuration
+  trafficSplit Float      @default(50) // Percentage for variant
+  status       TestStatus @default(DRAFT)
+
+  // Results
+  controlClicks Int @default(0)
+  controlViews  Int @default(0)
+  variantClicks Int @default(0)
+  variantViews  Int @default(0)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@map("ab_tests")
+}
+
+model Integration {
+  id     String          @id @default(cuid())
+  userId String
+  type   IntegrationType
+  name   String
+
+  // Encrypted credentials and configuration
+  config Json
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, type])
+  @@map("integrations")
+}
+
+model Webhook {
+  id     String         @id @default(cuid())
+  userId String
+  url    String
+  events WebhookEvent[]
+  secret String?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@map("webhooks")
+}
+
+model AuditLog {
+  id         String  @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String?
+
+  // Request details
+  ipAddress String?
+  userAgent String?
+
+  // Change details
+  oldValues Json?
+  newValues Json?
+
+  timestamp DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model ErrorLog {
+  id     String  @id @default(cuid())
+  userId String?
+
+  // Error details
+  message   String  @db.Text
+  stack     String? @db.Text
+  errorType String? // "runtime", "boundary", "api", "validation"
+
+  // App state capture
+  url       String?
+  pathname  String?
+  userAgent String?
+
+  // Component context
+  componentStack String? @db.Text
+
+  // User context (denormalized for quick access)
+  userEmail String?
+  userPlan  String?
+
+  // Additional context
+  context Json? // Flexible field for any extra data
+
+  // Status tracking
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime?
+  resolvedBy String?
+  notes      String?   @db.Text
+
+  timestamp DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([resolved, timestamp])
+  @@index([errorType, timestamp])
+  @@map("error_logs")
+}
+
+// ============================================
+// COACH PLATFORM: AVAILABILITY & BOOKINGS
+// ============================================
+
+model AvailabilityWindow {
+  id        String   @id @default(cuid())
+  userId    String
+  dayOfWeek Int // 0-6 (Sunday-Saturday)
+  startTime String // "09:00" format
+  endTime   String // "17:00" format
+  timezone  String   @default("UTC")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, dayOfWeek])
+  @@map("availability_windows")
+}
+
+model BlackoutDate {
+  id        String   @id @default(cuid())
+  userId    String
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startDate, endDate])
+  @@map("blackout_dates")
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  userId          String // Coach
+  customerEmail   String
+  customerName    String?
+  startTime       DateTime
+  endTime         DateTime
+  duration        Int // minutes
+  price           Decimal?      @db.Decimal(10, 2)
+  currency        String        @default("USD")
+  status          BookingStatus @default(PENDING)
+  notes           String?       @db.Text
+  stripePaymentId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, startTime])
+  @@index([customerEmail])
+  @@index([status])
+  @@map("bookings")
+}
+
+// Subscription plans
+model Plan {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., "Free", "Pro", "Enterprise"
+  description String?
+  planEnum    PlanEnum
+  price       Decimal  @db.Decimal(10, 2)
+  interval    String // "month", "year"
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  priceId     String?
+
+  features      PlanFeature[]
+  subscriptions Subscription[]
+
+  @@index([name])
+}
+
+// Features available in the system
+model Feature {
+  id          String   @id @default(cuid())
+  name        String   @unique // e.g., "api_calls", "storage", "users"
+  description String?
+  type        String // "boolean", "quota", "rate_limit"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  planFeatures PlanFeature[]
+  usageRecords UsageRecord[]
+
+  @@index([name])
+}
+
+// Junction table: Plan features with limits
+model PlanFeature {
+  id        String @id @default(cuid())
+  planId    String
+  featureId String
+
+  // For boolean features (enabled/disabled)
+  enabled Boolean @default(true)
+
+  // For quota-based features (e.g., 1000 API calls/month)
+  limit Int? // null = unlimited
+
+  // For rate limiting (e.g., 100 requests per minute)
+  rateLimit  Int? // requests allowed
+  ratePeriod String? // "minute", "hour", "day"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plan    Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([planId, featureId])
+  @@index([planId])
+  @@index([featureId])
+}
+
+// User subscriptions
+model Subscription {
+  id     String @id @default(cuid())
+  userId String @unique
+  planId String
+
+  status             String // "active", "canceled", "past_due", "trialing"
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+
+  // Payment provider info
+  stripeSubscriptionId String? @unique
+  stripeCustomerId     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan Plan @relation(fields: [planId], references: [id])
+
+  @@index([userId])
+  @@index([planId])
+  @@index([status])
+}
+
+// ============================================
+// STRIPE CONNECT: CREATOR ACCOUNTS & EARNINGS
+// ============================================
+
+model StripeConnectedAccount {
+  id        String @id @default(cuid())
+  userId    String @unique
+  // Stripe account ID, e.g., acct_123
+  accountId String @unique
+
+  // Capability status mirrors Stripe capabilities
+  chargesEnabled   Boolean @default(false)
+  payoutsEnabled   Boolean @default(false)
+  detailsSubmitted Boolean @default(false)
+
+  // Account information
+  country         String?
+  defaultCurrency String? @default("USD")
+  businessType    String?
+
+  // Platform fee defaults (% as decimal, e.g. 10 = 10%)
+  applicationFeePercent Int? // If null, use platform default
+
+  // Onboarding state
+  requirements Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stripe_connected_accounts")
+}
+
+model CreatorEarning {
+  id        String  @id @default(cuid())
+  userId    String
+  // Foreign keys
+  productId String?
+  saleId    String?
+  bookingId String?
+
+  // Amounts
+  grossAmount     Decimal @db.Decimal(10, 2)
+  stripeFees      Decimal @default(0) @db.Decimal(10, 2)
+  applicationFees Decimal @default(0) @db.Decimal(10, 2)
+  netAmount       Decimal @db.Decimal(10, 2)
+  currency        String  @default("USD")
+
+  // Stripe references
+  chargeId           String?
+  transferId         String?
+  payoutId           String?
+  connectedAccountId String? // acct_...
+
+  // Status
+  status      String    @default("pending") // pending | available | paid | reversed
+  availableAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id])
+  sale    Sale?    @relation(fields: [saleId], references: [id])
+
+  @@index([userId, status])
+  @@index([connectedAccountId, status])
+  @@map("creator_earnings")
+}
+
+// Track feature usage for rate limiting and quotas
+model UsageRecord {
+  id        String @id @default(cuid())
+  userId    String
+  featureId String
+
+  count       Int      @default(1)
+  periodStart DateTime
+  periodEnd   DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, featureId, periodStart])
+  @@index([userId, featureId, periodStart])
+  @@index([periodEnd])
+}
+
+enum PlanEnum {
+  FREE
+  CREATOR
+  PRO
+  BUSINESS
+  SUPER_ADMIN
+}
+
+enum DomainStatus {
+  PENDING
+  VERIFIED
+  FAILED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum BlockType {
+  LINK
+  DEEP_LINK
+  PRODUCT
+  EMAIL_CAPTURE
+  IMAGE_GALLERY
+  MUSIC_PLAYER
+  VIDEO_EMBED
+  BOOKING_CALENDAR
+  TIP_JAR
+  SOCIAL_FEED
+  AMA_BLOCK
+  GATED_CONTENT
+  RSS_FEED
+  PORTFOLIO
+  CONTACT_FORM
+  DIVIDER
+  TEXT_BLOCK
+  ANALYTICS
+  PROMO
+  DISCOUNT
+  SOCIAL_SHARE
+  WAITLIST
+  NEWSLETTER
+  CUSTOM
+  COURSE
+  FUNNEL
+  QUIZ
+  SOCIAL_PROOF
+  SAAS_APP
+}
+
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum TestStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+}
+
+enum IntegrationType {
+  STRIPE
+  PAYPAL
+  MAILCHIMP
+  CONVERTKIT
+  CALENDLY
+  SHOPIFY
+  GUMROAD
+  GOOGLE_ANALYTICS
+  FACEBOOK_PIXEL
+  ZAPIER
+}
+
+enum WebhookEvent {
+  PAGE_VIEW
+  BLOCK_CLICK
+  EMAIL_SIGNUP
+  PRODUCT_SALE
+  TIP_RECEIVED
+}
+
+// ============================================
+// FEATURE #1: AUTO-CAMPAIGN GENERATOR
+// ============================================
+
+model Campaign {
+  id        String         @id @default(cuid())
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  userId    String
+  status    CampaignStatus
+
+  // Source content
+  productId     String?
+  blockId       String?
+  customContent Json?
+
+  // Generated assets
+  assets CampaignAsset[]
+
+  // Campaign metadata
+  name           String
+  goal           String?
+  targetAudience String?
+
+  // Performance tracking
+  analyticsId String?
+
+  user    User     @relation(fields: [userId], references: [id])
+  product Product? @relation(fields: [productId], references: [id])
+
+  @@index([userId, status])
+  @@map("campaigns")
+}
+
+enum CampaignStatus {
+  DRAFT
+  GENERATING
+  READY
+  FAILED
+}
+
+model CampaignAsset {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  type     AssetType
+  platform Platform?
+
+  // Content
+  content  String  @db.Text
+  mediaUrl String?
+
+  // Scheduling
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  status      AssetStatus
+
+  // Performance
+  views       Int @default(0)
+  clicks      Int @default(0)
+  conversions Int @default(0)
+
+  @@index([campaignId])
+  @@map("campaign_assets")
+}
+
+enum AssetType {
+  SOCIAL_POST
+  EMAIL
+  PAGE_VARIANT
+  IMAGE
+  VIDEO_CLIP
+}
+
+enum Platform {
+  TWITTER
+  INSTAGRAM
+  FACEBOOK
+  LINKEDIN
+  TIKTOK
+  EMAIL
+  LINK_IN_BIO
+}
+
+enum AssetStatus {
+  DRAFT
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  FAILED
+}
+
+// ============================================
+// FEATURE #3: CONTENT REPURPOSING STUDIO
+// ============================================
+
+model RepurposedContent {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Source content
+  sourceUrl   String
+  sourceType  SourceType
+  sourceTitle String?
+  sourceMeta  Json?
+
+  // Extracted data
+  transcript String? @db.Text
+  keyPoints  Json?
+  duration   Int?
+
+  // Processing status
+  status RepurposeStatus
+  error  String?
+
+  // Generated assets
+  assets RepurposedAsset[]
+
+  // Settings
+  brandColors Json?
+  brandLogo   String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, status])
+  @@map("repurposed_contents")
+}
+
+enum SourceType {
+  YOUTUBE
+  TIKTOK
+  INSTAGRAM
+  VIMEO
+  BLOG
+  MEDIUM
+  SUBSTACK
+  LINKEDIN_ARTICLE
+  TWITTER_THREAD
+  PODCAST_RSS
+  PODCAST_MP3
+  SPOTIFY
+  APPLE_PODCASTS
+  MANUAL_TEXT
+}
+
+enum RepurposeStatus {
+  ANALYZING
+  EXTRACTING
+  GENERATING
+  READY
+  FAILED
+}
+
+model RepurposedAsset {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repurposedContentId String
+  repurposedContent   RepurposedContent @relation(fields: [repurposedContentId], references: [id], onDelete: Cascade)
+
+  type     RepurposeAssetType
+  platform Platform?
+
+  // Content
+  content  String? @db.Text
+  mediaUrl String?
+  metadata Json?
+
+  // Publishing
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  blockId     String?
+
+  // User edits
+  edited          Boolean @default(false)
+  originalContent String? @db.Text
+
+  @@index([repurposedContentId])
+  @@map("repurposed_assets")
+}
+
+enum RepurposeAssetType {
+  TWITTER_THREAD
+  LINKEDIN_POST
+  INSTAGRAM_CAPTION
+  FACEBOOK_POST
+  EMAIL_NEWSLETTER
+  BLOG_SUMMARY
+  QUOTE_GRAPHIC
+  CAROUSEL_SLIDE
+  INFOGRAPHIC
+  VIDEO_CLIP
+  THUMBNAIL
+}
+
+// ============================================
+// FEATURE #6: SMART SCHEDULING ENGINE
+// ============================================
+
+model ScheduledPost {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Content4e 
+  content   String   @db.Text
+  mediaUrls String[]
+
+  // Platform
+  platform     Platform
+  platformType PostType
+
+  // Scheduling
+  scheduledFor DateTime
+  timezone     String   @default("UTC")
+  priority     Int      @default(0)
+
+  // Publishing
+  status      ScheduleStatus
+  publishedAt DateTime?
+  externalId  String?
+  externalUrl String?
+
+  // Mode
+  autoPost Boolean @default(false)
+
+  // Source tracking
+  campaignAssetId   String?
+  repurposedAssetId String?
+
+  // Error handling
+  attempts  Int     @default(0)
+  lastError String?
+
+  // Performance
+  views    Int?
+  clicks   Int?
+  likes    Int?
+  comments Int?
+  shares   Int?
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, scheduledFor, status])
+  @@index([scheduledFor, status])
+  @@map("scheduled_posts")
+}
+
+enum ScheduleStatus {
+  PENDING
+  PROCESSING
+  PUBLISHED
+  FAILED
+  CANCELLED
+}
+
+enum PostType {
+  FEED_POST
+  STORY
+  REEL
+  TWEET
+  THREAD
+  LINKEDIN_POST
+  FACEBOOK_POST
+}
+
+model OptimalTimeSlot {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Time slot
+  dayOfWeek Int
+  hourOfDay Int
+
+  // Platform-specific
+  platform Platform?
+
+  // Metrics
+  avgEngagementRate Decimal @db.Decimal(5, 2)
+  totalViews        Int     @default(0)
+  totalClicks       Int     @default(0)
+  sampleSize        Int     @default(0)
+
+  // Confidence
+  confidence Decimal @db.Decimal(5, 2)
+
+  // Ranking
+  rank Int
+
+  // Analysis period
+  analyzedFrom DateTime
+  analyzedTo   DateTime
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, platform, dayOfWeek, hourOfDay])
+  @@index([userId, rank])
+  @@map("optimal_time_slots")
+}
+
+model SchedulingPreferences {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // Default settings
+  defaultMode SchedulingMode @default(SUGGESTION)
+  timezone    String         @default("America/New_York")
+
+  // Posting constraints
+  noPostBefore Int   @default(8)
+  noPostAfter  Int   @default(22)
+  excludedDays Int[]
+
+  // Platform preferences
+  preferredPlatforms Platform[]
+
+  // Spread settings
+  minHoursBetween Int @default(4)
+  maxPostsPerDay  Int @default(5)
+
+  // Analysis
+  dataRequirement Int @default(30)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("scheduling_preferences")
+}
+
+enum SchedulingMode {
+  SUGGESTION
+  AUTO_POST
+  HYBRID
+}
+
+enum TemplateType {
+  BIO_ONLY
+  FULL_PAGE
+}
+
+// ============================================
+// FEATURE #7: LEAD MAGNET AUTOMATION SUITE
+// ============================================
+
+model LeadMagnet {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Magnet details
+  name        String
+  slug        String?    @unique
+  description String?    @db.Text
+  type        MagnetType
+
+  // Asset storage
+  fileUrl  String?
+  fileSize Int?
+  fileName String?
+  mimeType String?
+
+  // Multi-asset courses
+  assets LeadMagnetAsset[]
+
+  // Opt-in copy
+  headline    String
+  subheadline String?
+  benefits    String[]
+
+  // Branding
+  coverImageUrl String?
+  brandColors   Json?
+
+  // Delivery settings
+  deliveryMethod DeliveryMethod
+  deliveryDelay  Int            @default(0)
+
+  // Email drip settings
+  dripEnabled  Boolean @default(false)
+  dripSchedule Json?
+
+  // Email template
+  emailSubject String?
+  emailBody    String? @db.Text
+
+  // Performance tracking
+  views          Int      @default(0)
+  optIns         Int      @default(0)
+  downloads      Int      @default(0)
+  conversionRate Decimal? @db.Decimal(5, 2)
+
+  // Gating
+  emailCaptureBlockId String?
+
+  // Status
+  status      MagnetStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  user       User                 @relation(fields: [userId], references: [id])
+  deliveries LeadMagnetDelivery[]
+
+  @@index([userId, status])
+  @@map("lead_magnets")
+}
+
+enum MagnetType {
+  PDF
+  EBOOK
+  TEMPLATE
+  CHECKLIST
+  WORKBOOK
+  VIDEO
+  VIDEO_COURSE
+  AUDIO
+  SPREADSHEET
+  ZIP_BUNDLE
+  CUSTOM
+}
+
+enum DeliveryMethod {
+  INSTANT_DOWNLOAD
+  EMAIL_DELIVERY
+  GATED_ACCESS
+  HYBRID
+  DRIP_COURSE
+}
+
+enum MagnetStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model LeadMagnetAsset {
+  id           String     @id @default(cuid())
+  createdAt    DateTime   @default(now())
+  leadMagnetId String
+  leadMagnet   LeadMagnet @relation(fields: [leadMagnetId], references: [id], onDelete: Cascade)
+
+  // Asset details
+  name        String
+  description String?
+  fileUrl     String
+  fileSize    Int
+  mimeType    String
+
+  // Ordering
+  order Int @default(0)
+
+  // Drip schedule
+  dripDay Int?
+
+  @@index([leadMagnetId, order])
+  @@map("lead_magnet_assets")
+}
+
+model LeadMagnetDelivery {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leadMagnetId String
+  leadMagnet   LeadMagnet @relation(fields: [leadMagnetId], references: [id])
+
+  // Recipient
+  email             String
+  name              String?
+  emailSubscriberId String?
+
+  // Delivery tracking
+  delivered       Boolean   @default(false)
+  deliveredAt     DateTime?
+  downloadedCount Int       @default(0)
+  lastDownloadAt  DateTime?
+
+  // Email tracking
+  emailSent        Boolean @default(false)
+  emailOpened      Boolean @default(false)
+  emailClickedLink Boolean @default(false)
+
+  // Drip course tracking
+  currentAssetIndex Int      @default(0)
+  completedAssets   String[]
+
+  // Unique delivery token
+  deliveryToken  String    @unique
+  tokenExpiresAt DateTime?
+
+  // Attribution
+  source   String?
+  medium   String?
+  campaign String?
+
+  @@index([leadMagnetId, email])
+  @@index([deliveryToken])
+  @@map("lead_magnet_deliveries")
+}
+
+model LeadMagnetTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Template details
+  name        String
+  description String           @db.Text
+  category    TemplateCategory
+  type        MagnetType
+
+  // Preview
+  thumbnailUrl String
+  previewUrl   String?
+
+  // Template file
+  templateUrl String
+
+  // Popularity
+  useCount Int     @default(0)
+  featured Boolean @default(false)
+
+  // Sample content
+  samplePrompt String? @db.Text
+
+  @@map("lead_magnet_templates")
+}
+
+enum TemplateCategory {
+  CHECKLIST
+  WORKBOOK
+  CHEAT_SHEET
+  RESOURCE_LIST
+  SWIPE_FILE
+  GUIDE
+  PLANNER
+  TRACKER
+  EBOOK
+  MINI_COURSE
+}
+
+// ============================================
+// TEMPLATES SYSTEM
+// ============================================
+
+model ProductTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+
+  // Template details
+  name          String
+  description   String?
+  price         Float
+  currency      String  @default("USD")
+  downloadLimit Int?
+
+  // Category
+  category String // "Course", "Ebook", "Template", "Digital Art", etc.
+
+  // Preview
+  thumbnailUrl String?
+
+  // Popularity
+  useCount Int     @default(0)
+  featured Boolean @default(false)
+  isPublic Boolean @default(false)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([featured, useCount])
+  @@map("product_templates")
+}
+
+model PostTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+
+  // Template details
+  name        String
+  description String?
+  content     String   @db.Text
+  platform    Platform
+  postType    PostType
+  mediaUrls   String[]
+
+  // Category
+  category String // "Promotional", "Educational", "Engagement", etc.
+
+  // Popularity
+  useCount Int     @default(0)
+  featured Boolean @default(false)
+  isPublic Boolean @default(false)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, platform])
+  @@index([featured, useCount])
+  @@map("post_templates")
+}
+
+model CampaignTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+
+  // Template details
+  name           String
+  description    String?
+  goal           String?
+  targetAudience String?
+  platforms      Platform[]
+  tone           String?
+
+  // Category
+  category String // "Product Launch", "Lead Generation", "Awareness", etc.
+
+  // Popularity
+  useCount Int     @default(0)
+  featured Boolean @default(false)
+  isPublic Boolean @default(false)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, category])
+  @@index([featured, useCount])
+  @@map("campaign_templates")
+}
+
+model PageTemplate {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String?
+
+  // Template metadata
+  name        String
+  description String?  @db.Text
+  category    String
+  industry    String? // Industry-specific classification
+  tags        String[]
+
+  // Template type
+  templateType TemplateType
+
+  // Template data storage
+  headerData Json
+  blocksData Json
+  theme      Json? // Theme configuration (colors, fonts, spacing)
+
+  // Preview assets
+  thumbnailUrl String
+  previewUrl   String?
+
+  // Popularity tracking
+  useCount Int     @default(0)
+  rating   Float?  @default(0)
+  featured Boolean @default(false)
+  isPublic Boolean @default(false)
+
+  // Marketplace fields
+  price          Decimal? @db.Decimal(10, 2)
+  currency       String   @default("USD")
+  isPaid         Boolean  @default(false)
+  commissionRate Decimal? @db.Decimal(5, 2)
+  totalRevenue   Decimal  @default(0) @db.Decimal(10, 2)
+  totalSales     Int      @default(0)
+  licenseType    String   @default("free") // free, paid, premium
+
+  // Relations
+  user           User?                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customizations TemplateCustomization[]
+  performance    TemplatePerformance[]
+  purchases      TemplatePurchase[]
+  reviews        TemplateReview[]
+  abTestsA       ABTestExperiment[]      @relation("TemplateA")
+  abTestsB       ABTestExperiment[]      @relation("TemplateB")
+  abTestsWinner  ABTestExperiment[]      @relation("WinnerTemplate")
+
+  @@index([userId, category])
+  @@index([category, featured])
+  @@index([industry])
+  @@index([useCount])
+  @@index([featured, useCount])
+  @@index([category, templateType])
+  @@map("page_templates")
+}
+
+// ============================================
+// MICRO-COURSE SYSTEM
+// ============================================
+
+model Course {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Course details
+  title       String
+  description String?  @db.Text
+  slug        String   @unique
+  category    String?
+  tags        String[]
+
+  // Course metadata
+  level         CourseLevel @default(BEGINNER)
+  estimatedTime Int? // in minutes
+  language      String      @default("en")
+
+  // Media
+  coverImageUrl String?
+  promoVideoUrl String?
+
+  // Access control
+  accessType CourseAccessType @default(FREE)
+  price      Decimal?         @db.Decimal(10, 2)
+  currency   String           @default("USD")
+
+  // Lead magnet settings
+  leadMagnetId  String?
+  isLeadMagnet  Boolean @default(false)
+  requiresEmail Boolean @default(false)
+
+  // Publishing
+  status      CourseStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  // Analytics
+  enrollmentCount Int      @default(0)
+  completionRate  Decimal? @db.Decimal(5, 2)
+  averageRating   Decimal? @db.Decimal(3, 2)
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  // Relations
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessons     CourseLesson[]
+  enrollments CourseEnrollment[]
+  reviews     CourseReview[]
+
+  @@index([userId, status])
+  @@index([slug])
+  @@index([category, status])
+  @@map("courses")
+}
+
+enum CourseLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ALL_LEVELS
+}
+
+enum CourseAccessType {
+  FREE
+  PAID
+  EMAIL_GATE
+  MEMBERSHIP
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model CourseLesson {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courseId  String
+
+  // Lesson details
+  title       String
+  description String? @db.Text
+  order       Int
+
+  // Content
+  contentType LessonContentType
+  content     String?           @db.Text // For text/markdown
+  videoUrl    String? // For video
+  videoLength Int? // in seconds
+  audioUrl    String? // For audio
+
+  // Additional resources
+  resources LessonResource[]
+
+  // Quiz/Assessment
+  hasQuiz  Boolean @default(false)
+  quizData Json?
+
+  // Drip settings
+  dripDay         Int? // Release after N days of enrollment
+  dripAfterLesson String? // Release after completing specific lesson
+
+  // Analytics
+  viewCount      Int      @default(0)
+  completionRate Decimal? @db.Decimal(5, 2)
+  avgTimeSpent   Int? // in seconds
+
+  // Publishing
+  isPublished Boolean @default(true)
+  isFree      Boolean @default(false) // Preview lesson
+
+  // Relations
+  course   Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress CourseLessonProgress[]
+
+  @@index([courseId, order])
+  @@map("course_lessons")
+}
+
+enum LessonContentType {
+  TEXT
+  VIDEO
+  AUDIO
+  EMBED
+  PDF
+  MIXED
+}
+
+model LessonResource {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  lessonId  String
+
+  // Resource details
+  name        String
+  description String?
+  type        ResourceType
+  url         String
+  fileSize    Int?
+
+  // Download tracking
+  downloadCount Int @default(0)
+
+  // Relations
+  lesson CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+  @@map("lesson_resources")
+}
+
+enum ResourceType {
+  PDF
+  DOCUMENT
+  SPREADSHEET
+  VIDEO
+  AUDIO
+  IMAGE
+  ARCHIVE
+  LINK
+  OTHER
+}
+
+model CourseEnrollment {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courseId  String
+  userId    String?
+
+  // Enrollment details
+  email            String
+  name             String?
+  enrollmentSource String? // Where they enrolled from
+
+  // Payment (for paid courses)
+  paymentStatus   String? // "pending", "completed", "failed"
+  paymentAmount   Decimal? @db.Decimal(10, 2)
+  stripePaymentId String?
+
+  // Progress tracking
+  currentLessonId    String?
+  progressPercentage Int       @default(0)
+  completedAt        DateTime?
+
+  // Certificate
+  certificateIssued   Boolean   @default(false)
+  certificateUrl      String?
+  certificateIssuedAt DateTime?
+
+  // Access
+  expiresAt            DateTime?
+  accessRevoked        Boolean   @default(false)
+  accessToken          String?   @unique
+  accessTokenExpiresAt DateTime?
+
+  // Engagement
+  lastAccessedAt DateTime?
+  totalTimeSpent Int       @default(0) // in seconds
+
+  // Relations
+  course         Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonProgress CourseLessonProgress[]
+
+  @@unique([courseId, email])
+  @@index([courseId, progressPercentage])
+  @@index([accessToken])
+  @@index([email])
+  @@map("course_enrollments")
+}
+
+model CourseLessonProgress {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  enrollmentId String
+  lessonId     String
+
+  // Progress
+  status          LessonProgressStatus @default(NOT_STARTED)
+  progressPercent Int                  @default(0)
+  completedAt     DateTime?
+
+  // Engagement
+  timeSpent    Int  @default(0) // in seconds
+  lastPosition Int? // Video/audio position in seconds
+  viewCount    Int  @default(0)
+
+  // Quiz results
+  quizAttempts Int       @default(0)
+  quizScore    Decimal?  @db.Decimal(5, 2)
+  quizPassedAt DateTime?
+
+  // Notes
+  notes String? @db.Text
+
+  // Relations
+  enrollment CourseEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  lesson     CourseLesson     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, lessonId])
+  @@index([enrollmentId, status])
+  @@map("course_lesson_progress")
+}
+
+enum LessonProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model CourseReview {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courseId  String
+
+  // Reviewer
+  email String
+  name  String?
+
+  // Review
+  rating  Int // 1-5
+  comment String? @db.Text
+
+  // Moderation
+  approved Boolean @default(false)
+  featured Boolean @default(false)
+
+  // Relations
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, approved])
+  @@map("course_reviews")
+}
+
+// ============================================
+// AUTOMATION WORKFLOW SYSTEM
+// ============================================
+
+model Workflow {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Workflow details
+  name        String
+  description String? @db.Text
+
+  // Visual canvas data (node positions, connections)
+  canvasData Json?
+
+  // Status
+  status    WorkflowStatus @default(DRAFT)
+  lastRunAt DateTime?
+
+  // Performance
+  totalRuns      Int @default(0)
+  successfulRuns Int @default(0)
+  failedRuns     Int @default(0)
+
+  // Settings
+  enabled Boolean @default(true)
+
+  // Relations
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trigger    WorkflowTrigger?
+  steps      WorkflowStep[]
+  executions WorkflowExecution[]
+
+  @@index([userId, status])
+  @@index([userId, enabled])
+  @@map("workflows")
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model WorkflowTrigger {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  workflowId String   @unique
+
+  // Trigger configuration
+  triggerType TriggerType
+  config      Json // Stores type-specific configuration
+
+  // Filter conditions
+  filters Json?
+
+  // Relations
+  workflow Workflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([triggerType])
+  @@map("workflow_triggers")
+}
+
+enum TriggerType {
+  NEW_SUBSCRIBER // When someone subscribes to email list
+  NEW_COURSE_ENROLLMENT // When someone enrolls in course
+  LESSON_COMPLETED // When lesson is completed
+  COURSE_COMPLETED // When entire course is completed
+  FORM_SUBMITTED // When a form is submitted
+  PRODUCT_PURCHASED // When product is purchased
+  PAGE_VIEWED // When page is viewed
+  BLOCK_CLICKED // When specific block is clicked
+  TAG_ADDED // When tag is added to subscriber
+  TAG_REMOVED // When tag is removed
+  SCHEDULE // Time-based trigger
+  WEBHOOK // External webhook trigger
+  MANUAL // Manually triggered
+}
+
+model WorkflowStep {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  workflowId String
+
+  // Step details
+  name  String
+  type  StepType
+  order Int
+
+  // Action/Condition configuration
+  config Json
+
+  // Conditional branching
+  parentStepId String? // For conditional branches
+  condition    Json? // If this is a conditional branch
+
+  // Delay settings
+  delayAmount Int? // Amount of time
+  delayUnit   DelayUnit?
+
+  // Relations
+  workflow Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  logs     WorkflowStepLog[]
+
+  @@index([workflowId, order])
+  @@map("workflow_steps")
+}
+
+enum StepType {
+  // Actions
+  SEND_EMAIL
+  ADD_TAG
+  REMOVE_TAG
+  SUBSCRIBE_TO_LIST
+  UNSUBSCRIBE_FROM_LIST
+  ENROLL_IN_COURSE
+  GRANT_ACCESS
+  REVOKE_ACCESS
+  SEND_SMS
+  SEND_WEBHOOK
+  CREATE_TASK
+  UPDATE_SUBSCRIBER
+  SEND_NOTIFICATION
+
+  // Control flow
+  WAIT
+  DELAY
+  CONDITION
+  BRANCH
+  SPLIT_TEST
+
+  // Integrations
+  ZAPIER_WEBHOOK
+  MAILCHIMP_ACTION
+  CONVERTKIT_ACTION
+  STRIPE_ACTION
+}
+
+enum DelayUnit {
+  MINUTES
+  HOURS
+  DAYS
+  WEEKS
+}
+
+model WorkflowExecution {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  workflowId String
+
+  // Execution details
+  status      ExecutionStatus @default(RUNNING)
+  startedAt   DateTime        @default(now())
+  completedAt DateTime?
+
+  // Trigger context
+  triggerData     Json // Data that triggered the workflow
+  subscriberEmail String? // If triggered by subscriber action
+
+  // Error handling
+  error      String? @db.Text
+  errorStep  String? // Which step failed
+  retryCount Int     @default(0)
+
+  // Relations
+  workflow Workflow          @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  stepLogs WorkflowStepLog[]
+
+  @@index([workflowId, status])
+  @@index([status, createdAt])
+  @@index([subscriberEmail])
+  @@map("workflow_executions")
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  WAITING // Waiting for delay/schedule
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model WorkflowStepLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  executionId String
+  stepId      String
+
+  // Step execution
+  status      StepExecutionStatus @default(PENDING)
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  // Step data
+  input  Json?
+  output Json?
+
+  // Error details
+  error String? @db.Text
+
+  // Relations
+  execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  step      WorkflowStep      @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@index([executionId, stepId])
+  @@map("workflow_step_logs")
+}
+
+enum StepExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+// ============================================
+// USER ONBOARDING
+// ============================================
+
+model UserOnboarding {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Progress tracking
+  completedSteps    String[]
+  currentStep       String?
+  skipped           Boolean   @default(false)
+  completedAt       DateTime?
+  tourCompleted     Boolean   @default(false)
+  checklistProgress Json      @default("{}")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_onboarding")
+}
+
+// ============================================
+// CONVERSION FUNNEL SYSTEM
+// ============================================
+
+model Funnel {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // Funnel details
+  name        String
+  description String? @db.Text
+  slug        String  @unique
+
+  // Goal tracking
+  goalType       FunnelGoalType
+  goalValue      String? // e.g., product ID, course ID, etc.
+  conversionGoal String // "purchase", "signup", "download", etc.
+
+  // Styling and branding
+  theme       Json?
+  brandColors Json?
+  customCss   String? @db.Text
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  ogImage         String?
+
+  // Settings
+  trackingEnabled Boolean @default(true)
+  exitRedirect    String? // Where to redirect after completion
+
+  // Analytics
+  totalVisits      Int      @default(0)
+  totalConversions Int      @default(0)
+  conversionRate   Decimal? @db.Decimal(5, 2)
+
+  // Status
+  status      FunnelStatus @default(DRAFT)
+  publishedAt DateTime?
+
+  // Relations
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  steps       FunnelStep[]
+  visits      FunnelVisit[]
+  conversions FunnelConversion[]
+
+  @@index([userId, status])
+  @@index([slug])
+  @@map("funnels")
+}
+
+enum FunnelGoalType {
+  LEAD_CAPTURE
+  PRODUCT_SALE
+  COURSE_ENROLLMENT
+  BOOKING
+  CUSTOM
+}
+
+enum FunnelStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+model FunnelStep {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  funnelId  String
+
+  // Step details
+  name  String
+  slug  String // URL path segment
+  type  FunnelStepType
+  order Int
+
+  // Page content
+  headline    String?
+  subheadline String?
+  content     String? @db.Text
+
+  // Page-specific data
+  pageData Json? // Flexible storage for different step types
+
+  // Media
+  backgroundImage String?
+  videoUrl        String?
+
+  // Form/CTA configuration
+  ctaText    String?
+  ctaUrl     String?
+  formConfig Json? // For lead capture forms
+
+  // Split testing
+  isVariant    Boolean @default(false)
+  variantOf    String? // ID of parent step
+  trafficSplit Int     @default(50)
+
+  // Analytics
+  views       Int      @default(0)
+  completions Int      @default(0)
+  dropoffRate Decimal? @db.Decimal(5, 2)
+
+  // Conditional logic
+  rules Json? // For conditional branching
+
+  // Relations
+  funnel         Funnel               @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  stepProgresses FunnelStepProgress[]
+
+  @@unique([funnelId, slug])
+  @@index([funnelId, order])
+  @@map("funnel_steps")
+}
+
+enum FunnelStepType {
+  LANDING_PAGE // Initial landing page
+  LEAD_CAPTURE // Email/info capture
+  SALES_PAGE // Product/service presentation
+  ORDER_FORM // Checkout/payment
+  UPSELL // Additional offer
+  DOWNSELL // Alternative offer
+  THANK_YOU // Confirmation/success
+  VIDEO_SALES // Video-based sales page
+  WEBINAR_REG // Webinar registration
+  SURVEY // Information gathering
+  CUSTOM // Custom step type
+}
+
+model FunnelVisit {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  funnelId  String
+
+  // Visitor tracking
+  visitorId String // Unique ID for this visitor session
+  email     String? // Captured email if available
+  name      String?
+
+  // Entry point
+  entryStepId String
+  entryUrl    String?
+  referrer    String?
+
+  // Current progress
+  currentStepId  String?
+  lastStepId     String?
+  completedSteps String[]
+
+  // Session details
+  ipAddress String?
+  userAgent String?
+  device    String?
+  browser   String?
+  os        String?
+  country   String?
+  city      String?
+
+  // UTM tracking
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmTerm     String?
+  utmContent  String?
+
+  // Engagement
+  totalTimeSpent Int      @default(0) // in seconds
+  lastActivityAt DateTime @default(now())
+
+  // Conversion
+  converted       Boolean   @default(false)
+  convertedAt     DateTime?
+  conversionValue Decimal?  @db.Decimal(10, 2)
+
+  // Relations
+  funnel       Funnel               @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  stepProgress FunnelStepProgress[]
+
+  @@index([funnelId, visitorId])
+  @@index([funnelId, converted])
+  @@index([email])
+  @@map("funnel_visits")
+}
+
+model FunnelStepProgress {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  visitId   String
+  stepId    String
+
+  // Progress tracking
+  status      FunnelStepStatus @default(VIEWED)
+  enteredAt   DateTime         @default(now())
+  completedAt DateTime?
+  timeSpent   Int              @default(0) // in seconds
+
+  // Form data (if applicable)
+  formData Json?
+
+  // Interaction tracking
+  scrollDepth  Int? // Percentage
+  ctaClicked   Boolean @default(false)
+  videoWatched Int? // Percentage
+  interactions Json? // Other tracked interactions
+
+  // Relations
+  visit FunnelVisit @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  step  FunnelStep  @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  @@unique([visitId, stepId])
+  @@index([stepId, status])
+  @@map("funnel_step_progress")
+}
+
+enum FunnelStepStatus {
+  VIEWED // User viewed the step
+  ENGAGED // User interacted (scroll, video, etc.)
+  COMPLETED // User completed step action
+  ABANDONED // User left without completing
+  CONVERTED // Led to goal completion
+}
+
+model FunnelConversion {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  funnelId  String
+  visitId   String
+
+  // Conversion details
+  conversionType  String // Type of conversion achieved
+  conversionValue Decimal? @db.Decimal(10, 2)
+  currency        String   @default("USD")
+
+  // Attribution
+  entrySource   String?
+  entryMedium   String?
+  entryCampaign String?
+
+  // Customer info
+  email    String
+  name     String?
+  metadata Json?
+
+  // External references
+  orderId   String?
+  productId String?
+  courseId  String?
+
+  // Relations
+  funnel Funnel @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  @@index([funnelId, createdAt])
+  @@index([email])
+  @@map("funnel_conversions")
+}
+
+// ============================================
+// ENHANCEMENT FEATURES (5 New Features)
+// ============================================
+
+// 1. Template Customization Studio
+model TemplateCustomization {
+  id         String  @id @default(cuid())
+  templateId String
+  pageId     String?
+  userId     String
+
+  customizations Json    @default("{}")
+  previewData    Json?
+  saved          Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  template PageTemplate? @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  page     Page?         @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([userId])
+  @@index([pageId])
+  @@map("template_customizations")
+}
+
+// 2. SEO Performance Tracking
+model SEOPerformance {
+  id     String   @id @default(cuid())
+  pageId String
+  userId String
+  date   DateTime
+
+  score    Int
+  errors   Int   @default(0)
+  warnings Int   @default(0)
+  info     Int   @default(0)
+  issues   Json?
+
+  searchRanking  Int?
+  organicTraffic Int      @default(0)
+  impressions    Int      @default(0)
+  clicks         Int      @default(0)
+  ctr            Decimal? @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([pageId, date])
+  @@index([userId])
+  @@index([date])
+  @@map("seo_performance")
+}
+
+// 3. Content Optimization Suggestions
+model ContentOptimization {
+  id      String  @id @default(cuid())
+  pageId  String
+  blockId String?
+  userId  String
+
+  suggestionType String
+  field          String
+  currentValue   String?
+  suggestedValue String
+  reason         String?
+  priority       String // high, medium, low
+  impactScore    Int?
+
+  applied   Boolean   @default(false)
+  appliedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  page  Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  block Block? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@index([userId])
+  @@index([applied])
+  @@map("content_optimizations")
+}
+
+// 4. Template Performance Analytics
+model TemplatePerformance {
+  id         String   @id @default(cuid())
+  templateId String
+  pageId     String
+  userId     String
+  date       DateTime
+
+  views          Int      @default(0)
+  clicks         Int      @default(0)
+  conversions    Int      @default(0)
+  conversionRate Decimal? @db.Decimal(5, 2)
+  engagementTime Int?
+  bounceRate     Decimal? @db.Decimal(5, 2)
+  revenue        Decimal  @default(0) @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  template PageTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  page     Page         @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, pageId, date])
+  @@index([templateId])
+  @@index([userId])
+  @@map("template_performance")
+}
+
+// 5. A/B Test Experiments
+model ABTestExperiment {
+  id     String @id @default(cuid())
+  pageId String
+  userId String
+
+  name         String
+  description  String?
+  templateAId  String
+  templateBId  String
+  status       String  @default("draft") // draft, running, completed, paused
+  trafficSplit Int     @default(50) // percentage for template A
+
+  startDate        DateTime?
+  endDate          DateTime?
+  winnerTemplateId String?
+  results          Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  page           Page          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateA      PageTemplate  @relation("TemplateA", fields: [templateAId], references: [id])
+  templateB      PageTemplate  @relation("TemplateB", fields: [templateBId], references: [id])
+  winnerTemplate PageTemplate? @relation("WinnerTemplate", fields: [winnerTemplateId], references: [id])
+
+  @@index([pageId])
+  @@index([userId])
+  @@index([status])
+  @@map("ab_test_experiments")
+}
+
+// 6. Template Marketplace (Revenue Sharing)
+model TemplatePurchase {
+  id         String @id @default(cuid())
+  templateId String
+  buyerId    String
+  sellerId   String
+
+  price          Decimal @db.Decimal(10, 2)
+  currency       String  @default("USD")
+  commission     Decimal @db.Decimal(10, 2)
+  platformFee    Decimal @db.Decimal(10, 2)
+  sellerEarnings Decimal @db.Decimal(10, 2)
+  paymentStatus  String  @default("pending") // pending, completed, failed, refunded
+
+  createdAt DateTime @default(now())
+
+  template PageTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  buyer    User         @relation("TemplateBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller   User         @relation("TemplateSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@map("template_purchases")
+}
+
+model TemplateReview {
+  id         String @id @default(cuid())
+  templateId String
+  userId     String
+
+  rating Int // 1-5
+  review String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  template PageTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, userId])
+  @@index([templateId])
+  @@index([rating])
+  @@map("template_reviews")
+}
+
+model TemplateCreatorProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  displayName String?
+  bio         String? @db.Text
+  avatarUrl   String?
+
+  totalTemplates Int      @default(0)
+  totalSales     Int      @default(0)
+  totalRevenue   Decimal  @default(0) @db.Decimal(10, 2)
+  averageRating  Decimal? @db.Decimal(3, 2)
+  verified       Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("template_creator_profiles")
+}
